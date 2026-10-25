@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wordle Battle</title>
+<meta name="theme-color" content="#0a1024">
+<meta name="description" content="Wordle Battle: daily word puzzles, hints and coins.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wordle Battle">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="splash">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="logo">Wordle <span>Battle</span></div>
+  <div class="loader"><i></i><i></i><i></i><i></i><i></i></div>
+  <p>Loading your next challenge...</p>
+</div>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="screen hidden">
+  <header class="dash-head">
+    <div class="logo sm">Wordle <span>Battle</span></div>
+    <div class="head-right">
+      <button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button>
+      <button class="coins" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b><span class="plus">+</span></button>
+      <button id="go-settings" class="icon" aria-label="Settings">⚙️</button>
+    </div>
+  </header>
+  <div class="player">
+    <div class="avatar-wrap"><div class="avatar" id="d-avatar"></div><span class="lvbadge" id="d-badge"></span></div>
+    <div class="pinfo"><b id="d-name"></b><small id="d-level"></small><div class="xp"><i id="d-xp"></i></div></div>
+  </div>
+  <div class="installbar hidden" data-install-wrap><span>📲 Install Wordle Battle on your phone</span><button class="primary" data-install>Install App</button></div>
+  <article class="feature">
+    <div class="f-top"><span class="tag">DAILY CHALLENGE</span><span class="note" id="d-daily-note"></span></div>
+    <h2>Today's puzzle</h2>
+    <div class="fdate" id="d-date"></div>
+    <p>One word a day. Solve it to earn bonus rewards and keep your streak alive.</p>
+    <div class="rewards" id="d-rewards"></div>
+    <button class="primary big" id="d-daily-btn" data-go="daily">Play Now</button>
+  </article>
+  <div class="cards two">
+    <article class="gcard"><div class="ico">🧩</div><div><h3>Play Solo</h3><p>Unlimited practice puzzles.</p></div><button class="primary" data-go="practice">Play</button></article>
+    <article class="gcard"><div class="ico">⚔️</div><div><h3>Battle Online</h3><p>Random match or private room.</p></div><button class="primary alt" data-go="battle">Play</button></article>
+  </div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen hidden">
+  <header class="top">
+    <button id="g-back" class="icon" aria-label="Back">← Back</button>
+    <div class="g-title"><b id="g-title"></b><small id="attempts"></small></div>
+    <div class="head-right"><button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><button class="coins" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b><span class="plus">+</span></button></div>
+  </header>
+  <main>
+    <div id="board" aria-label="Game board"></div>
+    <div class="hints">
+      <button class="hint" data-hint="reveal"><i>🔍</i><span>Reveal letter</span><small class="badge"></small></button>
+      <button class="hint" data-hint="remove"><i>🚫</i><span>Remove wrong</span><small class="badge"></small></button>
+    </div>
+    <div id="keyboard"></div>
+  </main>
+</section>
+
+<!-- SHOP -->
+<section id="shop" class="screen hidden">
+  <header class="top"><button class="icon" data-back>← Back</button><b>Hint Shop</b><div class="head-right"><button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><div class="coins">🪙 <b class="coin-val"></b></div></div></header>
+  <div class="cards" id="shop-cards"></div>
+</section>
+
+<!-- BATTLE -->
+<section id="battle" class="screen hidden">
+  <header class="top"><button class="icon" data-back>← Back</button><b>Battle Online</b><span></span></header>
+  <div class="panel center">
+    <div class="ico big-ico">⚔️</div>
+    <h3>Online battles need a server</h3>
+    <p>Matchmaking, secret words and rewards must be controlled by Supabase so nobody can cheat. Wordle Battle will not fake opponents, so this mode unlocks once Supabase is configured (stages 3–4).</p>
+    <p><small>Steps: see README.md → Supabase setup.</small></p>
+    <div class="actions"><button class="primary" data-go="practice">Play solo instead</button><button class="primary alt" data-go="dashboard">Dashboard</button></div>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section id="leaderboard" class="screen hidden">
+  <header class="top"><button class="icon" data-back>← Back</button><b>Leaderboard</b><span></span></header>
+  <div class="panel"><ol id="lb-list" class="lb"></ol>
+    <small>Global rankings need online accounts (Supabase, stage 5). In demo mode only your own progress is shown.</small></div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings" class="screen hidden">
+  <header class="top"><button class="icon" data-back>← Back</button><b>Profile</b><span></span></header>
+  <div class="player big-profile">
+    <div class="avatar-wrap"><div class="avatar" id="p-avatar"></div><span class="lvbadge" id="p-badge"></span></div>
+    <div class="pinfo"><b id="p-name"></b><small id="p-level"></small><div class="xp"><i id="p-xp"></i></div><div class="mini" id="p-stats"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h4>Daily streak</h4><div class="big" id="p-streak"></div><small id="p-streak-note"></small></div>
+    <div class="panel"><h4>Recent games</h4><div class="big" id="p-record"></div><div id="p-recent" class="chips"></div></div>
+  </div>
+  <div class="panel">
+    <h4>Username</h4><input id="s-name" maxlength="16" autocomplete="off">
+    <h4>Avatar</h4><div id="s-avatars" class="avatars"></div>
+    <h4>Preferences</h4>
+    <div class="actions"><button class="primary alt" id="s-theme"></button><button class="primary alt" id="s-sound"></button><button class="primary alt" id="s-motion"></button></div>
+    <h4>About</h4>
+    <div class="about"><b id="s-version"></b><small id="s-update-note"></small></div>
+    <div class="actions"><button class="primary alt" id="s-check-btn">Check for updates</button><button class="primary hidden" id="s-update-btn">Update App</button></div>
+    <div class="actions hidden" data-install-wrap><button class="primary" data-install>📲 Install App</button></div>
+    <h4>Data</h4><button class="primary danger" id="s-reset">Reset all progress</button>
+  </div>
+</section>
+
+<div id="update-bar" class="hidden" role="status"><span id="update-text">A new version is available.</span><button id="update-btn" class="primary">Update App</button></div>
+<div id="offline-bar" class="hidden" role="status">📡 You're offline. Solo play still works; sign-in and online battles need a connection.</div>
+
+<nav id="bottomnav" aria-label="Main navigation">
+  <button data-nav="dashboard"><i>🏠</i><span>Home</span></button>
+  <button data-nav="play"><i>🎮</i><span>Play</span></button>
+  <button data-nav="leaderboard"><i>🏆</i><span>Leaderboard</span></button>
+  <button data-nav="shop"><i>🛒</i><span>Shop</span></button>
+  <button data-nav="settings"><i>👤</i><span>Profile</span></button>
+</nav>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="card result">
+    <button id="modal-close" class="x" aria-label="Close results">✕</button>
+    <div class="r-emoji" id="r-emoji"></div>
+    <h2 id="modal-title"></h2>
+    <p id="modal-msg"></p>
+    <div class="rword" id="r-word" aria-label="Correct word"></div>
+    <div id="r-rewards" class="rewardbox">
+      <div class="rchips"><div class="chip"><b id="r-coins">+0</b><small>🪙 Coins</small></div><div class="chip xpc"><b id="r-xpv">+0</b><small>⚡ XP</small></div></div>
+      <div class="xp"><i id="r-xp"></i></div><small id="r-level"></small>
+    </div>
+    <p id="r-note" class="note-line"></p>
+    <div class="stats" id="stats-grid"></div>
+    <div id="dist"></div>
+    <small id="r-daily" class="note-line"></small>
+    <div class="actions col" id="modal-actions">
+      <button id="btn-again" class="primary big">Play again</button>
+      <div class="row2"><button id="btn-share" class="primary alt">Share result</button><button id="btn-home" class="primary alt">Dashboard</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="dialog" class="modal hidden">
+  <div class="card"><h2 id="dlg-title"></h2><p id="dlg-msg"></p><div class="actions" id="dlg-actions"></div></div>
+</div>
+
+<script src="js/version.js"></script>
+<script src="js/build.js"></script>
+<script src="js/config.js"></script>
+<script src="js/words.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
