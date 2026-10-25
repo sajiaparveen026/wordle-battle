@@ -15,7 +15,14 @@ Service workers run on `localhost`, so install/update behaviour can be tried loc
     js/build.js                 GENERATED build hash (scripts/stamp-version.js)
     scripts/stamp-version.js    stamps js/build.js
     vercel.json                 Vercel build + cache headers
-    supabase/                   SQL + Edge Functions (later stages)
+    supabase/                   migrations/001_auth_profiles.sql + SETUP.md (accounts)
+    js/auth.js, js/ns.js        accounts + storage namespaces; js/vendor/supabase.js = official client (v2.118.0)
+
+## Accounts (Supabase)
+Sign up / log in / password reset / Google / guest mode are built in. Follow **supabase/SETUP.md** once
+(run the SQL, set redirect URLs, add your public keys). Until keys are added, the app runs in guest-only mode
+and shows no sign-in buttons. Keys can come from Vercel environment variables `SUPABASE_URL` and
+`SUPABASE_ANON_KEY` (public values only; the build refuses a service_role/secret key).
 
 ## Deploy for free on Vercel (recommended: free HTTPS, auto-deploy, correct cache headers)
 1. Create a GitHub repo and push this folder:

@@ -36,7 +36,7 @@
   </header>
   <div class="player">
     <div class="avatar-wrap"><div class="avatar" id="d-avatar"></div><span class="lvbadge" id="d-badge"></span></div>
-    <div class="pinfo"><b id="d-name"></b><small id="d-level"></small><div class="xp"><i id="d-xp"></i></div></div>
+    <div class="pinfo"><b id="d-name"></b> <span class="acctbadge" id="d-acct"></span><small id="d-level"></small><div class="xp"><i id="d-xp"></i></div></div>
   </div>
   <div class="installbar hidden" data-install-wrap><span>📲 Install Wordle Battle on your phone</span><button class="primary" data-install>Install App</button></div>
   <article class="feature">
@@ -81,8 +81,8 @@
   <header class="top"><button class="icon" data-back>← Back</button><b>Battle Online</b><span></span></header>
   <div class="panel center">
     <div class="ico big-ico">⚔️</div>
-    <h3>Online battles need a server</h3>
-    <p>Matchmaking, secret words and rewards must be controlled by Supabase so nobody can cheat. Wordle Battle will not fake opponents, so this mode unlocks once Supabase is configured (stages 3–4).</p>
+    <h3 id="battle-title">Online battles need a server</h3>
+    <p id="battle-note">Matchmaking, secret words and rewards must be controlled by Supabase so nobody can cheat. Wordle Battle will not fake opponents, so this mode unlocks once Supabase is configured (stages 3–4).</p>
     <p><small>Steps: see README.md → Supabase setup.</small></p>
     <div class="actions"><button class="primary" data-go="practice">Play solo instead</button><button class="primary alt" data-go="dashboard">Dashboard</button></div>
   </div>
@@ -95,17 +95,105 @@
     <small>Global rankings need online accounts (Supabase, stage 5). In demo mode only your own progress is shown.</small></div>
 </section>
 
+<!-- AUTH SCREENS -->
+<section id="welcome" class="screen auth hidden">
+  <div class="auth-hero"><div class="logo">Wordle <span>Battle</span></div><p class="tagline">Outsmart every word. Beat every rival.</p></div>
+  <div class="authcard">
+    <p id="welcome-notice" class="authmsg" role="status"></p>
+    <button class="primary big" data-go="signup" data-needs-auth>Create Account</button>
+    <button class="primary alt big" data-go="login" data-needs-auth>Log In</button>
+    <button class="gbtn hidden" data-google type="button"><i>G</i> Continue with Google</button>
+    <div class="or" data-needs-auth><span>or</span></div>
+    <button class="ghost big" id="btn-guest">Play as Guest</button>
+    <small id="welcome-setup" class="hidden">Online accounts aren't set up on this copy of the app yet, but you can play as a guest.</small>
+    <small class="fine">Guest progress is saved on this device only.</small>
+  </div>
+</section>
+
+<section id="signup" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Create your account</h2></div>
+  <div class="authcard">
+    <form id="signup-form" novalidate>
+      <label class="field"><span aria-hidden="true">📧</span><input id="su-email" type="email" autocomplete="email" placeholder="Email" ></label>
+      <label class="field"><span aria-hidden="true">🎮</span><input id="su-user" type="text" autocomplete="username" placeholder="Username (3-16 letters, numbers, _)" maxlength="16" autocapitalize="off" spellcheck="false"></label>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="su-pass" type="password" autocomplete="new-password" placeholder="Password" ><button type="button" class="eye" data-eye="su-pass" aria-label="Show password">👁</button></label>
+      <div class="meter"><i id="su-meter"></i></div><small id="su-hint" class="fine">8+ characters with upper, lower case and a number.</small>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="su-pass2" type="password" autocomplete="new-password" placeholder="Confirm password" ><button type="button" class="eye" data-eye="su-pass2" aria-label="Show password">👁</button></label>
+      <p class="authmsg error" id="su-msg" role="alert"></p>
+      <button class="primary big" id="su-submit" type="submit"><span class="spin"></span><b>Create Account</b></button>
+    </form>
+    <button class="gbtn hidden" data-google type="button"><i>G</i> Continue with Google</button>
+    <div class="authlinks">Already have an account? <button class="link" data-go="login">Log in</button></div>
+    <button class="ghost" id="su-guest">Play as Guest instead</button>
+  </div>
+</section>
+
+<section id="login" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Welcome back</h2></div>
+  <div class="authcard">
+    <p id="li-notice" class="authmsg ok" role="status"></p>
+    <form id="login-form" novalidate>
+      <label class="field"><span aria-hidden="true">📧</span><input id="li-email" type="email" autocomplete="email" placeholder="Email" ></label>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="li-pass" type="password" autocomplete="current-password" placeholder="Password" ><button type="button" class="eye" data-eye="li-pass" aria-label="Show password">👁</button></label>
+      <div class="authlinks right"><button type="button" class="link" data-go="forgot">Forgot password?</button></div>
+      <p class="authmsg error" id="li-msg" role="alert"></p>
+      <button class="primary big" id="li-submit" type="submit"><span class="spin"></span><b>Log In</b></button>
+    </form>
+    <button class="gbtn hidden" data-google type="button"><i>G</i> Continue with Google</button>
+    <div class="authlinks">New here? <button class="link" data-go="signup">Create an account</button></div>
+    <button class="ghost" id="li-guest">Play as Guest instead</button>
+  </div>
+</section>
+
+<section id="forgot" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Reset your password</h2></div>
+  <div class="authcard">
+    <p class="fine">Enter your email and we'll send a reset link if an account exists for it.</p>
+    <form id="forgot-form" novalidate>
+      <label class="field"><span aria-hidden="true">📧</span><input id="fp-email" type="email" autocomplete="email" placeholder="Email" ></label>
+      <p class="authmsg" id="fp-msg" role="status"></p>
+      <button class="primary big" id="fp-submit" type="submit"><span class="spin"></span><b>Send reset link</b></button>
+    </form>
+    <div class="authlinks"><button class="link" data-go="login">Back to log in</button></div>
+  </div>
+</section>
+
+<section id="reset" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Choose a new password</h2></div>
+  <div class="authcard">
+    <form id="reset-form" novalidate>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="rp-pass" type="password" autocomplete="new-password" placeholder="New password" ><button type="button" class="eye" data-eye="rp-pass" aria-label="Show password">👁</button></label>
+      <div class="meter"><i id="rp-meter"></i></div><small id="rp-hint" class="fine">8+ characters with upper, lower case and a number.</small>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="rp-pass2" type="password" autocomplete="new-password" placeholder="Confirm new password" ><button type="button" class="eye" data-eye="rp-pass2" aria-label="Show password">👁</button></label>
+      <p class="authmsg error" id="rp-msg" role="alert"></p>
+      <button class="primary big" id="rp-submit" type="submit"><span class="spin"></span><b>Update password</b></button>
+    </form>
+  </div>
+</section>
+
+<section id="verify" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="bigmail">✉️</div><h2>Check your email</h2></div>
+  <div class="authcard center">
+    <p>If this address can be registered, a verification link is on its way to <b id="vf-email"></b>. Open it to activate your account, then log in.</p>
+    <small class="fine">Tip: open the link in the same browser you signed up with. Check your spam folder too.</small>
+    <p class="authmsg" id="vf-msg" role="status"></p>
+    <button class="primary alt big" id="vf-resend">Resend email</button>
+    <button class="primary big" data-go="login">Go to Log In</button>
+  </div>
+</section>
+
 <!-- SETTINGS -->
 <section id="settings" class="screen hidden">
   <header class="top"><button class="icon" data-back>← Back</button><b>Profile</b><span></span></header>
   <div class="player big-profile">
     <div class="avatar-wrap"><div class="avatar" id="p-avatar"></div><span class="lvbadge" id="p-badge"></span></div>
-    <div class="pinfo"><b id="p-name"></b><small id="p-level"></small><div class="xp"><i id="p-xp"></i></div><div class="mini" id="p-stats"></div></div>
+    <div class="pinfo"><b id="p-name"></b> <span class="acctbadge" id="p-acct"></span><small id="p-level"></small><div class="xp"><i id="p-xp"></i></div><div class="mini" id="p-stats"></div></div>
   </div>
   <div class="grid2">
     <div class="panel"><h4>Daily streak</h4><div class="big" id="p-streak"></div><small id="p-streak-note"></small></div>
     <div class="panel"><h4>Recent games</h4><div class="big" id="p-record"></div><div id="p-recent" class="chips"></div></div>
   </div>
+  <div class="panel" id="acct"></div>
   <div class="panel">
     <h4>Username</h4><input id="s-name" maxlength="16" autocomplete="off">
     <h4>Avatar</h4><div id="s-avatars" class="avatars"></div>
@@ -161,8 +249,11 @@
 <script src="js/version.js"></script>
 <script src="js/build.js"></script>
 <script src="js/config.js"></script>
+<script src="js/ns.js"></script>
 <script src="js/words.js"></script>
 <script src="js/store.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 <script src="js/pwa.js"></script>
 </body>

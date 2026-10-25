@@ -6,8 +6,9 @@ const KEYS = ["qwertyuiop", "asdfghjkl", "+zxcvbnm-"]; // + = Enter, - = Backspa
 const AVATARS = ["🦊", "🐼", "🐯", "🦉", "🐙", "🚀"];
 
 // ---------- Storage ----------
-const load = (k, d) => { try { return JSON.parse(localStorage.getItem("wb_" + k)) ?? d; } catch { return d; } };
-const save = (k, v) => localStorage.setItem("wb_" + k, JSON.stringify(v));
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(wbKey(k))) ?? d; } catch { return d; } };
+const save = (k, v, quiet) => { localStorage.setItem(wbKey(k), JSON.stringify(v)); if (k === "stats" && !quiet) window.dispatchEvent(new Event("wb:save")); };
+const AUTH_SCREENS = ["welcome", "signup", "login", "forgot", "reset", "verify"];
 let settings = load("settings", { theme: "dark", mute: false });
 if (settings.reduceMotion === undefined) settings.reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const reduced = () => !!settings.reduceMotion;
@@ -92,11 +93,12 @@ function show(name) {
   screen = name;
   $$(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== name));
   const el = $("#" + name); el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
-  $("#bottomnav").classList.toggle("hidden", name === "game");
+  $("#bottomnav").classList.toggle("hidden", name === "game" || AUTH_SCREENS.includes(name));
   const navMap = { game: "play", battle: "play" };
   $$("#bottomnav [data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === (navMap[name] || name)));
   if (name === "leaderboard") renderLeaderboard();
   if (name === "dashboard") renderDashboard();
+  if (window.Auth) Auth.renderAccount();
   if (name === "shop") renderShop();
   if (name === "settings") renderSettings();
   window.scrollTo(0, 0);
@@ -393,7 +395,7 @@ document.addEventListener("click", (e) => {
   if (t.dataset.go) go(t.dataset.go);
   else if (t.dataset.buy) buyHint(t.dataset.buy);
   else if (t.dataset.back !== undefined) show("dashboard"); // every Back button returns to the dashboard
-  else if (t.dataset.av) { Player.data.avatar = t.dataset.av; Player.save(); renderSettings(); }
+  else if (t.dataset.av) { Player.data.avatar = t.dataset.av; Player.save(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(t.dataset.av); renderSettings(); }
   else if (t.dataset.hint) useHint(t.dataset.hint);
 });
 $("#go-settings").onclick = () => show("settings");
@@ -402,7 +404,10 @@ $("#g-back").onclick = async () => {
   if (status === "playing" && guesses.length > 0 && !(await confirmBox("Leave this game?", "Your progress is saved, so you can continue later.", "Leave"))) return;
   show("dashboard");
 };
-$("#s-name").onchange = (e) => { Player.data.username = e.target.value.trim().slice(0, 16) || Player.data.username; Player.save(); toast("Username saved", "success"); };
+$("#s-name").onchange = (e) => {
+  if (window.Auth && Auth.isAccount()) return Auth.setUsername(e.target.value.trim());
+  Player.data.username = e.target.value.trim().slice(0, 16) || Player.data.username; Player.save(); toast("Username saved", "success");
+};
 $("#s-theme").onclick = () => { settings.theme = settings.theme === "dark" ? "light" : "dark"; applySettings(); renderSettings(); };
 $("#s-motion").onclick = () => { settings.reduceMotion = !settings.reduceMotion; applySettings(); renderSettings(); };
 $("#s-sound").onclick = () => { settings.mute = !settings.mute; applySettings(); renderSettings(); };
@@ -417,6 +422,7 @@ $("#btn-home").onclick = () => { closeModal(); show("dashboard"); };
 $("#btn-again").onclick = () => { closeModal(); openGame("practice", true); };
 $("#btn-share").onclick = async () => ((await copyText(shareText())) ? toast("Result copied to clipboard", "success") : toast("Couldn't copy result", "error"));
 document.addEventListener("keydown", (e) => {
+  if (e.target.closest && e.target.closest("input,textarea,select")) return; // typing in a form: leave Enter/letters alone
   if (e.ctrlKey || e.metaKey || e.altKey || !$("#modal").classList.contains("hidden") || !$("#dialog").classList.contains("hidden")) return;
   const k = e.key.toLowerCase();
   if (k === "enter") { e.preventDefault(); if (e.repeat) return; } // stops a focused button from also firing
@@ -425,5 +431,7 @@ document.addEventListener("keydown", (e) => {
 
 // ---------- Start ----------
 applySettings(); buildKeyboard(); buildBoard(); refreshCoins();
-setTimeout(() => { $("#splash").classList.add("out"); show("dashboard"); }, 1600);
+window.WBApp = { show, applyStats: (o) => { Object.assign(stats, o); save("stats", stats, true); }, getStats: () => stats, refresh: () => { refreshCoins(); if (screen === "dashboard") renderDashboard(); } };
+const splashMs = sessionStorage.getItem("wb_fast") ? 250 : 1600; sessionStorage.removeItem("wb_fast"); // shorter splash right after sign-in/out
+setTimeout(async () => { $("#splash").classList.add("out"); if (window.Auth) await Auth.route(); else show("dashboard"); }, splashMs);
 if (window.DEMO_MODE) console.info("Wordle Battle: local demo mode. Online battles need Supabase.");

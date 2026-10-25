@@ -7,7 +7,7 @@ const HINTS = {
 const REWARDS = { practice: { coins: 20, xp: 30 }, daily: { coins: 50, xp: 60 } };
 
 const Player = (() => {
-  const KEY = "wb_player";
+  const KEY = wbKey("player");
   const fresh = () => ({
     username: "Player" + Math.floor(1000 + Math.random() * 9000), avatar: "🦊",
     coins: 100, xp: 0, wins: 0, losses: 0,
@@ -16,10 +16,10 @@ const Player = (() => {
   });
   let p;
   try { p = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { p = fresh(); }
-  const save = () => localStorage.setItem(KEY, JSON.stringify(p));
+  const save = (quiet) => { localStorage.setItem(KEY, JSON.stringify(p)); if (quiet !== true) window.dispatchEvent(new Event("wb:save")); }; // quiet=true: no cloud sync
   // Migration: older saves had no win distribution/streak. Seed them from what we already know.
   if (!Array.isArray(p.dist) || p.dist.length !== 6) {
-    let old = null; try { old = JSON.parse(localStorage.getItem("wb_stats")); } catch {}
+    let old = null; try { old = JSON.parse(localStorage.getItem(wbKey("stats"))); } catch {}
     p.dist = old && Array.isArray(old.dist) && old.dist.length === 6 ? [...old.dist] : [0, 0, 0, 0, 0, 0];
     let s = 0; for (let i = p.recent.length - 1; i >= 0 && p.recent[i] === "W"; i--) s++;
     p.streak = s; p.bestStreak = s;

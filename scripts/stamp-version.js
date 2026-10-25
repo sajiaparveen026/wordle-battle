@@ -3,8 +3,27 @@
 // Runs automatically on Vercel (see vercel.json). Locally: node scripts/stamp-version.js
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const root = path.join(__dirname, "..");
+
+// ---- Public Supabase settings from environment variables (set them in Vercel > Settings > Environment Variables) ----
+// If SUPABASE_URL and SUPABASE_ANON_KEY exist at build time, js/config.js is generated from them.
+// Otherwise js/config.js is left exactly as committed. A secret/service-role key makes the build FAIL.
+function checkNotSecret(key) {
+  if (/^sb_secret_/.test(key)) throw new Error("Refusing to build: that is a Supabase SECRET key. Use the publishable/anon key only.");
+  if (/^eyJ/.test(key)) { try { const role = JSON.parse(Buffer.from(key.split(".")[1], "base64url").toString()).role; if (role === "service_role") throw new Error("service_role"); } catch (e) { if (e.message === "service_role") throw new Error("Refusing to build: that is the service_role key. Use the anon/publishable key only."); } }
+}
+const cfgPath = path.join(root, "js/config.js");
+const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_ANON_KEY;
+if (url && key) {
+  checkNotSecret(key);
+  fs.writeFileSync(cfgPath, `// Generated at build time from environment variables. Public values only.\nwindow.CONFIG = { SUPABASE_URL: ${JSON.stringify(url)}, SUPABASE_ANON_KEY: ${JSON.stringify(key)} };\nwindow.DEMO_MODE = false;\n`);
+  console.log("js/config.js generated from environment variables");
+} else {
+  const m = fs.readFileSync(cfgPath, "utf8").match(/SUPABASE_ANON_KEY:\s*"([^"]+)"/);
+  if (m) checkNotSecret(m[1]);
+}
 const files = ["index.html", "manifest.webmanifest", "sw.js"];
-for (const dir of ["css", "js", "icons"]) for (const f of fs.readdirSync(path.join(root, dir))) files.push(`${dir}/${f}`);
+const walk = (dir) => { for (const e of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) e.isDirectory() ? walk(`${dir}/${e.name}`) : files.push(`${dir}/${e.name}`); };
+for (const dir of ["css", "js", "icons"]) walk(dir);
 const hash = crypto.createHash("sha256");
 for (const f of files.filter((f) => f !== "js/build.js").sort()) { hash.update(f); hash.update(fs.readFileSync(path.join(root, f))); }
 const build = hash.digest("hex").slice(0, 8);
