@@ -4,10 +4,7 @@ const HINTS = {
   reveal: { cost: 50, icon: "🔍", name: "Reveal a Letter", verb: "reveal a letter", desc: "Shows one correct letter in its correct position." },
   remove: { cost: 40, icon: "🚫", name: "Remove Wrong Letters", verb: "remove wrong letters", desc: "Disables keys for letters that are not in the word." }
 };
-<<<<<<< HEAD
 const SKIP = { free: 3, cost: 30 }; // skips: 3 free, then coins. Cost is above a solo win reward (20) so skipping can never be profitable.
-=======
->>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 const REWARDS = { practice: { coins: 20, xp: 30 }, daily: { coins: 50, xp: 60 } };
 
 const Player = (() => {
@@ -16,18 +13,12 @@ const Player = (() => {
     username: "Player" + Math.floor(1000 + Math.random() * 9000), avatar: "🦊",
     coins: 100, xp: 0, wins: 0, losses: 0,
     hints: { reveal: { free: 2, credits: 0 }, remove: { free: 2, credits: 0 } },
-<<<<<<< HEAD
     skips: { free: SKIP.free },
-=======
->>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
     rewarded: [], recent: []
   });
   let p;
   try { p = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { p = fresh(); }
-<<<<<<< HEAD
   if (!p.skips || typeof p.skips.free !== "number") p.skips = { free: SKIP.free }; // older saves get the default 3 free skips
-=======
->>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   const save = (quiet) => { localStorage.setItem(KEY, JSON.stringify(p)); if (quiet !== true) window.dispatchEvent(new Event("wb:save")); }; // quiet=true: no cloud sync
   // Migration: older saves had no win distribution/streak. Seed them from what we already know.
   if (!Array.isArray(p.dist) || p.dist.length !== 6) {
@@ -52,10 +43,7 @@ const Player = (() => {
       if (h.credits > 0) { h.credits--; save(); return "credit"; }
       return null;
     },
-<<<<<<< HEAD
     consumeSkip() { if (p.skips.free > 0) { p.skips.free--; save(); return true; } return false; },
-=======
->>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
     addHintCredit(type) { p.hints[type].credits++; save(); },
     // Each game id can be rewarded or counted only once.
     reward(gameId, kind, tries) {
@@ -73,8 +61,4 @@ const Player = (() => {
       p.losses++; p.streak = 0; p.rewarded.push("L:" + gameId); p.recent = [...p.recent, "L"].slice(-5); save();
     }
   };
-<<<<<<< HEAD
 })();
-=======
-})();
->>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
