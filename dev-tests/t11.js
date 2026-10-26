@@ -1,0 +1,14 @@
+const {JSDOM}=require("jsdom");const fs=require("fs");const root="/home/claude/wordle-battle/";
+const base=fs.readFileSync(root+"index.html","utf8").replace(/<script src="([^"]+)"><\/script>/g,(m,s)=>`<script>${fs.readFileSync(root+s,"utf8")}</script>`);
+const errs=[];const w=new JSDOM(base,{runScripts:"dangerously",pretendToBeVisual:true,url:"http://localhost/",beforeParse(w){const st=w.setTimeout.bind(w);w.setTimeout=(f,t=0,...a)=>st(f,t/25,...a);w.matchMedia=()=>({matches:false});w.scrollTo=()=>{};w.localStorage.setItem("wb_mode","guest");w.addEventListener("error",e=>errs.push(e.message));}}).window;
+const d=w.document,$=s=>d.querySelector(s);let fails=0;const ok=(c,m)=>{console.log((c?"PASS ":"FAIL ")+m);if(!c)fails++};const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+(async()=>{await sleep(300);w.openGame("practice",true);w.eval('answer="crane"');
+ const tiles=()=>[...$("#board").children[0].children];
+ ok(tiles()[0].classList.contains("cursor"),"gold cursor on first tile");
+ w.press("c");w.press("r");ok(tiles()[0].classList.contains("filled")&&tiles()[2].classList.contains("cursor")&&!tiles()[0].classList.contains("cursor"),"cursor follows typing");
+ for(const c of "ate")w.press(c);w.press("enter");await sleep(300);
+ const t=tiles();ok(t[0].classList.contains("correct")&&t[0].getAttribute("aria-label")==="c, correct position","tile has text label for screen readers (not colour only)");
+ ok(t[1].getAttribute("aria-label").includes("correct")&&t[3].getAttribute("aria-label").includes("not in the word"),"labels for correct/absent");
+ ok($('[data-key=c]').getAttribute("aria-label")==="c, correct position","key label updated");
+ ok(!$("#board").children[0].children[0].classList.contains("cursor")&&$("#board").children[1].children[0].classList.contains("cursor"),"cursor moves to the next row");
+ console.log(errs.length?"JS ERRORS "+errs:"no JS errors");console.log(fails?"FAILED":"GAMEPLAY THEME ALL PASS");process.exit(0)})();

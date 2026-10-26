@@ -7,13 +7,8 @@ importScripts("./js/version.js", "./js/build.js");
 const PREFIX = "wordle-battle-";
 const CACHE = `${PREFIX}${self.APP_VERSION}-${self.APP_BUILD}`;
 const ASSETS = [
-<<<<<<< HEAD
   "./", "./index.html", "./terms.html", "./privacy.html", "./manifest.webmanifest", "./css/style.css",
   "./js/version.js", "./js/build.js", "./js/config.js", "./js/ns.js", "./js/words.js", "./js/store.js", "./js/vendor/supabase.js", "./js/auth.js", "./js/app.js", "./js/tutorial.js", "./js/pwa.js",
-=======
-  "./", "./index.html", "./manifest.webmanifest", "./css/style.css",
-  "./js/version.js", "./js/build.js", "./js/config.js", "./js/ns.js", "./js/words.js", "./js/store.js", "./js/vendor/supabase.js", "./js/auth.js", "./js/app.js", "./js/pwa.js",
->>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png", "./icons/favicon.svg"
 ];
 
@@ -43,7 +38,6 @@ self.addEventListener("message", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request, url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== self.location.origin) return; // Supabase etc.: untouched
-<<<<<<< HEAD
   if (req.mode === "navigate") { // the app page keeps OAuth / password-reset redirect URLs (?code=, #access_token=) working
     const shell = url.pathname.endsWith("/") || url.pathname.endsWith("/index.html");
     event.respondWith(caches.open(CACHE).then((c) => c.match(shell ? "./index.html" : req)).then((r) => r || fetch(req)));
@@ -51,11 +45,3 @@ self.addEventListener("fetch", (event) => {
   }
   event.respondWith(caches.open(CACHE).then((c) => c.match(req)).then((r) => r || fetch(req))); // not precached = network only, never stored
 });
-=======
-  if (req.mode === "navigate") { // keeps OAuth / password-reset redirect URLs (?code=, #access_token=) working
-    event.respondWith(caches.open(CACHE).then((c) => c.match("./index.html")).then((r) => r || fetch(req)));
-    return;
-  }
-  event.respondWith(caches.open(CACHE).then((c) => c.match(req)).then((r) => r || fetch(req))); // not precached = network only, never stored
-});
->>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
