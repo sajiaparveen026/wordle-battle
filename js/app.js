@@ -2,7 +2,11 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const ROWS = 6, COLS = 5;
+<<<<<<< HEAD
 const KEYS = ["qwertyuiop", "asdfghjkl", "zxcvbnm-"]; // - = Backspace. No on-screen Enter: guesses are sent with the Submit button
+=======
+const KEYS = ["qwertyuiop", "asdfghjkl", "+zxcvbnm-"]; // + = Enter, - = Backspace
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 const AVATARS = ["🦊", "🐼", "🐯", "🦉", "🐙", "🚀"];
 
 // ---------- Storage ----------
@@ -77,7 +81,11 @@ function dialog(title, msg, buttons) {
 const confirmBox = async (title, msg, ok = "Yes") => (await dialog(title, msg, ["Cancel", ok])) === 1;
 function confetti() {
   if (reduced()) return;
+<<<<<<< HEAD
   const colors = ["#FACC15", "#FAFAF5", "#F2C230", "#8A7A3A"];
+=======
+  const colors = ["#39ff88", "#a65bff", "#f2c230", "#ffffff"];
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   for (let i = 0; i < 50; i++) {
     const c = document.createElement("i"); c.className = "confetti";
     c.style.left = Math.random() * 100 + "vw"; c.style.background = colors[i % 4];
@@ -98,7 +106,10 @@ function show(name) {
   $$("#bottomnav [data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === (navMap[name] || name)));
   if (name === "leaderboard") renderLeaderboard();
   if (name === "dashboard") renderDashboard();
+<<<<<<< HEAD
   if (name === "dashboard" && window.Tutorial) Tutorial.maybeAutoShow();
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   if (window.Auth) Auth.renderAccount();
   if (name === "shop") renderShop();
   if (name === "settings") renderSettings();
@@ -109,7 +120,10 @@ function go(target) {
   show(target);
 }
 function refreshCoins() {
+<<<<<<< HEAD
   $$(".win-val").forEach((e) => (e.textContent = Player.data.wins));
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   $$(".coin-val").forEach((e) => (e.textContent = Player.data.coins));
   $$(".streak-val").forEach((e) => (e.textContent = stats.streak));
 }
@@ -120,7 +134,11 @@ function renderDashboard() {
   $("#d-avatar").textContent = p.avatar; $("#d-name").textContent = p.username;
   $("#d-level").textContent = `Level ${lv.level} · ${lv.xp}/${lv.need} XP`;
   $("#d-badge").textContent = lv.level; animateXp("#d-xp", (lv.xp / lv.need) * 100);
+<<<<<<< HEAD
   const done = !!dailyRecord();
+=======
+  const done = stats.lastDaily === today();
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   $("#d-rewards").innerHTML = `<span>🪙 +${REWARDS.daily.coins} coins</span><span>⚡ +${REWARDS.daily.xp} XP</span><span>🔥 Streak ${stats.streak}</span>`;
   $("#d-daily-btn").textContent = done ? "View today's result" : "Play Now";
   $("#d-date").textContent = "📅 " + new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
@@ -205,7 +223,10 @@ function buildKeyboard() {
 const rowEl = (i) => $("#board").children[i];
 function paintRow(i, word) {
   [...rowEl(i).children].forEach((t, c) => { t.textContent = word[c] || ""; t.classList.toggle("filled", !!word[c]); });
+<<<<<<< HEAD
   markActive();
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 }
 function colorKeys() {
   const rank = { absent: 1, present: 2, correct: 3 }, best = {};
@@ -214,7 +235,10 @@ function colorKeys() {
     k.classList.remove("correct", "present", "absent");
     if (best[k.dataset.key]) k.classList.add(best[k.dataset.key]);
     k.classList.toggle("disabled", hintState.disabled.includes(k.dataset.key));
+<<<<<<< HEAD
     if (k.dataset.key.length === 1) k.setAttribute("aria-label", k.dataset.key + (best[k.dataset.key] ? ", " + { correct: "correct position", present: "in the word, wrong position", absent: "not in the word" }[best[k.dataset.key]] : ""));
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   });
 }
 function renderHintTiles() { // faint letters show revealed hints in every unused row
@@ -226,7 +250,11 @@ function renderHintTiles() { // faint letters show revealed hints in every unuse
 function reveal(i, word, animate, done) {
   const res = evaluate(word, answer);
   [...rowEl(i).children].forEach((t, c) => {
+<<<<<<< HEAD
     const apply = () => { t.classList.add(res[c]); t.setAttribute("aria-label", `${word[c]}, ${{ correct: "correct position", present: "in the word, wrong position", absent: "not in the word" }[res[c]]}`); };
+=======
+    const apply = () => t.classList.add(res[c]);
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
     if (!animate) { t.textContent = word[c]; apply(); return; }
     setTimeout(() => { t.classList.add("flip"); sfx.flip(c); setTimeout(apply, 275); }, c * 280);
   });
@@ -234,9 +262,12 @@ function reveal(i, word, animate, done) {
 }
 function markActive() { // highlights the row the player is typing in
   for (let r = 0; r < ROWS; r++) rowEl(r).classList.toggle("active", status === "playing" && !busy && r === guesses.length);
+<<<<<<< HEAD
   $("#btn-submit").disabled = status !== "playing" || busy; // no double submits, none after the game ends
   $$(".tile.cursor").forEach((t) => t.classList.remove("cursor")); // gold cursor on the tile being typed
   if (status === "playing" && !busy && guesses.length < ROWS && current.length < COLS) rowEl(guesses.length).children[current.length].classList.add("cursor");
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 }
 function updateAttempts() {
   const left = ROWS - guesses.length;
@@ -249,6 +280,7 @@ function updateAttempts() {
 function updateHintButtons() {
   $$(".hint").forEach((b) => {
     const t = b.dataset.hint, n = Player.data.hints[t];
+<<<<<<< HEAD
     const label = n.free > 0 ? `${n.free} free` : n.credits > 0 ? `${n.credits} owned` : `${HINTS[t].cost} 🪙`;
     b.querySelector("small").textContent = label;
     b.setAttribute("aria-label", `${HINTS[t].name}, ${label}`); b.title = `${HINTS[t].name} (${label})`;
@@ -256,6 +288,13 @@ function updateHintButtons() {
     b.disabled = status !== "playing";
   });
   updateSkipButton(); refreshCoins();
+=======
+    b.querySelector("small").textContent = n.free > 0 ? `${n.free} free left` : n.credits > 0 ? `${n.credits} owned` : `${HINTS[t].cost} 🪙`;
+    b.classList.toggle("paid", n.free <= 0 && n.credits <= 0);
+    b.disabled = status !== "playing";
+  });
+  refreshCoins();
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 }
 function planReveal() {
   const solved = new Set();
@@ -271,6 +310,7 @@ function planRemove() {
   if (!pool.length) return null;
   return pool.sort(() => Math.random() - 0.5).slice(0, 5);
 }
+<<<<<<< HEAD
 // ---------- Skip word ----------
 let skipLock = false;
 function submitMsg(text) { // inline message next to the Submit button
@@ -306,6 +346,8 @@ $("#btn-skip").onclick = skipWord;
 $("#btn-submit").onclick = () => { if (screen === "game" && status === "playing" && !busy) submit(); };
 $("#g-info").onclick = () => Tutorial.openInfo();
 
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 async function useHint(type) {
   if (status !== "playing" || busy) return;
   const plan = type === "reveal" ? planReveal() : planRemove();
@@ -326,6 +368,7 @@ async function useHint(type) {
 function saveProgress() { save("game_" + mode, { date: today(), id: gameId, answer, guesses, status, hintState }); }
 
 function openGame(m, forceNew = false) {
+<<<<<<< HEAD
   if (m === "daily") { const done = dailyRecord(); if (done) return showDailyDone(done); } // already completed today: show the result, never replay
   mode = m; show("game"); startGame(forceNew);
 }
@@ -372,6 +415,10 @@ function showDailyDone(r) {
   clearInterval(ddTimer); tick(); ddTimer = setInterval(tick, 1000);
   m.classList.remove("hidden"); lockModal(true); $("#dd-ok").focus();
 }
+=======
+  mode = m; show("game"); startGame(forceNew);
+}
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 function startGame(newPractice = false) {
   buildBoard(); current = ""; busy = false;
   const saved = load("game_" + mode, null);
@@ -392,18 +439,30 @@ function startGame(newPractice = false) {
 function press(k) {
   if (screen !== "game" || status !== "playing" || busy) return;
   if (k === "enter") return submit();
+<<<<<<< HEAD
   if (k === "back") { current = current.slice(0, -1); sfx.key(); submitMsg(""); }
   else if (/^[a-z]$/.test(k) && current.length < COLS && !hintState.disabled.includes(k)) { current += k; sfx.key(); submitMsg(""); }
+=======
+  if (k === "back") { current = current.slice(0, -1); sfx.key(); }
+  else if (/^[a-z]$/.test(k) && current.length < COLS && !hintState.disabled.includes(k)) { current += k; sfx.key(); }
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   paintRow(guesses.length, current);
 }
 
 function submit() {
   const row = guesses.length;
+<<<<<<< HEAD
   const bad = (msg) => { submitMsg(msg); sfx.bad(); rowEl(row).classList.add("shake", "invalid"); setTimeout(() => rowEl(row).classList.remove("shake", "invalid"), 450); };
   if (current.length < COLS) return bad("Not enough letters");
   if (!VALID.has(current)) return bad("Not a word!");
   if (guesses.includes(current)) return bad("Already guessed");
   submitMsg("");
+=======
+  const bad = (msg) => { toast(msg, "error"); sfx.bad(); rowEl(row).classList.add("shake", "invalid"); setTimeout(() => rowEl(row).classList.remove("shake", "invalid"), 450); };
+  if (current.length < COLS) return bad("Not enough letters");
+  if (!VALID.has(current)) return bad("Not in word list");
+  if (guesses.includes(current)) return bad("Already guessed");
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   const word = current; current = ""; busy = true; guesses.push(word); markActive();
   reveal(row, word, true, () => {
     busy = false;
@@ -419,7 +478,10 @@ function finishGame() { // each game id can only pay out once (see Player.reward
   lastReward = null;
   if (status === "won") { lastReward = Player.reward(gameId, mode, guesses.length); }
   else Player.recordLoss(gameId);
+<<<<<<< HEAD
   if (mode === "daily") { const g = load("game_daily", null); if (g && g.date === today()) { g.reward = lastReward ? { coins: lastReward.coins, xp: lastReward.xp } : { coins: 0, xp: 0 }; save("game_daily", g); } } // remember what this game earned
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   if (mode === "daily" && stats.lastDaily !== today()) {
     const y = new Date(); y.setDate(y.getDate() - 1); const yesterday = isoLocal(y);
     stats.played++;
@@ -507,14 +569,22 @@ $("#s-reset").onclick = async () => {
   }
 };
 $("#modal-close").onclick = closeModal;
+<<<<<<< HEAD
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); if (e.key === "Escape" && !$("#daily-done").classList.contains("hidden")) closeDailyDone(); });
 $("#dd-ok").onclick = closeDailyDone;
+=======
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); });
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 $("#btn-home").onclick = () => { closeModal(); show("dashboard"); };
 $("#btn-again").onclick = () => { closeModal(); openGame("practice", true); };
 $("#btn-share").onclick = async () => ((await copyText(shareText())) ? toast("Result copied to clipboard", "success") : toast("Couldn't copy result", "error"));
 document.addEventListener("keydown", (e) => {
   if (e.target.closest && e.target.closest("input,textarea,select")) return; // typing in a form: leave Enter/letters alone
+<<<<<<< HEAD
   if (e.ctrlKey || e.metaKey || e.altKey || !$("#modal").classList.contains("hidden") || !$("#dialog").classList.contains("hidden") || !$("#tutorial").classList.contains("hidden") || !$("#daily-done").classList.contains("hidden") || !$("#info").classList.contains("hidden")) return;
+=======
+  if (e.ctrlKey || e.metaKey || e.altKey || !$("#modal").classList.contains("hidden") || !$("#dialog").classList.contains("hidden")) return;
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   const k = e.key.toLowerCase();
   if (k === "enter") { e.preventDefault(); if (e.repeat) return; } // stops a focused button from also firing
   if (k === "enter") press("enter"); else if (k === "backspace") press("back"); else if (/^[a-z]$/.test(k)) press(k);
@@ -525,4 +595,8 @@ applySettings(); buildKeyboard(); buildBoard(); refreshCoins();
 window.WBApp = { show, applyStats: (o) => { Object.assign(stats, o); save("stats", stats, true); }, getStats: () => stats, refresh: () => { refreshCoins(); if (screen === "dashboard") renderDashboard(); } };
 const splashMs = sessionStorage.getItem("wb_fast") ? 250 : 1600; sessionStorage.removeItem("wb_fast"); // shorter splash right after sign-in/out
 setTimeout(async () => { $("#splash").classList.add("out"); if (window.Auth) await Auth.route(); else show("dashboard"); }, splashMs);
+<<<<<<< HEAD
 if (window.DEMO_MODE) console.info("Wordle Battle: local demo mode. Online battles need Supabase.");
+=======
+if (window.DEMO_MODE) console.info("Wordle Battle: local demo mode. Online battles need Supabase.");
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf

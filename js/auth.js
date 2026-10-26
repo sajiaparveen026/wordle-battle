@@ -23,7 +23,10 @@
     auth: { flowType: "pkce", persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   }) : null;
 
+<<<<<<< HEAD
   let readyP = Promise.resolve();
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   let user = null, recovering = false, routed = false, googleOn = false, leaving = false, pushing = false, pushTimer = null;
   let meta = { rev: 0, dirty: false };
   const isAccount = () => !!user && window.WB_NS === user.id;
@@ -107,13 +110,20 @@
     if (!userOk(username)) return setMsg("su-msg", "Username must be 3-16 letters, numbers or underscores.", "error");
     const iss = pwIssues(p1); if (iss.length) return setMsg("su-msg", "Password needs: " + iss.join(", ") + ".", "error");
     if (p1 !== p2) return setMsg("su-msg", "The two passwords don't match.", "error");
+<<<<<<< HEAD
     if (!$("#su-terms").checked) return setMsg("su-msg", "Please accept the Terms and Privacy Policy to continue.", "error");
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
     setMsg("su-msg", ""); busy(btn, true);
     try {
       const av = await sb.rpc("username_available", { p_username: username });
       if (av.error) return setMsg("su-msg", ["PGRST202", "42883"].includes(av.error.code) ? "Accounts aren't fully set up yet (database migration missing)." : mapError(av.error, "signup"), "error");
       if (av.data === false) return setMsg("su-msg", "That username is taken. Try another.", "error");
+<<<<<<< HEAD
       const { data, error } = await sb.auth.signUp({ email, password: p1, options: { data: { username, accepted_terms_at: new Date().toISOString() }, emailRedirectTo: redirectUrl() } });
+=======
+      const { data, error } = await sb.auth.signUp({ email, password: p1, options: { data: { username }, emailRedirectTo: redirectUrl() } });
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
       if (error) return setMsg("su-msg", mapError(error, "signup"), "error");
       $("#su-pass").value = $("#su-pass2").value = "";
       if (data.session) { setMsg("su-msg", "Account created! Signing you in...", "ok"); applySession(data.session); }
@@ -197,10 +207,14 @@
     if (enabled) { try { session = (await sb.auth.getSession()).data.session; } catch {} }
     if (recovering) return go("reset");
     const notice = sessionStorage.getItem("wb_notice") || startupNotice; sessionStorage.removeItem("wb_notice");
+<<<<<<< HEAD
     if (session) {
       if (window.WB_NS === session.user.id) { user = session.user; readyP = applySession(session); go("dashboard"); await readyP; return; }
       await applySession(session); return;
     }
+=======
+    if (session) { if (window.WB_NS === session.user.id) { user = session.user; go("dashboard"); } await applySession(session); return; }
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
     if (window.WB_NS) { // account data present but no session
       if (!navigator.onLine) { user = { id: window.WB_NS, offline: true }; meta = loadMeta(); return go("dashboard"); } // offline: use the cached copy
       sessionStorage.setItem("wb_notice", "Your session expired. Please log in again."); return endAccountMode();
@@ -219,7 +233,11 @@
   const metaKey = () => "wb_sync_" + user.id;
   const loadMeta = () => { try { return JSON.parse(localStorage.getItem("wb_sync_" + window.WB_NS)) || { rev: 0, dirty: false }; } catch { return { rev: 0, dirty: false }; } };
   const saveMeta = () => localStorage.setItem(metaKey(), JSON.stringify(meta));
+<<<<<<< HEAD
   const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses"];
+=======
+  const KEYS = ["coins", "xp", "wins", "losses", "hints", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses"];
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   const snapshot = () => { const P = Player.data, player = {}; KEYS.forEach((k) => (player[k] = P[k])); return { v: 1, player, stats: window.WBApp.getStats() }; };
   function applySnapshot(s) { // sanitise before trusting remote/guest data in the local store
     if (!s || typeof s.player !== "object") return;
@@ -230,7 +248,10 @@
     if (Array.isArray(r.dist) && r.dist.length === 6) P.dist = r.dist.map((x) => n(x, 0));
     if (Array.isArray(r.rewarded)) P.rewarded = r.rewarded.filter((x) => typeof x === "string").slice(-300);
     if (Array.isArray(r.recent)) P.recent = r.recent.filter((x) => x === "W" || x === "L").slice(-5);
+<<<<<<< HEAD
     if (r.skips && typeof r.skips === "object") P.skips = { free: n(r.skips.free, P.skips.free) };
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
     if (r.hints && r.hints.reveal && r.hints.remove) P.hints = { reveal: { free: n(r.hints.reveal.free, 0), credits: n(r.hints.reveal.credits, 0) }, remove: { free: n(r.hints.remove.free, 0), credits: n(r.hints.remove.credits, 0) } };
     Player.save(true);
     if (s.stats && typeof s.stats === "object") window.WBApp.applyStats(s.stats);
@@ -286,6 +307,7 @@
   let readyFor = "";
   async function onAccountReady() {
     if (readyFor === user.id) return; readyFor = user.id;
+<<<<<<< HEAD
     await loadProfile(); await syncTutorial(); window.WBApp.refresh(); renderAccount(); // show the account name right away,
     await syncDown(); window.WBApp.refresh(); renderAccount();      // then sync (may ask about moving guest progress)
   }
@@ -307,6 +329,12 @@
   }
   const whenReady = () => Promise.race([readyP, new Promise((r) => setTimeout(r, 6000))]);
 
+=======
+    await loadProfile(); window.WBApp.refresh(); renderAccount(); // show the account name right away,
+    await syncDown(); window.WBApp.refresh(); renderAccount();      // then sync (may ask about moving guest progress)
+  }
+
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   // ---------- account UI ----------
   async function setUsername(v) {
     const input = $("#s-name");
@@ -343,5 +371,10 @@
     const reset = $("#s-reset"); if (reset) reset.classList.toggle("hidden", acct); // never offer to wipe a cloud-synced account
   }
 
+<<<<<<< HEAD
   window.Auth = { enabled, route, renderAccount, isAccount, setUsername, setAvatar, logout, whenReady, setTutorialDone };
 })();
+=======
+  window.Auth = { enabled, route, renderAccount, isAccount, setUsername, setAvatar, logout };
+})();
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf

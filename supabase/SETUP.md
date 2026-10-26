@@ -6,10 +6,13 @@ Do these once. Nothing below needs a paid plan.
 1. Supabase dashboard > **SQL Editor** > **New query**.
 2. Paste the whole of `supabase/migrations/001_auth_profiles.sql` and click **Run**. Safe to run again.
 
+<<<<<<< HEAD
 ### 1b. Add the tutorial flag (one more small script)
 Run `supabase/migrations/002_tutorial_flag.sql` the same way. (Without it the tutorial still works, but it is only
 remembered on each device instead of on your account.)
 
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`

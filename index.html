@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wordle Battle</title>
+<<<<<<< HEAD
 <meta name="theme-color" content="#1A1A1B">
+=======
+<meta name="theme-color" content="#0a1024">
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 <meta name="description" content="Wordle Battle: daily word puzzles, hints and coins.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
@@ -51,11 +55,15 @@
     <article class="gcard"><div class="ico">🧩</div><div><h3>Play Solo</h3><p>Unlimited practice puzzles.</p></div><button class="primary" data-go="practice">Play</button></article>
     <article class="gcard"><div class="ico">⚔️</div><div><h3>Battle Online</h3><p>Random match or private room.</p></div><button class="primary alt" data-go="battle">Play</button></article>
   </div>
+<<<<<<< HEAD
   <button class="ghost big" data-howto type="button">📖 How to Play</button>
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 </section>
 
 <!-- GAME -->
 <section id="game" class="screen hidden">
+<<<<<<< HEAD
   <header class="gtop">
     <div class="gleft">
       <button id="g-back" class="ibtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -78,6 +86,21 @@
     <button id="btn-submit" class="primary submit-btn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 13l4 4L19 7"/></svg><span>Submit</span></button>
     <button id="btn-skip" class="ctl skip" type="button" aria-label="Skip word"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg><small class="badge"></small></button>
   </div>
+=======
+  <header class="top">
+    <button id="g-back" class="icon" aria-label="Back">← Back</button>
+    <div class="g-title"><b id="g-title"></b><small id="attempts"></small></div>
+    <div class="head-right"><button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><button class="coins" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b><span class="plus">+</span></button></div>
+  </header>
+  <main>
+    <div id="board" aria-label="Game board"></div>
+    <div class="hints">
+      <button class="hint" data-hint="reveal"><i>🔍</i><span>Reveal letter</span><small class="badge"></small></button>
+      <button class="hint" data-hint="remove"><i>🚫</i><span>Remove wrong</span><small class="badge"></small></button>
+    </div>
+    <div id="keyboard"></div>
+  </main>
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 </section>
 
 <!-- SHOP -->
@@ -107,9 +130,13 @@
 
 <!-- AUTH SCREENS -->
 <section id="welcome" class="screen auth hidden">
+<<<<<<< HEAD
   <div class="auth-hero"><div class="logo">Wordle <span>Battle</span></div>
     <div class="preview" aria-hidden="true"><span class="pt gold" style="--i:0">C</span><span class="pt" style="--i:1">R</span><span class="pt dim" style="--i:2">O</span><span class="pt" style="--i:3">W</span><span class="pt gold" style="--i:4">N</span></div>
     <h1>Ready to Battle?</h1><p class="tagline">Challenge your mind. Beat your rivals. Claim the crown.</p></div>
+=======
+  <div class="auth-hero"><div class="logo">Wordle <span>Battle</span></div><p class="tagline">Outsmart every word. Beat every rival.</p></div>
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
   <div class="authcard">
     <p id="welcome-notice" class="authmsg" role="status"></p>
     <button class="primary big" data-go="signup" data-needs-auth>Create Account</button>
@@ -131,7 +158,10 @@
       <label class="field"><span aria-hidden="true">🔒</span><input id="su-pass" type="password" autocomplete="new-password" placeholder="Password" ><button type="button" class="eye" data-eye="su-pass" aria-label="Show password">👁</button></label>
       <div class="meter"><i id="su-meter"></i></div><small id="su-hint" class="fine">8+ characters with upper, lower case and a number.</small>
       <label class="field"><span aria-hidden="true">🔒</span><input id="su-pass2" type="password" autocomplete="new-password" placeholder="Confirm password" ><button type="button" class="eye" data-eye="su-pass2" aria-label="Show password">👁</button></label>
+<<<<<<< HEAD
       <label class="check"><input type="checkbox" id="su-terms"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a></span></label>
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
       <p class="authmsg error" id="su-msg" role="alert"></p>
       <button class="primary big" id="su-submit" type="submit"><span class="spin"></span><b>Create Account</b></button>
     </form>
@@ -212,8 +242,11 @@
     <h4>Avatar</h4><div id="s-avatars" class="avatars"></div>
     <h4>Preferences</h4>
     <div class="actions"><button class="primary alt" id="s-theme"></button><button class="primary alt" id="s-sound"></button><button class="primary alt" id="s-motion"></button></div>
+<<<<<<< HEAD
     <h4>Help</h4>
     <div class="actions"><button class="primary alt" data-howto type="button">📖 How to Play</button></div>
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
     <h4>About</h4>
     <div class="about"><b id="s-version"></b><small id="s-update-note"></small></div>
     <div class="actions"><button class="primary alt" id="s-check-btn">Check for updates</button><button class="primary hidden" id="s-update-btn">Update App</button></div>
@@ -257,6 +290,7 @@
   </div>
 </div>
 
+<<<<<<< HEAD
 <!-- DAILY CHALLENGE ALREADY COMPLETED -->
 <div id="daily-done" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="dd-title">
   <div class="card result dd">
@@ -351,6 +385,8 @@
   </div>
 </div>
 
+=======
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
 <div id="dialog" class="modal hidden">
   <div class="card"><h2 id="dlg-title"></h2><p id="dlg-msg"></p><div class="actions" id="dlg-actions"></div></div>
 </div>
@@ -364,7 +400,13 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
+<<<<<<< HEAD
 <script src="js/tutorial.js"></script>
 <script src="js/pwa.js"></script>
 </body>
 </html>
+=======
+<script src="js/pwa.js"></script>
+</body>
+</html>
+>>>>>>> 478442e6ee11fecb2857034e47a1ca71f1f668bf
