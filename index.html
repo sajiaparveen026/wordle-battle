@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wordle Battle</title>
+<meta name="theme-color" content="#1A1A1B">
+<meta name="description" content="Wordle Battle: daily word puzzles, hints and coins.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wordle Battle">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="splash">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="logo">Wordle <span>Battle</span></div>
+  <div class="loader"><i></i><i></i><i></i><i></i><i></i></div>
+  <p>Loading your next challenge...</p>
+</div>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="screen hidden">
+  <header class="dash-head">
+    <div class="logo sm">Wordle <span>Battle</span></div>
+    <div class="head-right">
+      <button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button>
+      <button class="coins" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b><span class="plus">+</span></button>
+      <button id="go-settings" class="icon" aria-label="Settings">⚙️</button>
+    </div>
+  </header>
+  <div class="player">
+    <div class="avatar-wrap"><div class="avatar" id="d-avatar"></div><span class="lvbadge" id="d-badge"></span></div>
+    <div class="pinfo"><b id="d-name"></b> <span class="acctbadge" id="d-acct"></span><small id="d-level"></small><div class="xp"><i id="d-xp"></i></div></div>
+  </div>
+  <div class="installbar hidden" data-install-wrap><span>📲 Install Wordle Battle on your phone</span><button class="primary" data-install>Install App</button></div>
+  <article class="feature">
+    <div class="f-top"><span class="tag">DAILY CHALLENGE</span><span class="note" id="d-daily-note"></span></div>
+    <h2>Today's puzzle</h2>
+    <div class="fdate" id="d-date"></div>
+    <p>One word a day. Solve it to earn bonus rewards and keep your streak alive.</p>
+    <div class="rewards" id="d-rewards"></div>
+    <button class="primary big" id="d-daily-btn" data-go="daily">Play Now</button>
+  </article>
+  <div class="cards two">
+    <article class="gcard"><div class="ico">🧩</div><div><h3>Play Solo</h3><p>Unlimited practice puzzles.</p></div><button class="primary" data-go="practice">Play</button></article>
+    <article class="gcard"><div class="ico">⚔️</div><div><h3>Battle Online</h3><p>Random match or private room.</p></div><button class="primary alt" data-go="battle">Play</button></article>
+  </div>
+  <button class="ghost big" data-howto type="button">📖 How to Play</button>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen hidden">
+  <header class="gtop">
+    <div class="gleft">
+      <button id="g-back" class="ibtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="winscore" role="status" aria-label="Wins" title="Total wins"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM5 5H3v2a3 3 0 0 0 3 3M19 5h2v2a3 3 0 0 1-3 3"/></svg><b class="win-val">0</b></div>
+    </div>
+    <div class="gright">
+      <button id="g-info" class="ibtn" aria-label="How to play"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg></button>
+      <button class="coins" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b><span class="plus">+</span></button>
+    </div>
+  </header>
+  <h1 id="g-title" class="sr-only"></h1><p id="attempts" class="sr-only" aria-live="polite"></p>
+  <div class="board-wrap"><div id="board" aria-label="Game board"></div></div>
+  <div id="keyboard"></div>
+  <p id="submit-msg" class="submit-msg" role="alert"></p>
+  <div class="controls">
+    <div class="ctl-group">
+      <button class="ctl hint" data-hint="reveal" aria-label="Reveal a letter"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><small class="badge"></small></button>
+      <button class="ctl hint" data-hint="remove" aria-label="Remove wrong letters"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg><small class="badge"></small></button>
+    </div>
+    <button id="btn-submit" class="primary submit-btn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 13l4 4L19 7"/></svg><span>Submit</span></button>
+    <button id="btn-skip" class="ctl skip" type="button" aria-label="Skip word"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg><small class="badge"></small></button>
+  </div>
+</section>
+
+<!-- SHOP -->
+<section id="shop" class="screen hidden">
+  <header class="top"><button class="icon" data-back>← Back</button><b>Hint Shop</b><div class="head-right"><button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><div class="coins">🪙 <b class="coin-val"></b></div></div></header>
+  <div class="cards" id="shop-cards"></div>
+</section>
+
+<!-- BATTLE -->
+<section id="battle" class="screen hidden">
+  <header class="top"><button class="icon" data-back>← Back</button><b>Battle Online</b><span></span></header>
+  <div class="panel center">
+    <div class="ico big-ico">⚔️</div>
+    <h3 id="battle-title">Online battles need a server</h3>
+    <p id="battle-note">Matchmaking, secret words and rewards must be controlled by Supabase so nobody can cheat. Wordle Battle will not fake opponents, so this mode unlocks once Supabase is configured (stages 3–4).</p>
+    <p><small>Steps: see README.md → Supabase setup.</small></p>
+    <div class="actions"><button class="primary" data-go="practice">Play solo instead</button><button class="primary alt" data-go="dashboard">Dashboard</button></div>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section id="leaderboard" class="screen hidden">
+  <header class="top"><button class="icon" data-back>← Back</button><b>Leaderboard</b><span></span></header>
+  <div class="panel"><ol id="lb-list" class="lb"></ol>
+    <small>Global rankings need online accounts (Supabase, stage 5). In demo mode only your own progress is shown.</small></div>
+</section>
+
+<!-- AUTH SCREENS -->
+<section id="welcome" class="screen auth hidden">
+  <div class="auth-hero"><div class="logo">Wordle <span>Battle</span></div>
+    <div class="preview" aria-hidden="true"><span class="pt gold" style="--i:0">C</span><span class="pt" style="--i:1">R</span><span class="pt dim" style="--i:2">O</span><span class="pt" style="--i:3">W</span><span class="pt gold" style="--i:4">N</span></div>
+    <h1>Ready to Battle?</h1><p class="tagline">Challenge your mind. Beat your rivals. Claim the crown.</p></div>
+  <div class="authcard">
+    <p id="welcome-notice" class="authmsg" role="status"></p>
+    <button class="primary big" data-go="signup" data-needs-auth>Create Account</button>
+    <button class="primary alt big" data-go="login" data-needs-auth>Log In</button>
+    <button class="gbtn hidden" data-google type="button"><i>G</i> Continue with Google</button>
+    <div class="or" data-needs-auth><span>or</span></div>
+    <button class="ghost big" id="btn-guest">Play as Guest</button>
+    <small id="welcome-setup" class="hidden">Online accounts aren't set up on this copy of the app yet, but you can play as a guest.</small>
+    <small class="fine">Guest progress is saved on this device only.</small>
+  </div>
+</section>
+
+<section id="signup" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Create your account</h2></div>
+  <div class="authcard">
+    <form id="signup-form" novalidate>
+      <label class="field"><span aria-hidden="true">📧</span><input id="su-email" type="email" autocomplete="email" placeholder="Email" ></label>
+      <label class="field"><span aria-hidden="true">🎮</span><input id="su-user" type="text" autocomplete="username" placeholder="Username (3-16 letters, numbers, _)" maxlength="16" autocapitalize="off" spellcheck="false"></label>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="su-pass" type="password" autocomplete="new-password" placeholder="Password" ><button type="button" class="eye" data-eye="su-pass" aria-label="Show password">👁</button></label>
+      <div class="meter"><i id="su-meter"></i></div><small id="su-hint" class="fine">8+ characters with upper, lower case and a number.</small>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="su-pass2" type="password" autocomplete="new-password" placeholder="Confirm password" ><button type="button" class="eye" data-eye="su-pass2" aria-label="Show password">👁</button></label>
+      <label class="check"><input type="checkbox" id="su-terms"><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a></span></label>
+      <p class="authmsg error" id="su-msg" role="alert"></p>
+      <button class="primary big" id="su-submit" type="submit"><span class="spin"></span><b>Create Account</b></button>
+    </form>
+    <button class="gbtn hidden" data-google type="button"><i>G</i> Continue with Google</button>
+    <div class="authlinks">Already have an account? <button class="link" data-go="login">Log in</button></div>
+    <button class="ghost" id="su-guest">Play as Guest instead</button>
+  </div>
+</section>
+
+<section id="login" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Welcome back</h2></div>
+  <div class="authcard">
+    <p id="li-notice" class="authmsg ok" role="status"></p>
+    <form id="login-form" novalidate>
+      <label class="field"><span aria-hidden="true">📧</span><input id="li-email" type="email" autocomplete="email" placeholder="Email" ></label>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="li-pass" type="password" autocomplete="current-password" placeholder="Password" ><button type="button" class="eye" data-eye="li-pass" aria-label="Show password">👁</button></label>
+      <div class="authlinks right"><button type="button" class="link" data-go="forgot">Forgot password?</button></div>
+      <p class="authmsg error" id="li-msg" role="alert"></p>
+      <button class="primary big" id="li-submit" type="submit"><span class="spin"></span><b>Log In</b></button>
+    </form>
+    <button class="gbtn hidden" data-google type="button"><i>G</i> Continue with Google</button>
+    <div class="authlinks">New here? <button class="link" data-go="signup">Create an account</button></div>
+    <button class="ghost" id="li-guest">Play as Guest instead</button>
+  </div>
+</section>
+
+<section id="forgot" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Reset your password</h2></div>
+  <div class="authcard">
+    <p class="fine">Enter your email and we'll send a reset link if an account exists for it.</p>
+    <form id="forgot-form" novalidate>
+      <label class="field"><span aria-hidden="true">📧</span><input id="fp-email" type="email" autocomplete="email" placeholder="Email" ></label>
+      <p class="authmsg" id="fp-msg" role="status"></p>
+      <button class="primary big" id="fp-submit" type="submit"><span class="spin"></span><b>Send reset link</b></button>
+    </form>
+    <div class="authlinks"><button class="link" data-go="login">Back to log in</button></div>
+  </div>
+</section>
+
+<section id="reset" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Choose a new password</h2></div>
+  <div class="authcard">
+    <form id="reset-form" novalidate>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="rp-pass" type="password" autocomplete="new-password" placeholder="New password" ><button type="button" class="eye" data-eye="rp-pass" aria-label="Show password">👁</button></label>
+      <div class="meter"><i id="rp-meter"></i></div><small id="rp-hint" class="fine">8+ characters with upper, lower case and a number.</small>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="rp-pass2" type="password" autocomplete="new-password" placeholder="Confirm new password" ><button type="button" class="eye" data-eye="rp-pass2" aria-label="Show password">👁</button></label>
+      <p class="authmsg error" id="rp-msg" role="alert"></p>
+      <button class="primary big" id="rp-submit" type="submit"><span class="spin"></span><b>Update password</b></button>
+    </form>
+  </div>
+</section>
+
+<section id="verify" class="screen auth hidden">
+  <div class="auth-hero sm"><div class="bigmail">✉️</div><h2>Check your email</h2></div>
+  <div class="authcard center">
+    <p>If this address can be registered, a verification link is on its way to <b id="vf-email"></b>. Open it to activate your account, then log in.</p>
+    <small class="fine">Tip: open the link in the same browser you signed up with. Check your spam folder too.</small>
+    <p class="authmsg" id="vf-msg" role="status"></p>
+    <button class="primary alt big" id="vf-resend">Resend email</button>
+    <button class="primary big" data-go="login">Go to Log In</button>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings" class="screen hidden">
+  <header class="top"><button class="icon" data-back>← Back</button><b>Profile</b><span></span></header>
+  <div class="player big-profile">
+    <div class="avatar-wrap"><div class="avatar" id="p-avatar"></div><span class="lvbadge" id="p-badge"></span></div>
+    <div class="pinfo"><b id="p-name"></b> <span class="acctbadge" id="p-acct"></span><small id="p-level"></small><div class="xp"><i id="p-xp"></i></div><div class="mini" id="p-stats"></div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h4>Daily streak</h4><div class="big" id="p-streak"></div><small id="p-streak-note"></small></div>
+    <div class="panel"><h4>Recent games</h4><div class="big" id="p-record"></div><div id="p-recent" class="chips"></div></div>
+  </div>
+  <div class="panel" id="acct"></div>
+  <div class="panel">
+    <h4>Username</h4><input id="s-name" maxlength="16" autocomplete="off">
+    <h4>Avatar</h4><div id="s-avatars" class="avatars"></div>
+    <h4>Preferences</h4>
+    <div class="actions"><button class="primary alt" id="s-theme"></button><button class="primary alt" id="s-sound"></button><button class="primary alt" id="s-motion"></button></div>
+    <h4>Help</h4>
+    <div class="actions"><button class="primary alt" data-howto type="button">📖 How to Play</button></div>
+    <h4>About</h4>
+    <div class="about"><b id="s-version"></b><small id="s-update-note"></small></div>
+    <div class="actions"><button class="primary alt" id="s-check-btn">Check for updates</button><button class="primary hidden" id="s-update-btn">Update App</button></div>
+    <div class="actions hidden" data-install-wrap><button class="primary" data-install>📲 Install App</button></div>
+    <h4>Data</h4><button class="primary danger" id="s-reset">Reset all progress</button>
+  </div>
+</section>
+
+<div id="update-bar" class="hidden" role="status"><span id="update-text">A new version is available.</span><button id="update-btn" class="primary">Update App</button></div>
+<div id="offline-bar" class="hidden" role="status">📡 You're offline. Solo play still works; sign-in and online battles need a connection.</div>
+
+<nav id="bottomnav" aria-label="Main navigation">
+  <button data-nav="dashboard"><i>🏠</i><span>Home</span></button>
+  <button data-nav="play"><i>🎮</i><span>Play</span></button>
+  <button data-nav="leaderboard"><i>🏆</i><span>Leaderboard</span></button>
+  <button data-nav="shop"><i>🛒</i><span>Shop</span></button>
+  <button data-nav="settings"><i>👤</i><span>Profile</span></button>
+</nav>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="card result">
+    <button id="modal-close" class="x" aria-label="Close results">✕</button>
+    <div class="r-emoji" id="r-emoji"></div>
+    <h2 id="modal-title"></h2>
+    <p id="modal-msg"></p>
+    <div class="rword" id="r-word" aria-label="Correct word"></div>
+    <div id="r-rewards" class="rewardbox">
+      <div class="rchips"><div class="chip"><b id="r-coins">+0</b><small>🪙 Coins</small></div><div class="chip xpc"><b id="r-xpv">+0</b><small>⚡ XP</small></div></div>
+      <div class="xp"><i id="r-xp"></i></div><small id="r-level"></small>
+    </div>
+    <p id="r-note" class="note-line"></p>
+    <div class="stats" id="stats-grid"></div>
+    <div id="dist"></div>
+    <small id="r-daily" class="note-line"></small>
+    <div class="actions col" id="modal-actions">
+      <button id="btn-again" class="primary big">Play again</button>
+      <div class="row2"><button id="btn-share" class="primary alt">Share result</button><button id="btn-home" class="primary alt">Dashboard</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- DAILY CHALLENGE ALREADY COMPLETED -->
+<div id="daily-done" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="dd-title">
+  <div class="card result dd">
+    <div class="r-emoji" id="dd-emoji" aria-hidden="true">🏆</div>
+    <h2 id="dd-title">Daily Challenge</h2>
+    <p class="dd-date" id="dd-date"></p>
+    <p class="dd-status" id="dd-status"></p>
+    <div class="tgrid" id="dd-grid" aria-hidden="true"></div>
+    <p id="dd-word" class="dd-word"></p>
+    <div class="dd-chips">
+      <div class="chip"><b id="dd-attempts">-</b><small>Attempts</small></div>
+      <div class="chip"><b id="dd-score">-</b><small>Score</small></div>
+    </div>
+    <div class="dd-chips">
+      <div class="chip"><b id="dd-coins">+0</b><small>🪙 Coins</small></div>
+      <div class="chip xpc"><b id="dd-xp">+0</b><small>⚡ XP</small></div>
+    </div>
+    <p class="dd-msg">Challenge completed! See you tomorrow for a brand-new word!</p>
+    <div class="stats" id="dd-stats"></div>
+    <p class="note-line" id="dd-next" role="timer"></p>
+    <button id="dd-ok" class="primary big" type="button">Okay!</button>
+  </div>
+</div>
+
+<!-- INFO: HOW TO PLAY (opened from the game screen) -->
+<div id="info" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="info-title">
+  <div class="card info">
+    <button id="info-close" class="x" aria-label="Close how to play">✕</button>
+    <h2 id="info-title">How to Play</h2>
+    <ul class="rules">
+      <li>Guess the hidden <b>5-letter word</b> in <b>6 attempts</b>.</li>
+      <li>Type a word, then tap <b>Submit</b>. It must be a real word. Invalid words don't use an attempt.</li>
+      <li>After each guess, the tiles change colour to show how close you were:</li>
+    </ul>
+    <div class="ex"><div class="row" id="ix1" data-row aria-hidden="true"></div><p><span class="chip c" aria-hidden="true">✓</span><span><b>Green</b>: <b>W</b> is in the word and in the right spot.</span></p></div>
+    <div class="ex"><div class="row" id="ix2" data-row aria-hidden="true"></div><p><span class="chip p" aria-hidden="true">•</span><span><b>Yellow</b>: <b>I</b> is in the word but in the wrong spot.</span></p></div>
+    <div class="ex"><div class="row" id="ix3" data-row aria-hidden="true"></div><p><span class="chip a" aria-hidden="true"></span><span><b>Grey</b>: <b>U</b> is not in the word at all.</span></p></div>
+    <p class="fine">Stuck? Use the eye to reveal a letter, the crossed circle to remove wrong letters, or skip to a new word.</p>
+    <button id="info-ok" class="primary big" type="button">Got it!</button>
+    <button class="link" data-howto type="button">Show the full tutorial</button>
+  </div>
+</div>
+
+<!-- HOW TO PLAY -->
+<div id="tutorial" class="modal hidden" role="dialog" aria-modal="true" aria-label="How to play Wordle Battle">
+  <div class="card tut">
+    <div class="tut-top"><span id="tut-step" class="fine">Step 1 of 5</span><button id="tut-skip" class="link" type="button">Skip tutorial</button></div>
+    <div class="tut-body">
+      <section class="slide on" aria-hidden="false">
+        <div class="tut-emoji" aria-hidden="true">🎯</div>
+        <h2>Guess the hidden word</h2>
+        <p>Find the secret <b>5-letter word</b> in <b>6 attempts</b>.</p>
+        <div class="tgrid" aria-hidden="true"><div class="row" id="g1a" data-row></div><div class="row" id="g1b" data-row></div><div class="row" id="g1c" data-row></div></div>
+        <p class="fine">Type a real word and press <b>Enter</b>. After every guess, the tiles change colour to show how close you were.</p>
+      </section>
+      <section class="slide" aria-hidden="true">
+        <h2>Read the colours</h2>
+        <div class="ex"><div class="row" id="ex1" data-row aria-hidden="true"></div><p><span class="chip c" aria-hidden="true">✓</span><span><b>Green</b>: <b>W</b> is in the word and in the right spot.</span></p></div>
+        <div class="ex"><div class="row" id="ex2" data-row aria-hidden="true"></div><p><span class="chip p" aria-hidden="true">•</span><span><b>Yellow</b>: <b>I</b> is in the word but in the wrong spot.</span></p></div>
+        <div class="ex"><div class="row" id="ex3" data-row aria-hidden="true"></div><p><span class="chip a" aria-hidden="true"></span><span><b>Grey</b>: <b>U</b> is not in the word at all.</span></p></div>
+        <p class="fine">Repeated letters are only marked as many times as they appear in the word.</p>
+      </section>
+      <section class="slide" aria-hidden="true">
+        <h2>Watch a full game</h2>
+        <p class="fine">The secret word is <b>CRANE</b>.</p>
+        <div class="tgrid" aria-hidden="true"><div class="row" id="g3a" data-row></div><div class="row" id="g3b" data-row></div></div>
+        <p id="tut-cap" class="demo-cap" aria-live="polite"></p>
+        <p class="sr-only">Example: the secret word is CRANE. Guess TRAIN: R and A are green, N is yellow, T and I are grey. Guess CRANE: every letter is green, so you win in two tries.</p>
+      </section>
+      <section class="slide" aria-hidden="true">
+        <div class="tut-emoji" aria-hidden="true">💡</div>
+        <h2>Stuck? Use a hint</h2>
+        <div class="hcard"><i aria-hidden="true">🔍</i><div><b>Reveal a Letter</b><small>Shows one correct letter in its right spot</small></div><span id="tut-h1" class="badge"></span></div>
+        <div class="hcard"><i aria-hidden="true">🚫</i><div><b>Remove Wrong Letters</b><small>Greys out letters that are not in the word</small></div><span id="tut-h2" class="badge"></span></div>
+        <p class="fine">You start with 2 free uses of each. Earn coins by winning games to buy more in the Hint Shop.</p>
+      </section>
+      <section class="slide" aria-hidden="true">
+        <div class="tut-emoji" aria-hidden="true">🏆</div>
+        <h2>Play every day</h2>
+        <div class="hcard"><i aria-hidden="true">📅</i><div><b>Daily Challenge</b><small>One puzzle a day with bonus rewards</small></div></div>
+        <div class="hcard"><i aria-hidden="true">🔥</i><div><b>Build your streak</b><small>Solve the daily puzzle on consecutive days</small></div></div>
+        <div class="hcard"><i aria-hidden="true">🪙</i><div><b>Earn coins and XP</b><small>Win games to level up and unlock hints</small></div></div>
+        <p class="fine">You can reopen this guide any time from the dashboard or your Profile.</p>
+      </section>
+    </div>
+    <div class="tut-foot">
+      <button id="tut-prev" class="primary alt" type="button">Previous</button>
+      <div id="tut-dots" class="dots"></div>
+      <button id="tut-next" class="primary" type="button">Next</button>
+      <button id="tut-go" class="primary hidden" type="button">Let's Play!</button>
+    </div>
+  </div>
+</div>
+
+<div id="dialog" class="modal hidden">
+  <div class="card"><h2 id="dlg-title"></h2><p id="dlg-msg"></p><div class="actions" id="dlg-actions"></div></div>
+</div>
+
+<script src="js/version.js"></script>
+<script src="js/build.js"></script>
+<script src="js/config.js"></script>
+<script src="js/ns.js"></script>
+<script src="js/words.js"></script>
+<script src="js/store.js"></script>
+<script src="js/vendor/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+<script src="js/tutorial.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
