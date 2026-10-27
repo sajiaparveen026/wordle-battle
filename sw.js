@@ -8,7 +8,7 @@ const PREFIX = "wordle-battle-";
 const CACHE = `${PREFIX}${self.APP_VERSION}-${self.APP_BUILD}`;
 const ASSETS = [
   "./", "./index.html", "./terms.html", "./privacy.html", "./manifest.webmanifest", "./css/style.css",
-  "./js/version.js", "./js/build.js", "./js/config.js", "./js/ns.js", "./js/words.js", "./js/store.js", "./js/vendor/supabase.js", "./js/auth.js", "./js/app.js", "./js/tutorial.js", "./js/pwa.js",
+  "./js/version.js", "./js/build.js", "./js/config.js", "./js/ns.js", "./js/words.js", "./js/clues.js", "./js/store.js", "./js/vendor/supabase.js", "./js/auth.js", "./js/app.js", "./js/tutorial.js", "./js/pwa.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png", "./icons/favicon.svg"
 ];
 

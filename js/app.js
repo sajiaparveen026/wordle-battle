@@ -16,7 +16,9 @@ let stats = load("stats", { played: 0, wins: 0, streak: 0, best: 0, dist: [0, 0,
 
 // ---------- Game state ----------
 let mode = "practice", answer = "", gameId = "", guesses = [], current = "", status = "playing", busy = false;
-let hintState = { reveals: {}, disabled: [] };
+const newHint = () => ({ reveals: {}, disabled: [], clues: [] }); // clues = indexes of the word-hint clues already shown in this game
+const loadHint = (h) => { const o = Object.assign(newHint(), h || {}); if (!Array.isArray(o.clues)) o.clues = []; return o; };
+let hintState = newHint();
 // Dates use the player's LOCAL day, so the daily resets at their own midnight.
 const isoLocal = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const today = () => isoLocal();
@@ -61,20 +63,33 @@ function toast(text, kind = "", ms = 2200) {
   $("#toast").prepend(el); setTimeout(() => el.remove(), ms);
 }
 // Shows a dialog; resolves with the index of the clicked button.
-function dialog(title, msg, buttons) {
+// extra (optional) = { icon: "bulb", rows: [[label, value], ...] } adds an icon and a cost/balance table (used before spending coins).
+function dialog(title, msg, buttons, extra) {
   return new Promise((resolve) => {
     $("#dlg-title").textContent = title; $("#dlg-msg").textContent = msg;
-    const box = $("#dlg-actions"); box.innerHTML = "";
+    const ex = $("#dlg-extra"); ex.innerHTML = ""; ex.classList.toggle("hidden", !extra);
+    if (extra) {
+      if (extra.icon) { const i = document.createElement("div"); i.className = "buy-ico mini-tile t-" + (extra.icon === "bulb" ? "word" : extra.icon); i.setAttribute("aria-hidden", "true"); i.innerHTML = `<svg viewBox="0 0 32 32" focusable="false"><use href="#i-${extra.icon}"/></svg>`; ex.append(i); }
+      (extra.rows || []).forEach(([k, v, cls]) => { const r = document.createElement("div"); r.className = "buy-row" + (cls ? " " + cls : ""); const a = document.createElement("span"), b = document.createElement("b"); a.textContent = k; b.textContent = v; r.append(a, b); ex.append(r); });
+    }
+    const box = $("#dlg-actions"); box.innerHTML = ""; let done = false;
     buttons.forEach((label, i) => {
       const b = document.createElement("button");
       b.className = "primary" + (i === 0 && buttons.length > 1 ? " alt" : ""); b.textContent = label;
-      b.onclick = () => { $("#dialog").classList.add("hidden"); resolve(i); };
+      b.onclick = () => { if (done) return; done = true; $("#dialog").classList.add("hidden"); resolve(i); }; // answers once: a double tap can't confirm twice
       box.append(b);
     });
     $("#dialog").classList.remove("hidden");
   });
 }
 const confirmBox = async (title, msg, ok = "Yes") => (await dialog(title, msg, ["Cancel", ok])) === 1;
+// Purchase popup: shows the cost, the current balance and what is left afterwards. Resolves true only if the player confirms.
+async function confirmSpend(title, msg, cost, icon) {
+  const bal = Player.data.coins;
+  return (await dialog(title, msg, ["Cancel", `Spend ${cost} 🪙`], { icon, rows: [["Cost", `${cost} 🪙`], ["Your coins", `${bal} 🪙`], ["Left after", `${Math.max(0, bal - cost)} 🪙`, "after"]] })) === 1;
+}
+let spendLock = false; // one coin purchase in progress at a time (hint, skip or shop): no duplicate charges
+const flash = (b) => { if (!b || reduced()) return; b.classList.remove("used"); void b.offsetWidth; b.classList.add("used"); setTimeout(() => b.classList.remove("used"), 700); };
 function confetti() {
   if (reduced()) return;
   const colors = ["#FACC15", "#FAFAF5", "#F2C230", "#8A7A3A"];
@@ -159,22 +174,25 @@ function applySettings() { document.documentElement.dataset.theme = settings.the
 function renderShop() {
   $("#shop-cards").innerHTML = Object.entries(HINTS).map(([t, h]) => {
     const n = Player.data.hints[t];
-    return `<article class="gcard"><div class="ico">${h.icon}</div><div><h3>${h.name}</h3><p>${h.desc}</p><p><b>${h.cost} 🪙 per use</b> · You have ${n.free + n.credits}</p></div><button class="primary" data-buy="${t}">Buy</button></article>`;
+    return `<article class="gcard"><span class="mini-tile t-${t}" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-${ICONS[t]}"/></svg></span><div><h3>${h.name}</h3><p>${h.desc}</p><p><b>${h.cost} 🪙 per use</b> · You have ${n.free + n.credits}</p></div><button class="primary" data-buy="${t}">Buy</button></article>`;
   }).join("");
   refreshCoins();
 }
 async function needCoins(cost) {
   const missing = cost - Player.data.coins;
-  const pick = await dialog("Not enough coins", `You need ${missing} more coin${missing === 1 ? "" : "s"}. Win games to earn coins: 20 for a solo win, 50 for the daily challenge.`, ["Dashboard", "Earn coins"]);
+  const pick = await dialog("Not enough coins", `You need ${missing} more coin${missing === 1 ? "" : "s"}. Win games to earn coins: ${REWARDS.practice.coins} for a solo win, ${REWARDS.daily.coins} for the daily challenge.`, ["Dashboard", "Earn coins"]);
   if (pick === 0) show("dashboard"); else openGame("practice", true);
 }
 async function buyHint(type) {
-  const h = HINTS[type];
-  if (Player.data.coins < h.cost) return needCoins(h.cost);
-  if (!(await confirmBox("Buy hint", `Buy 1 "${h.name}" for ${h.cost} coins?`, "Buy"))) return;
-  if (!Player.spend(h.cost)) return;
-  Player.addHintCredit(type); sfx.coin();
-  toast(`Bought: ${h.name}`, "success"); renderShop(); updateHintButtons();
+  if (spendLock) return; spendLock = true;
+  try {
+    const h = HINTS[type];
+    if (Player.data.coins < h.cost) return needCoins(h.cost);
+    if (!(await confirmSpend("Buy hint", `Buy 1 "${h.name}" for ${h.cost} coins?`, h.cost, ICONS[type]))) return;
+    if (!Player.spend(h.cost)) return toast("Not enough coins", "error"); // re-checked at the moment of payment
+    Player.addHintCredit(type); sfx.coin();
+    toast(`Bought: ${h.name}`, "success"); renderShop(); updateHintButtons();
+  } finally { spendLock = false; }
 }
 
 // ---------- Board & keyboard ----------
@@ -246,13 +264,21 @@ function updateAttempts() {
 }
 
 // ---------- Hints in a game ----------
+const ICONS = { reveal: "reveal", remove: "remove", word: "bulb", skip: "skip" }; // artwork symbols in the index.html sprite
+// Top-right badge = uses left without paying coins; the small caption under the icon says what the next use costs.
+function setCount(b, n) {
+  const c = b.querySelector(".cnt"); if (!c) return;
+  const changed = c.textContent !== String(n) && c.textContent !== "";
+  c.textContent = n; c.classList.toggle("zero", n === 0);
+  if (changed && !reduced()) { c.classList.remove("bump"); void c.offsetWidth; c.classList.add("bump"); }
+}
 function updateHintButtons() {
   $$(".hint").forEach((b) => {
-    const t = b.dataset.hint, n = Player.data.hints[t];
-    const label = n.free > 0 ? `${n.free} free` : n.credits > 0 ? `${n.credits} owned` : `${HINTS[t].cost} 🪙`;
-    b.querySelector("small").textContent = label;
-    b.setAttribute("aria-label", `${HINTS[t].name}, ${label}`); b.title = `${HINTS[t].name} (${label})`;
-    b.classList.toggle("paid", n.free <= 0 && n.credits <= 0);
+    const t = b.dataset.hint, n = Player.data.hints[t], left = n.free + n.credits;
+    b.querySelector("small").textContent = left > 0 ? "" : `🪙 ${HINTS[t].cost}`; setCount(b, left); // price pill shows only when no free uses are left
+    const say = left > 0 ? `${left} free use${left === 1 ? "" : "s"} left` : `costs ${HINTS[t].cost} coins`;
+    b.setAttribute("aria-label", `${HINTS[t].name}, ${say}`); b.title = `${HINTS[t].name} (${say})`;
+    b.classList.toggle("paid", left <= 0);
     b.disabled = status !== "playing";
   });
   updateSkipButton(); refreshCoins();
@@ -272,55 +298,103 @@ function planRemove() {
   return pool.sort(() => Math.random() - 0.5).slice(0, 5);
 }
 // ---------- Skip word ----------
-let skipLock = false;
 function submitMsg(text) { // inline message next to the Submit button
   const el = $("#submit-msg"); clearTimeout(submitMsg.t); el.textContent = text ? "⚠ " + text : "";
   if (text) submitMsg.t = setTimeout(() => (el.textContent = ""), 3000);
 }
 function updateSkipButton() {
   const b = $("#btn-skip"), s = Player.data.skips.free, off = mode === "daily" || status !== "playing";
-  const label = s > 0 ? `${s} free` : `${SKIP.cost} 🪙`;
-  b.querySelector("small").textContent = label; b.setAttribute("aria-label", `Skip word, ${label}`); b.title = `Skip word (${label})`;
+  const label = s > 0 ? "" : `🪙 ${SKIP.cost}`, say = s > 0 ? `${s} free skip${s === 1 ? "" : "s"} left` : `costs ${SKIP.cost} coins`;
+  b.querySelector("small").textContent = label; setCount(b, s); b.setAttribute("aria-label", `Skip word, ${say}`); b.title = `Skip word (${say})`;
   b.classList.toggle("paid", s <= 0); b.classList.toggle("off", off); b.setAttribute("aria-disabled", off ? "true" : "false");
 }
 async function skipWord() {
-  if (skipLock || busy) return;                       // one skip request at a time: no duplicate charges
+  if (spendLock || busy) return;                      // one purchase at a time: no duplicate charges
   if (mode === "daily") return submitMsg("Skip isn't available in the Daily Challenge");
   if (status !== "playing") return;
-  skipLock = true;
+  spendLock = true;
   try {
     const free = Player.data.skips.free > 0, gid = gameId;
     if (free) {
       if (!(await confirmBox("Skip this word?", `You have ${Player.data.skips.free} free skip${Player.data.skips.free === 1 ? "" : "s"} left. This word is replaced with a new one. No reward, no penalty.`, "Skip"))) return;
     } else {
       if (Player.data.coins < SKIP.cost) return needCoins(SKIP.cost);
-      if (!(await confirmBox("Skip this word", `Use ${SKIP.cost} coins to skip this word?`, "Skip"))) return;
+      if (!(await confirmSpend("Skip this word", `Use ${SKIP.cost} coins to skip this word?`, SKIP.cost, ICONS.skip))) return;
     }
     if (status !== "playing" || gameId !== gid || mode !== "practice") return; // the game changed while the dialog was open
     if (free) { if (!Player.consumeSkip()) return; } else if (!Player.spend(SKIP.cost)) return;
     startGame(true); sfx.coin();
     const left = Player.data.skips.free; toast(free ? `Word skipped. ${left} free skip${left === 1 ? "" : "s"} left.` : `Word skipped for ${SKIP.cost} coins.`, "success");
-  } finally { skipLock = false; }
+  } finally { spendLock = false; }
 }
 $("#btn-skip").onclick = skipWord;
 $("#btn-submit").onclick = () => { if (screen === "game" && status === "playing" && !busy) submit(); };
 $("#g-info").onclick = () => Tutorial.openInfo();
 
 async function useHint(type) {
-  if (status !== "playing" || busy) return;
-  const plan = type === "reveal" ? planReveal() : planRemove();
-  if (!plan) return toast("No useful hint available. No coins spent.", "error");
-  const h = Player.data.hints[type], cost = HINTS[type].cost;
-  if (h.free <= 0 && h.credits <= 0) {
-    if (Player.data.coins < cost) return needCoins(cost);
-    if (!(await confirmBox("Use a hint", `Use ${cost} coins to ${HINTS[type].verb}?`, "Use"))) return;
-    if (status !== "playing") return; // game may have ended while the dialog was open
-    if (!Player.spend(cost)) return;
-  } else Player.consumeHint(type);
-  if (type === "reveal") { hintState.reveals[plan.pos] = plan.letter; toast(`Letter ${plan.pos + 1} is ${plan.letter.toUpperCase()}`, "success"); }
-  else { hintState.disabled.push(...plan); toast(`${plan.length} wrong letters removed`, "success"); }
-  sfx.coin(); renderHintTiles(); colorKeys(); updateHintButtons(); saveProgress();
+  if (status !== "playing" || busy || spendLock) return;
+  if (type === "word") return useWordHint();
+  spendLock = true;
+  try {
+    const plan = type === "reveal" ? planReveal() : planRemove();
+    if (!plan) return toast("No useful hint available. No coins spent.", "error");
+    const h = Player.data.hints[type], cost = HINTS[type].cost, gid = gameId;
+    if (h.free <= 0 && h.credits <= 0) {
+      if (Player.data.coins < cost) return needCoins(cost);
+      if (!(await confirmSpend("Use a hint", `Use ${cost} coins to ${HINTS[type].verb}?`, cost, ICONS[type]))) return;
+      if (status !== "playing" || gameId !== gid) return; // game may have changed while the dialog was open
+      if (!Player.spend(cost)) return toast("Not enough coins", "error");
+    } else Player.consumeHint(type);
+    if (type === "reveal") { hintState.reveals[plan.pos] = plan.letter; toast(`Letter ${plan.pos + 1} is ${plan.letter.toUpperCase()}`, "success"); }
+    else { hintState.disabled.push(...plan); toast(`${plan.length} wrong letters removed`, "success"); }
+    sfx.coin(); flash($(`[data-hint=${type}]`)); renderHintTiles(); colorKeys(); updateHintButtons(); saveProgress();
+  } finally { spendLock = false; }
 }
+
+// ---------- Word Hint (lightbulb): one clue about the secret word, never the word itself ----------
+const CLUE_LABELS = { meaning: ["📖", "Meaning"], related: ["🔗", "Related words"], category: ["🏷️", "Category"], usage: ["💬", "In context"], fact: ["✨", "Fun fact"] };
+function clueDeck() { // three clues per word (js/clues.js); a safe fallback keeps the game working if a word has no entry
+  const d = window.CLUES && window.CLUES[answer];
+  if (Array.isArray(d) && d.length) return d;
+  const v = [...answer].filter((c) => "aeiou".includes(c)).length;
+  return [["fact", `It has ${v} vowel${v === 1 ? "" : "s"} and ${new Set(answer).size} different letters.`]];
+}
+function planClue() { // a random clue that has not been shown yet in this game, or null when all were used
+  const left = clueDeck().map((_, i) => i).filter((i) => !hintState.clues.includes(i));
+  return left.length ? left[Math.floor(Math.random() * left.length)] : null;
+}
+async function useWordHint() {
+  spendLock = true;
+  try {
+    const gid = gameId, h = Player.data.hints.word, cost = HINTS.word.cost;
+    if (planClue() === null) { showClue(false); return; }                 // every clue already seen: reopen them, no charge
+    if (h.free <= 0 && h.credits <= 0) {
+      if (Player.data.coins < cost) return needCoins(cost);
+      if (!(await confirmSpend("Use a word hint", `Use ${cost} coins to get a clue about the word?`, cost, ICONS.word))) return;
+      if (status !== "playing" || gameId !== gid) return;
+    }
+    const idx = planClue(); if (idx === null) { showClue(false); return; } // re-picked after the dialog; nothing left means nothing charged
+    if (h.free > 0 || h.credits > 0) Player.consumeHint("word"); else if (!Player.spend(cost)) return toast("Not enough coins", "error");
+    hintState.clues.push(idx); saveProgress();                              // the clue is saved together with the payment
+    sfx.coin(); flash($("[data-hint=word]")); updateHintButtons(); showClue(true);
+  } finally { spendLock = false; }
+}
+function clueRow(c) { const [e, l] = CLUE_LABELS[c[0]] || CLUE_LABELS.fact; return `<div class="clue-kind"><span aria-hidden="true">${e}</span>${l}</div><p class="clue-text"></p>`; }
+function showClue(isNew) {
+  const deck = clueDeck(), seen = hintState.clues.filter((i) => deck[i]);
+  if (!seen.length) return;
+  const last = seen[seen.length - 1], total = deck.length;
+  $("#clue-count").textContent = isNew ? `Clue ${seen.length} of ${total}` : `All ${total} clues revealed. No more to give for this word.`;
+  const main = $("#clue-main"); main.innerHTML = clueRow(deck[last]); main.querySelector(".clue-text").textContent = deck[last][1];
+  main.classList.remove("in"); void main.offsetWidth; main.classList.add("in");
+  const prev = $("#clue-prev"); prev.innerHTML = "";
+  seen.slice(0, -1).reverse().forEach((i) => { const d = document.createElement("div"); d.className = "clue-old"; d.innerHTML = clueRow(deck[i]); d.querySelector(".clue-text").textContent = deck[i][1]; prev.append(d); });
+  prev.classList.toggle("hidden", seen.length < 2);
+  $("#clue").classList.remove("hidden"); lockModal(true); $("#clue-close").focus();
+}
+function closeClue() { $("#clue").classList.add("hidden"); lockModal(false); const b = $("[data-hint=word]"); if (b && !b.disabled) b.focus({ preventScroll: true }); }
+$("#clue-close").onclick = closeClue; $("#clue-x").onclick = closeClue;
+$("#clue").addEventListener("click", (e) => { if (e.target.id === "clue") closeClue(); });
 
 // ---------- Game flow ----------
 function saveProgress() { save("game_" + mode, { date: today(), id: gameId, answer, guesses, status, hintState }); }
@@ -351,13 +425,11 @@ function showDailyDone(r) {
   $("#dd-date").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
   $("#dd-status").textContent = r.won === true ? "✓ Solved" : r.won === false ? "✗ Not solved this time" : "Completed";
   const grid = $("#dd-grid"); grid.innerHTML = "";
-  (r.guesses || []).forEach((g, gi) => { // replay of today's guesses (letters + colours, same as the board)
-    const row = document.createElement("div"); row.className = "row";
-    evaluate(g, r.answer).forEach((s, i) => { const t = document.createElement("div"); t.className = "tile " + s; t.textContent = g[i]; t.style.setProperty("--i", gi * 5 + i); t.setAttribute("aria-label", `${g[i]}, ${s}`); row.append(t); });
-    grid.append(row);
-  });
-  grid.style.display = r.guesses ? "" : "none";
+  const row = document.createElement("div"); row.className = "row"; // only the final row (the answer), not every guess
+  [...r.answer].forEach((ch, i) => { const t = document.createElement("div"); t.className = "tile " + (r.won ? "correct" : "absent"); t.textContent = ch; t.style.setProperty("--i", i); row.append(t); });
+  grid.append(row); grid.style.display = "";
   $("#dd-word").textContent = `The word was ${r.answer.toUpperCase()}`;
+  const dm = meaningOf(r.answer); $("#dd-meaning").textContent = dm; $("#dd-meaning").style.display = dm ? "" : "none";
   $("#dd-attempts").textContent = r.guesses ? (r.won ? `${r.guesses.length}/${ROWS}` : `${ROWS}/${ROWS}`) : "—";
   $("#dd-score").textContent = r.score === null ? "—" : r.score;
   $("#dd-coins").textContent = "+" + r.reward.coins; $("#dd-xp").textContent = "+" + r.reward.xp;
@@ -377,12 +449,12 @@ function startGame(newPractice = false) {
   const saved = load("game_" + mode, null);
   if (mode === "daily") {
     answer = dailyWord(); gameId = "daily-" + today();
-    if (saved && saved.date === today()) { guesses = saved.guesses; status = saved.status; hintState = saved.hintState || { reveals: {}, disabled: [] }; }
-    else { guesses = []; status = "playing"; hintState = { reveals: {}, disabled: [] }; }
+    if (saved && saved.date === today()) { guesses = saved.guesses; status = saved.status; hintState = loadHint(saved.hintState); }
+    else { guesses = []; status = "playing"; hintState = newHint(); }
   } else if (!newPractice && saved && saved.status === "playing" && saved.guesses.length < ROWS) {
-    ({ answer, id: gameId, guesses } = saved); status = "playing"; hintState = saved.hintState || { reveals: {}, disabled: [] };
+    ({ answer, id: gameId, guesses } = saved); status = "playing"; hintState = loadHint(saved.hintState);
     gameId = gameId || "p-" + Date.now();
-  } else { answer = randomWord(); gameId = "p-" + Date.now() + Math.random().toString(36).slice(2, 6); guesses = []; status = "playing"; hintState = { reveals: {}, disabled: [] }; }
+  } else { answer = randomWord(); gameId = "p-" + Date.now() + Math.random().toString(36).slice(2, 6); guesses = []; status = "playing"; hintState = newHint(); }
   $("#g-title").textContent = mode === "daily" ? "Daily Challenge" : "Solo Practice";
   guesses.forEach((g, i) => reveal(i, g, false));
   colorKeys(); renderHintTiles(); updateAttempts(); updateHintButtons(); saveProgress();
@@ -439,6 +511,10 @@ function countUp(el, to, prefix) { // short count-up so rewards are easy to noti
   const step = (t) => { const k = Math.min(1, (t - t0) / 800); el.textContent = prefix + Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
   requestAnimationFrame(step);
 }
+function meaningOf(w) { // first clue of each word is its short meaning (js/clues.js)
+  const c = window.CLUES && window.CLUES[w], m = c && c[0] && c[0][0] === "meaning" ? c[0][1] : "";
+  return m ? m.charAt(0).toUpperCase() + m.slice(1) : "";
+}
 function showResult() {
   const won = status === "won", r = lastReward, n = guesses.length;
   const m = $("#modal"); m.classList.toggle("win", won); m.classList.toggle("loss", !won);
@@ -446,11 +522,13 @@ function showResult() {
   $("#modal-title").textContent = won ? "You got it!" : "Nice try!";
   $("#modal-msg").textContent = won ? `Solved in ${n} ${n === 1 ? "guess" : "guesses"}` : "The word was";
   $("#r-word").innerHTML = [...answer].map((c, i) => `<span style="--i:${i}">${c}</span>`).join("");
+  const mean = meaningOf(answer); $("#r-meaning").textContent = mean; $("#r-meaning").style.display = mean ? "" : "none"; // short meaning under the word
   $("#r-rewards").style.display = won && r ? "" : "none";
   $("#r-note").textContent = won ? (r ? (r.levelUp ? "⬆ Level up!" : "") : "Reward for this game was already collected.") : "No reward this time. Try again to earn coins and XP.";
   if (won && r) {
     const lv = Player.levelInfo();
     countUp($("#r-coins"), r.coins, "+"); countUp($("#r-xpv"), r.xp, "+");
+    $("#r-balance").textContent = `Balance: ${Player.data.coins} 🪙`; // the real balance after this win was added
     $("#r-level").textContent = `Level ${lv.level} · ${lv.xp}/${lv.need} XP`; animateXp("#r-xp", (lv.xp / lv.need) * 100);
     confetti(); setTimeout(sfx.coin, 400);
   }
@@ -460,14 +538,10 @@ function showResult() {
   m.classList.remove("hidden"); lockModal(true); $("#btn-again").focus();
 }
 function renderStats(hi) { // lifetime stats for every game (solo + daily)
-  const p = Player.data, played = p.wins + p.losses, total = p.dist.reduce((a, b) => a + b, 0);
+  const p = Player.data, played = p.wins + p.losses;
   const rate = played ? Math.round((p.wins / played) * 100) + "%" : "—";
   $("#stats-grid").innerHTML = [[played, "Played"], [rate, "Win rate"], [p.streak, "Win streak"], [p.bestGuesses ? p.bestGuesses + "/6" : "—", "Best win"]]
     .map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join("");
-  const max = Math.max(1, ...p.dist);
-  $("#dist").innerHTML = total ? "<h4 class=\"dh\">Guess distribution</h4>" + p.dist.map((n, i) =>
-    `<div class="dist${i + 1 === hi ? " cur" : ""}"><span>${i + 1}</span><div class="bar${n ? "" : " zero"}" style="width:${n ? Math.max(12, (n / max) * 100) : 8}%">${n}</div></div>`).join("")
-    : "<small class=\"note-line\">Win a game to start your guess distribution.</small>";
 }
 async function copyText(t) {
   try { await navigator.clipboard.writeText(t); return true; } catch {}
@@ -507,14 +581,15 @@ $("#s-reset").onclick = async () => {
   }
 };
 $("#modal-close").onclick = closeModal;
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); if (e.key === "Escape" && !$("#daily-done").classList.contains("hidden")) closeDailyDone(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#clue").classList.contains("hidden")) closeClue(); if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); if (e.key === "Escape" && !$("#daily-done").classList.contains("hidden")) closeDailyDone(); });
 $("#dd-ok").onclick = closeDailyDone;
 $("#btn-home").onclick = () => { closeModal(); show("dashboard"); };
+$("#btn-shop").onclick = () => { closeModal(); go("shop"); };
 $("#btn-again").onclick = () => { closeModal(); openGame("practice", true); };
 $("#btn-share").onclick = async () => ((await copyText(shareText())) ? toast("Result copied to clipboard", "success") : toast("Couldn't copy result", "error"));
 document.addEventListener("keydown", (e) => {
   if (e.target.closest && e.target.closest("input,textarea,select")) return; // typing in a form: leave Enter/letters alone
-  if (e.ctrlKey || e.metaKey || e.altKey || !$("#modal").classList.contains("hidden") || !$("#dialog").classList.contains("hidden") || !$("#tutorial").classList.contains("hidden") || !$("#daily-done").classList.contains("hidden") || !$("#info").classList.contains("hidden")) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || !$("#modal").classList.contains("hidden") || !$("#dialog").classList.contains("hidden") || !$("#tutorial").classList.contains("hidden") || !$("#daily-done").classList.contains("hidden") || !$("#info").classList.contains("hidden") || !$("#clue").classList.contains("hidden")) return;
   const k = e.key.toLowerCase();
   if (k === "enter") { e.preventDefault(); if (e.repeat) return; } // stops a focused button from also firing
   if (k === "enter") press("enter"); else if (k === "backspace") press("back"); else if (/^[a-z]$/.test(k)) press(k);

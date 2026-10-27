@@ -51,7 +51,7 @@
   };
   function play(i) { stopAnim(); reset(i); if (i > 2) return; reduced() ? final(i) : animate(i); }
 
-  $("#tut-h1").textContent = `2 free, then ${HINTS.reveal.cost} 🪙`; $("#tut-h2").textContent = `2 free, then ${HINTS.remove.cost} 🪙`; // real prices from the game
+  $("#tut-h1").textContent = `2 free, then ${HINTS.reveal.cost} 🪙`; $("#tut-h2").textContent = `2 free, then ${HINTS.remove.cost} 🪙`; $("#tut-h3").textContent = `${HINTS.word.free} free, then ${HINTS.word.cost} 🪙`; // real prices from the game
 
   // ----- navigation -----
   dotsBox.innerHTML = slides.map((_, i) => `<button type="button" aria-label="Go to step ${i + 1}" data-dot="${i}"><i></i></button>`).join("");

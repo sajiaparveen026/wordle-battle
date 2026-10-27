@@ -16,6 +16,37 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<!-- Icon artwork for the game controls: white glossy glyphs, drawn on coloured tiles (tile colours live in css, not in the theme) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gGlyph" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EDE8DE"/></linearGradient>
+    <radialGradient id="gBulb" cx=".5" cy=".4" r=".65"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#FFF6CF"/><stop offset="1" stop-color="#FFE48A"/></radialGradient>
+    <linearGradient id="gBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F4F6"/><stop offset="1" stop-color="#9A9AA3"/></linearGradient>
+    <symbol id="i-reveal" viewBox="0 0 32 32">
+      <path d="M19.6 19.6L26.8 26.8" fill="none" stroke="url(#gGlyph)" stroke-width="4.8" stroke-linecap="round"/>
+      <circle cx="13" cy="13" r="8.8" fill="#fff" fill-opacity=".3" stroke="url(#gGlyph)" stroke-width="3.2"/>
+      <path d="M9.6 17.6l3.4-8.8 3.4 8.8M10.9 14.9h4.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-remove" viewBox="0 0 32 32">
+      <circle cx="15" cy="17" r="10.6" fill="none" stroke="url(#gGlyph)" stroke-width="2.8"/>
+      <circle cx="15" cy="17" r="5.6" fill="none" stroke="url(#gGlyph)" stroke-width="2.6"/>
+      <circle cx="15" cy="17" r="2" fill="#fff"/>
+      <path d="M17 15L27.4 4.6M22.6 4.6h4.8v4.8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-skip" viewBox="0 0 32 32">
+      <path d="M5.5 6.6v18.8a1 1 0 0 0 1.55.84l12.6-9.4a1 1 0 0 0 0-1.68L7.05 5.76a1 1 0 0 0-1.55.84z" fill="url(#gGlyph)"/>
+      <rect x="22" y="5.4" width="4.6" height="21.2" rx="2.3" fill="url(#gGlyph)"/>
+    </symbol>
+    <symbol id="i-bulb" viewBox="0 0 32 32">
+      <path d="M16 2.8c-5.5 0-9.4 3.8-9.4 8.8 0 3.1 1.6 5 3.1 6.6.9 1 1.5 1.9 1.5 3v.6h9.6v-.6c0-1.1.6-2 1.5-3 1.5-1.6 3.1-3.5 3.1-6.6 0-5-3.9-8.8-9.4-8.8z" fill="url(#gBulb)" stroke="#B87400" stroke-width="1.3"/>
+      <path d="M12.2 15.4l2.2 2.8 1.6-2.2 1.6 2.2 2.2-2.8M16 18.2v3.2" fill="none" stroke="#D18A00" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="11.2" y="22.6" width="9.6" height="2.6" rx="1.3" fill="url(#gBase)"/>
+      <rect x="11.8" y="25.4" width="8.4" height="2.4" rx="1.2" fill="url(#gBase)"/>
+      <path d="M13.6 28.2h4.8l-.9 1.8h-3z" fill="url(#gBase)"/>
+    </symbol>
+  </defs>
+</svg>
+
 
 <div id="splash">
   <div class="orb o1"></div><div class="orb o2"></div>
@@ -59,7 +90,7 @@
   <header class="gtop">
     <div class="gleft">
       <button id="g-back" class="ibtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <div class="winscore" role="status" aria-label="Wins" title="Total wins"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM5 5H3v2a3 3 0 0 0 3 3M19 5h2v2a3 3 0 0 1-3 3"/></svg><b class="win-val">0</b></div>
+      <div class="winscore" role="status" aria-label="Wins" title="Total wins"><span class="sc-l">Score</span><b class="win-val">0</b></div>
     </div>
     <div class="gright">
       <button id="g-info" class="ibtn" aria-label="How to play"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg></button>
@@ -72,11 +103,14 @@
   <p id="submit-msg" class="submit-msg" role="alert"></p>
   <div class="controls">
     <div class="ctl-group">
-      <button class="ctl hint" data-hint="reveal" aria-label="Reveal a letter"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><small class="badge"></small></button>
-      <button class="ctl hint" data-hint="remove" aria-label="Remove wrong letters"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg><small class="badge"></small></button>
+      <button class="ctl hint" data-hint="reveal" aria-label="Reveal a letter"><span class="cico" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-reveal"/></svg></span><span class="cnt" aria-hidden="true"></span><small class="badge"></small></button>
+      <button class="ctl hint" data-hint="remove" aria-label="Remove wrong letters"><span class="cico" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-remove"/></svg></span><span class="cnt" aria-hidden="true"></span><small class="badge"></small></button>
     </div>
     <button id="btn-submit" class="primary submit-btn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 13l4 4L19 7"/></svg><span>Submit</span></button>
-    <button id="btn-skip" class="ctl skip" type="button" aria-label="Skip word"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg><small class="badge"></small></button>
+    <div class="ctl-group right">
+      <button class="ctl hint" data-hint="word" aria-label="Word hint"><span class="cico" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></span><span class="cnt" aria-hidden="true"></span><small class="badge"></small></button>
+      <button id="btn-skip" class="ctl skip" type="button" aria-label="Skip word"><span class="cico" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-skip"/></svg></span><span class="cnt" aria-hidden="true"></span><small class="badge"></small></button>
+    </div>
   </div>
 </section>
 
@@ -242,17 +276,22 @@
     <h2 id="modal-title"></h2>
     <p id="modal-msg"></p>
     <div class="rword" id="r-word" aria-label="Correct word"></div>
+    <p id="r-meaning" class="r-meaning"></p>
     <div id="r-rewards" class="rewardbox">
       <div class="rchips"><div class="chip"><b id="r-coins">+0</b><small>🪙 Coins</small></div><div class="chip xpc"><b id="r-xpv">+0</b><small>⚡ XP</small></div></div>
+      <small id="r-balance" class="r-balance"></small>
       <div class="xp"><i id="r-xp"></i></div><small id="r-level"></small>
     </div>
     <p id="r-note" class="note-line"></p>
     <div class="stats" id="stats-grid"></div>
-    <div id="dist"></div>
     <small id="r-daily" class="note-line"></small>
-    <div class="actions col" id="modal-actions">
-      <button id="btn-again" class="primary big">Play again</button>
-      <div class="row2"><button id="btn-share" class="primary alt">Share result</button><button id="btn-home" class="primary alt">Dashboard</button></div>
+    <div class="r-actions" id="modal-actions">
+      <button id="btn-again" class="again-link" type="button">Play again</button>
+      <div class="r-icons">
+        <button id="btn-home" class="r-icon" type="button" aria-label="Home"><span aria-hidden="true">🏠</span><small>Home</small></button>
+        <button id="btn-shop" class="r-icon" type="button" aria-label="Shop"><span aria-hidden="true">🛍️</span><small>Shop</small></button>
+      </div>
+      <button id="btn-share" class="share-link" type="button">Share result</button>
     </div>
   </div>
 </div>
@@ -265,7 +304,8 @@
     <p class="dd-date" id="dd-date"></p>
     <p class="dd-status" id="dd-status"></p>
     <div class="tgrid" id="dd-grid" aria-hidden="true"></div>
-    <p id="dd-word" class="dd-word"></p>
+    <p id="dd-word" class="sr-only"></p>
+    <p id="dd-meaning" class="r-meaning"></p>
     <div class="dd-chips">
       <div class="chip"><b id="dd-attempts">-</b><small>Attempts</small></div>
       <div class="chip"><b id="dd-score">-</b><small>Score</small></div>
@@ -294,7 +334,7 @@
     <div class="ex"><div class="row" id="ix1" data-row aria-hidden="true"></div><p><span class="chip c" aria-hidden="true">✓</span><span><b>Green</b>: <b>W</b> is in the word and in the right spot.</span></p></div>
     <div class="ex"><div class="row" id="ix2" data-row aria-hidden="true"></div><p><span class="chip p" aria-hidden="true">•</span><span><b>Yellow</b>: <b>I</b> is in the word but in the wrong spot.</span></p></div>
     <div class="ex"><div class="row" id="ix3" data-row aria-hidden="true"></div><p><span class="chip a" aria-hidden="true"></span><span><b>Grey</b>: <b>U</b> is not in the word at all.</span></p></div>
-    <p class="fine">Stuck? Use the eye to reveal a letter, the crossed circle to remove wrong letters, or skip to a new word.</p>
+    <p class="fine">Stuck? Use the magnifier to reveal a letter, the crossed circle to remove wrong letters, the lightbulb for a clue about the word, or skip to a new word.</p>
     <button id="info-ok" class="primary big" type="button">Got it!</button>
     <button class="link" data-howto type="button">Show the full tutorial</button>
   </div>
@@ -329,9 +369,10 @@
       <section class="slide" aria-hidden="true">
         <div class="tut-emoji" aria-hidden="true">💡</div>
         <h2>Stuck? Use a hint</h2>
-        <div class="hcard"><i aria-hidden="true">🔍</i><div><b>Reveal a Letter</b><small>Shows one correct letter in its right spot</small></div><span id="tut-h1" class="badge"></span></div>
-        <div class="hcard"><i aria-hidden="true">🚫</i><div><b>Remove Wrong Letters</b><small>Greys out letters that are not in the word</small></div><span id="tut-h2" class="badge"></span></div>
-        <p class="fine">You start with 2 free uses of each. Earn coins by winning games to buy more in the Hint Shop.</p>
+        <div class="hcard"><span class="mini-tile t-reveal" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-reveal"/></svg></span><div><b>Reveal a Letter</b><small>Shows one correct letter in its right spot</small></div><span id="tut-h1" class="badge"></span></div>
+        <div class="hcard"><span class="mini-tile t-remove" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-remove"/></svg></span><div><b>Remove Wrong Letters</b><small>Greys out letters that are not in the word</small></div><span id="tut-h2" class="badge"></span></div>
+        <div class="hcard"><span class="mini-tile t-word" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></span><div><b>Word Hint</b><small>A clue about the word: meaning, category or fun fact</small></div><span id="tut-h3" class="badge"></span></div>
+        <p class="fine">Each hint button shows how many free uses are left. Earn coins by winning games to buy more in the Hint Shop.</p>
       </section>
       <section class="slide" aria-hidden="true">
         <div class="tut-emoji" aria-hidden="true">🏆</div>
@@ -352,7 +393,20 @@
 </div>
 
 <div id="dialog" class="modal hidden">
-  <div class="card"><h2 id="dlg-title"></h2><p id="dlg-msg"></p><div class="actions" id="dlg-actions"></div></div>
+  <div class="card"><h2 id="dlg-title"></h2><div id="dlg-extra" class="buybox hidden"></div><p id="dlg-msg"></p><div class="actions" id="dlg-actions"></div></div>
+</div>
+
+<!-- WORD HINT: clue popup (opened from the lightbulb) -->
+<div id="clue" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="clue-title">
+  <div class="card clue">
+    <button id="clue-x" class="x" aria-label="Close hint">✕</button>
+    <div class="clue-bulb mini-tile t-word" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></div>
+    <h2 id="clue-title">Word Hint</h2>
+    <p id="clue-count" class="clue-count"></p>
+    <div id="clue-main" class="clue-main" aria-live="polite"></div>
+    <div id="clue-prev" class="clue-prev"></div>
+    <button id="clue-close" class="primary big" type="button">Back to the game</button>
+  </div>
 </div>
 
 <script src="js/version.js"></script>
@@ -360,6 +414,7 @@
 <script src="js/config.js"></script>
 <script src="js/ns.js"></script>
 <script src="js/words.js"></script>
+<script src="js/clues.js"></script>
 <script src="js/store.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/auth.js"></script>
