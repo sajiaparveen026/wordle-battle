@@ -20,6 +20,7 @@
   --tw1:#FFE066; --tw2:#F5A800; --tw3:#9A6500;
   --ts1:#4A4A52; --ts2:#2B2B30; --ts3:#121214;
   --badge-red:#D62828; --badge-grey:#6B6B73;
+  --tg1:#5EE0A0; --tg2:#1FA971; --tg3:#12714A;
   --pill-r:#7A3E00; --pill-m:#471671; --pill-w:#7A5400; --pill-s:#151518;
   /* control-icon artwork (gold metal + steel) */
   --ico-hi:#FFE680;--ico-mid:#FACC15;--ico-lo:#B8860B;--ico-glow:#FFF3B0;--ico-st-hi:#D9D9DE;--ico-st-lo:#6B6B73;--ctl-shadow:rgba(0,0,0,.4);--glow-lo:rgba(250,204,21,.45);--glow-hi:rgba(255,224,102,.95)
@@ -654,3 +655,17 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 .free-next b{color:var(--text);font-size:1.05rem}
 .free-next span{color:var(--gold);font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums}
 .card.free .primary.big{margin-top:2px;min-height:48px}
+
+/* ===== Shop: small boxes (icon, name, price, button), 3 per row ===== */
+.t-gift{--t1:var(--tg1);--t2:var(--tg2);--t3:var(--tg3)}
+.mini-tile i{font-style:normal;font-size:1.7rem;line-height:1}
+.shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.shop-grid .gcard{flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:6px;padding:12px 8px 10px;min-width:0}
+.shop-grid .gcard:hover{transform:translateY(-2px)}
+.shop-grid .gcard .mini-tile{width:50px;height:50px;margin:0 0 2px;border-radius:15px}
+.shop-grid .gcard h3{margin:0;font-size:.8rem;line-height:1.2;min-height:2.4em;padding:0 2px;display:flex;align-items:center;justify-content:center;overflow-wrap:anywhere}
+.shop-grid .gcard .price{margin:0;font-size:1rem;font-weight:800;color:var(--gold)}
+.shop-grid .gcard .primary{width:100%;padding:9px 4px;font-size:.92rem;min-height:40px}
+.shop-grid .gcard .primary.claimed,.shop-grid .gcard .primary.claimed:disabled{background:var(--panel-2);color:var(--muted);border:1px solid var(--line);box-shadow:none;opacity:1;cursor:default}
+.shop-grid .shop-next{color:var(--muted);font-size:.68rem;line-height:1.2}
+@media (max-width:340px){.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

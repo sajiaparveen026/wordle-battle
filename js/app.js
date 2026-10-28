@@ -170,28 +170,29 @@ function renderSettings() {
 }
 function applySettings() { document.documentElement.dataset.theme = settings.theme; document.documentElement.dataset.motion = reduced() ? "reduced" : "full"; save("settings", settings); }
 
-// ---------- Hint shop ----------
+// ---------- Shop ----------  (the items come from SHOP_ITEMS in store.js)
+function shopCard(it) {
+  if (it.kind === "free") return `<article class="gcard free-box"><span class="mini-tile t-gift" aria-hidden="true"><i>🎁</i></span><h3>${it.name}</h3><p class="price">+${FREE_COINS.amount} 🪙</p><button class="primary" type="button" data-free-shop>Claim</button><small class="shop-next" data-free-next></small></article>`;
+  return `<article class="gcard"><span class="mini-tile ${it.tile}" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-${it.icon}"/></svg></span><h3>${it.name}</h3><p class="price">${it.price} 🪙</p><button class="primary" type="button" data-buy="${it.id}">Buy</button></article>`;
+}
 function renderShop() {
-  $("#shop-cards").innerHTML = Object.entries(HINTS).map(([t, h]) => {
-    const n = Player.data.hints[t];
-    return `<article class="gcard"><span class="mini-tile t-${t}" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-${ICONS[t]}"/></svg></span><div><h3>${h.name}</h3><p>${h.desc}</p><p><b>${h.cost} 🪙 per use</b> · You have ${n.free + n.credits}</p></div><button class="primary" data-buy="${t}">Buy</button></article>`;
-  }).join("");
-  refreshCoins();
+  $("#shop-cards").innerHTML = SHOP_ITEMS.map(shopCard).join("");
+  refreshCoins(); if (window.FreeCoins) window.FreeCoins.syncShop();
 }
 async function needCoins(cost) {
   const missing = cost - Player.data.coins;
   const pick = await dialog("Not enough coins", `You need ${missing} more coin${missing === 1 ? "" : "s"}. Win games to earn coins: ${REWARDS.practice.coins} for a solo win, ${REWARDS.daily.coins} for the daily challenge.`, ["Dashboard", "Earn coins"]);
   if (pick === 0) show("dashboard"); else openGame("practice", true);
 }
-async function buyHint(type) {
+async function buyItem(id) {                              // one purchase at a time; the price is checked again at the moment of payment
   if (spendLock) return; spendLock = true;
   try {
-    const h = HINTS[type];
-    if (Player.data.coins < h.cost) return needCoins(h.cost);
-    if (!(await confirmSpend("Buy hint", `Buy 1 "${h.name}" for ${h.cost} coins?`, h.cost, ICONS[type]))) return;
-    if (!Player.spend(h.cost)) return toast("Not enough coins", "error"); // re-checked at the moment of payment
-    Player.addHintCredit(type); sfx.coin();
-    toast(`Bought: ${h.name}`, "success"); renderShop(); updateHintButtons();
+    const it = SHOP_ITEMS.find((i) => i.id === id); if (!it || it.kind === "free") return;
+    if (Player.data.coins < it.price) return needCoins(it.price);
+    if (!(await confirmSpend("Buy", `Buy 1 "${it.name}" for ${it.price} coins?`, it.price, it.icon))) return;
+    if (!Player.spend(it.price)) return toast("Not enough coins", "error");
+    if (it.kind === "hint") Player.addHintCredit(it.type); else if (it.kind === "skip") Player.addSkipCredit();
+    sfx.coin(); toast(`Bought: ${it.name}`, "success"); renderShop(); updateHintButtons();   // updateHintButtons also refreshes every coin counter
   } finally { spendLock = false; }
 }
 
@@ -302,8 +303,9 @@ function submitMsg(text) { // inline message next to the Submit button
   const el = $("#submit-msg"); clearTimeout(submitMsg.t); el.textContent = text ? "⚠ " + text : "";
   if (text) submitMsg.t = setTimeout(() => (el.textContent = ""), 3000);
 }
+const skipsLeft = () => Player.data.skips.free + (Player.data.skips.credits || 0);
 function updateSkipButton() {
-  const b = $("#btn-skip"), s = Player.data.skips.free, off = mode === "daily" || status !== "playing";
+  const b = $("#btn-skip"), s = skipsLeft(), off = mode === "daily" || status !== "playing";
   const label = s > 0 ? "" : `🪙 ${SKIP.cost}`, say = s > 0 ? `${s} free skip${s === 1 ? "" : "s"} left` : `costs ${SKIP.cost} coins`;
   b.querySelector("small").textContent = label; setCount(b, s); b.setAttribute("aria-label", `Skip word, ${say}`); b.title = `Skip word (${say})`;
   b.classList.toggle("paid", s <= 0); b.classList.toggle("off", off); b.setAttribute("aria-disabled", off ? "true" : "false");
@@ -314,9 +316,9 @@ async function skipWord() {
   if (status !== "playing") return;
   spendLock = true;
   try {
-    const free = Player.data.skips.free > 0, gid = gameId;
+    const free = skipsLeft() > 0, gid = gameId;
     if (free) {
-      if (!(await confirmBox("Skip this word?", `You have ${Player.data.skips.free} free skip${Player.data.skips.free === 1 ? "" : "s"} left. This word is replaced with a new one. No reward, no penalty.`, "Skip"))) return;
+      if (!(await confirmBox("Skip this word?", `You have ${skipsLeft()} skip${skipsLeft() === 1 ? "" : "s"} left. This word is replaced with a new one. No reward, no penalty.`, "Skip"))) return;
     } else {
       if (Player.data.coins < SKIP.cost) return needCoins(SKIP.cost);
       if (!(await confirmSpend("Skip this word", `Use ${SKIP.cost} coins to skip this word?`, SKIP.cost, ICONS.skip))) return;
@@ -324,7 +326,7 @@ async function skipWord() {
     if (status !== "playing" || gameId !== gid || mode !== "practice") return; // the game changed while the dialog was open
     if (free) { if (!Player.consumeSkip()) return; } else if (!Player.spend(SKIP.cost)) return;
     startGame(true); sfx.coin();
-    const left = Player.data.skips.free; toast(free ? `Word skipped. ${left} free skip${left === 1 ? "" : "s"} left.` : `Word skipped for ${SKIP.cost} coins.`, "success");
+    const left = skipsLeft(); toast(free ? `Word skipped. ${left} skip${left === 1 ? "" : "s"} left.` : `Word skipped for ${SKIP.cost} coins.`, "success");
   } finally { spendLock = false; }
 }
 $("#btn-skip").onclick = skipWord;
@@ -557,7 +559,7 @@ document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-go],[data-buy],[data-back],[data-av],[data-hint]");
   if (!t) return;
   if (t.dataset.go) go(t.dataset.go);
-  else if (t.dataset.buy) buyHint(t.dataset.buy);
+  else if (t.dataset.buy) buyItem(t.dataset.buy);
   else if (t.dataset.back !== undefined) show("dashboard"); // every Back button returns to the dashboard
   else if (t.dataset.av) { Player.data.avatar = t.dataset.av; Player.save(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(t.dataset.av); renderSettings(); }
   else if (t.dataset.hint) useHint(t.dataset.hint);

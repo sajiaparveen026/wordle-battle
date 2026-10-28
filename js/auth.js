@@ -230,7 +230,7 @@
     if (Array.isArray(r.dist) && r.dist.length === 6) P.dist = r.dist.map((x) => n(x, 0));
     if (Array.isArray(r.rewarded)) P.rewarded = r.rewarded.filter((x) => typeof x === "string").slice(-300);
     if (Array.isArray(r.recent)) P.recent = r.recent.filter((x) => x === "W" || x === "L").slice(-5);
-    if (r.skips && typeof r.skips === "object") P.skips = { free: n(r.skips.free, P.skips.free) };
+    if (r.skips && typeof r.skips === "object") P.skips = { free: n(r.skips.free, P.skips.free), credits: n(r.skips.credits, P.skips.credits || 0) };
     if (r.hints && r.hints.reveal && r.hints.remove) {
       const w = r.hints.word && typeof r.hints.word === "object" ? r.hints.word : P.hints.word; // older cloud saves have no word hints yet: keep the local count
       P.hints = { reveal: { free: n(r.hints.reveal.free, 0), credits: n(r.hints.reveal.credits, 0) }, remove: { free: n(r.hints.remove.free, 0), credits: n(r.hints.remove.credits, 0) }, word: { free: n(w.free, 0), credits: n(w.credits, 0) } };
@@ -313,9 +313,9 @@
     if (!sb || !isAccount() || !user || user.offline) return { error: "offline" };
     try { const r = await sb.rpc("free_coins_status"); return r.error ? { error: "server" } : (r.data || {}); } catch { return { error: "offline" }; }
   }
-  async function freeCoinsClaim(day) {
+  async function freeCoinsClaim(day, place) {
     if (!sb || !isAccount() || !user || user.offline) return { error: "offline" };
-    try { const r = await sb.rpc("claim_free_coins", { p_day: day }); return r.error ? { error: "server" } : (r.data || { error: "server" }); } catch { return { error: "offline" }; }
+    try { const r = await sb.rpc("claim_free_coins", { p_day: day, p_place: place }); return r.error ? { error: "server" } : (r.data || { error: "server" }); } catch { return { error: "offline" }; }
   }
   const whenReady = () => Promise.race([readyP, new Promise((r) => setTimeout(r, 6000))]);
 

@@ -61,7 +61,7 @@
     <div class="logo sm">Wordle <span>Battle</span></div>
     <div class="head-right">
       <button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button>
-      <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
+      <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
       <button id="go-settings" class="icon" aria-label="Settings">⚙️</button>
     </div>
   </header>
@@ -94,7 +94,7 @@
     </div>
     <div class="winscore" role="status" aria-label="Wins" title="Total wins"><span class="sc-l">Score</span><b class="win-val">0</b></div>
     <div class="gright">
-      <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
+      <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
     </div>
   </header>
   <h1 id="g-title" class="sr-only"></h1><p id="attempts" class="sr-only" aria-live="polite"></p>
@@ -116,8 +116,8 @@
 
 <!-- SHOP -->
 <section id="shop" class="screen hidden">
-  <header class="top"><button class="icon" data-back>← Back</button><b>Hint Shop</b><div class="head-right"><button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><div class="coins">🪙 <b class="coin-val"></b></div></div></header>
-  <div class="cards" id="shop-cards"></div>
+  <header class="top"><button class="icon" data-back>← Back</button><b>Shop</b><div class="head-right"><button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><div class="coins">🪙 <b class="coin-val"></b></div></div></header>
+  <div class="cards shop-grid" id="shop-cards"></div>
 </section>
 
 <!-- BATTLE -->
@@ -372,7 +372,7 @@
         <div class="hcard"><span class="mini-tile t-reveal" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-reveal"/></svg></span><div><b>Reveal a Letter</b><small>Shows one correct letter in its right spot</small></div><span id="tut-h1" class="badge"></span></div>
         <div class="hcard"><span class="mini-tile t-remove" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-remove"/></svg></span><div><b>Remove Wrong Letters</b><small>Greys out letters that are not in the word</small></div><span id="tut-h2" class="badge"></span></div>
         <div class="hcard"><span class="mini-tile t-word" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></span><div><b>Word Hint</b><small>A clue about the word: meaning, category or fun fact</small></div><span id="tut-h3" class="badge"></span></div>
-        <p class="fine">Each hint button shows how many free uses are left. Earn coins by winning games to buy more in the Hint Shop.</p>
+        <p class="fine">Each hint button shows how many free uses are left. Earn coins by winning games to buy more in the Shop.</p>
       </section>
       <section class="slide" aria-hidden="true">
         <div class="tut-emoji" aria-hidden="true">🏆</div>
@@ -403,7 +403,7 @@
     <div id="free-ico" class="free-ico" aria-hidden="true">🎁</div>
     <h2 id="free-title">Free Coins</h2>
     <p id="free-msg" class="free-msg"></p>
-    <div id="free-amount" class="free-amount" aria-hidden="true">+50 🪙</div>
+    <div id="free-amount" class="free-amount" aria-hidden="true"></div>
     <div id="free-next" class="free-next hidden"><small>Next free coins</small><b id="free-when"></b><span id="free-count" role="timer" aria-live="off"></span></div>
     <button id="free-btn" class="primary big" type="button"></button>
   </div>

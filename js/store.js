@@ -1,11 +1,23 @@
 // Player store: coins, XP, hint credits, reward history. Saved in localStorage (local demo).
 // NOTE: for online battles, rewards must be granted by the server, never by this file.
+// ONE price table: the Shop price and the in-game price of every item come from here, so they always match.
+const PRICES = { reveal: 25, remove: 25, word: 10, skip: 30 };
 const HINTS = {
-  reveal: { cost: 50, icon: "🔍", name: "Reveal a Letter", verb: "reveal a letter", desc: "Shows one correct letter in its correct position." },
-  remove: { cost: 40, icon: "🚫", name: "Remove Wrong Letters", verb: "remove wrong letters", desc: "Disables keys for letters that are not in the word." },
-  word: { cost: 30, icon: "💡", name: "Word Hint", verb: "get a word hint", desc: "A clue about the secret word: its meaning, a related word, a category or a fun fact.", free: 5 }
+  reveal: { cost: PRICES.reveal, icon: "🔍", name: "Reveal Letter", verb: "reveal a letter", desc: "Shows one correct letter in its correct position." },
+  remove: { cost: PRICES.remove, icon: "🚫", name: "Remove Wrong Letters", verb: "remove wrong letters", desc: "Disables keys for letters that are not in the word." },
+  word: { cost: PRICES.word, icon: "💡", name: "Hint", verb: "get a hint", desc: "A clue about the secret word: its meaning, a related word, a category or a fun fact.", free: 5 }
 };
-const SKIP = { free: 3, cost: 30 }; // skips: 3 free, then coins. A skip costs as much as a solo win pays (30), so skipping can never make coins.
+const SKIP = { free: 3, cost: PRICES.skip }; // skips: 3 free, then coins. A skip costs as much as a solo win pays (30), so skipping can never make coins.
+const FREE_COINS = { amount: 25, places: ["game", "shop"] }; // free coins: once a day from the game screen AND once a day from the shop (separate limits)
+// SHOP CATALOGUE: to sell something new, add one entry here (and, for a new kind, one line in buyItem() in app.js).
+//   kind "hint": buying adds one use of HINTS[type] | kind "skip": adds one skip | kind "free": the daily free-coins box
+const SHOP_ITEMS = [
+  { id: "free", kind: "free", name: "Free Coins" },
+  { id: "reveal", kind: "hint", type: "reveal", name: HINTS.reveal.name, price: PRICES.reveal, icon: "reveal", tile: "t-reveal" },
+  { id: "remove", kind: "hint", type: "remove", name: HINTS.remove.name, price: PRICES.remove, icon: "remove", tile: "t-remove" },
+  { id: "skip", kind: "skip", name: "Skip", price: PRICES.skip, icon: "skip", tile: "t-skip" },
+  { id: "word", kind: "hint", type: "word", name: HINTS.word.name, price: PRICES.word, icon: "bulb", tile: "t-word" }
+];
 const REWARDS = { practice: { coins: 30, xp: 30 }, daily: { coins: 50, xp: 60 } }; // coins per win: 30 solo, 50 daily (each game id pays once)
 
 const Player = (() => {
@@ -14,12 +26,13 @@ const Player = (() => {
     username: "Player" + Math.floor(1000 + Math.random() * 9000), avatar: "🦊",
     coins: 100, xp: 0, wins: 0, losses: 0,
     hints: { reveal: { free: 2, credits: 0 }, remove: { free: 2, credits: 0 }, word: { free: HINTS.word.free, credits: 0 } },
-    skips: { free: SKIP.free },
+    skips: { free: SKIP.free, credits: 0 },
     rewarded: [], recent: []
   });
   let p;
   try { p = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { p = fresh(); }
-  if (!p.skips || typeof p.skips.free !== "number") p.skips = { free: SKIP.free }; // older saves get the default 3 free skips
+  if (!p.skips || typeof p.skips.free !== "number") p.skips = { free: SKIP.free, credits: 0 }; // older saves get the default 3 free skips
+  if (typeof p.skips.credits !== "number" || p.skips.credits < 0) p.skips.credits = 0;            // skips bought in the shop
   if (!p.hints || typeof p.hints !== "object") p.hints = fresh().hints;
   if (!p.hints.word || typeof p.hints.word.free !== "number") p.hints.word = { free: HINTS.word.free, credits: 0 }; // older saves get the 5 free word hints
   const save = (quiet) => { localStorage.setItem(KEY, JSON.stringify(p)); if (quiet !== true) window.dispatchEvent(new Event("wb:save")); }; // quiet=true: no cloud sync
@@ -47,7 +60,8 @@ const Player = (() => {
       return null;
     },
     addCoins(n) { if (!Number.isInteger(n) || n <= 0 || n > 1000) return false; p.coins += n; save(); return true; }, // used by the daily free-coins claim
-    consumeSkip() { if (p.skips.free > 0) { p.skips.free--; save(); return true; } return false; },
+    consumeSkip() { if (p.skips.free > 0) { p.skips.free--; save(); return true; } if (p.skips.credits > 0) { p.skips.credits--; save(); return true; } return false; }, // free skips first, then bought ones
+    addSkipCredit() { p.skips.credits++; save(); },
     addHintCredit(type) { p.hints[type].credits++; save(); },
     // Each game id can be rewarded or counted only once.
     reward(gameId, kind, tries) {
