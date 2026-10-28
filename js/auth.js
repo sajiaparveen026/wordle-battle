@@ -308,6 +308,15 @@
     if (!isAccount() || !user || user.offline) return;
     try { await sb.from("profiles").update({ tutorial_completed_at: new Date().toISOString() }).eq("id", user.id); } catch {}
   }
+  // ---------- free daily coins: the server decides, the app only asks ----------
+  async function freeCoinsStatus() {
+    if (!sb || !isAccount() || !user || user.offline) return { error: "offline" };
+    try { const r = await sb.rpc("free_coins_status"); return r.error ? { error: "server" } : (r.data || {}); } catch { return { error: "offline" }; }
+  }
+  async function freeCoinsClaim(day) {
+    if (!sb || !isAccount() || !user || user.offline) return { error: "offline" };
+    try { const r = await sb.rpc("claim_free_coins", { p_day: day }); return r.error ? { error: "server" } : (r.data || { error: "server" }); } catch { return { error: "offline" }; }
+  }
   const whenReady = () => Promise.race([readyP, new Promise((r) => setTimeout(r, 6000))]);
 
   // ---------- account UI ----------
@@ -346,5 +355,5 @@
     const reset = $("#s-reset"); if (reset) reset.classList.toggle("hidden", acct); // never offer to wipe a cloud-synced account
   }
 
-  window.Auth = { enabled, route, renderAccount, isAccount, setUsername, setAvatar, logout, whenReady, setTutorialDone };
+  window.Auth = { enabled, route, renderAccount, isAccount, setUsername, setAvatar, logout, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
 })();

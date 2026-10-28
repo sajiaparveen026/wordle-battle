@@ -46,6 +46,7 @@ const Player = (() => {
       if (h.credits > 0) { h.credits--; save(); return "credit"; }
       return null;
     },
+    addCoins(n) { if (!Number.isInteger(n) || n <= 0 || n > 1000) return false; p.coins += n; save(); return true; }, // used by the daily free-coins claim
     consumeSkip() { if (p.skips.free > 0) { p.skips.free--; save(); return true; } return false; },
     addHintCredit(type) { p.hints[type].credits++; save(); },
     // Each game id can be rewarded or counted only once.

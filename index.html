@@ -61,7 +61,7 @@
     <div class="logo sm">Wordle <span>Battle</span></div>
     <div class="head-right">
       <button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button>
-      <button class="coins" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b><span class="plus">+</span></button>
+      <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
       <button id="go-settings" class="icon" aria-label="Settings">⚙️</button>
     </div>
   </header>
@@ -94,7 +94,7 @@
     </div>
     <div class="winscore" role="status" aria-label="Wins" title="Total wins"><span class="sc-l">Score</span><b class="win-val">0</b></div>
     <div class="gright">
-      <button class="coins" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b><span class="plus">+</span></button>
+      <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open hint shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
     </div>
   </header>
   <h1 id="g-title" class="sr-only"></h1><p id="attempts" class="sr-only" aria-live="polite"></p>
@@ -396,6 +396,19 @@
   <div class="card"><h2 id="dlg-title"></h2><div id="dlg-extra" class="buybox hidden"></div><p id="dlg-msg"></p><div class="actions" id="dlg-actions"></div></div>
 </div>
 
+<!-- FREE COINS: claim popup (opened from the + next to the coins) -->
+<div id="free" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="free-title">
+  <div class="card free">
+    <button id="free-x" class="x" aria-label="Close">✕</button>
+    <div id="free-ico" class="free-ico" aria-hidden="true">🎁</div>
+    <h2 id="free-title">Free Coins</h2>
+    <p id="free-msg" class="free-msg"></p>
+    <div id="free-amount" class="free-amount" aria-hidden="true">+50 🪙</div>
+    <div id="free-next" class="free-next hidden"><small>Next free coins</small><b id="free-when"></b><span id="free-count" role="timer" aria-live="off"></span></div>
+    <button id="free-btn" class="primary big" type="button"></button>
+  </div>
+</div>
+
 <!-- WORD HINT: clue popup (opened from the lightbulb) -->
 <div id="clue" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="clue-title">
   <div class="card clue">
@@ -420,6 +433,7 @@
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 <script src="js/tutorial.js"></script>
+<script src="js/freecoins.js"></script>
 <script src="js/pwa.js"></script>
 </body>
 </html>

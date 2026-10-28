@@ -636,3 +636,21 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 #game .gtop{position:relative}
 #game .winscore{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:0}
 #game .gleft{display:flex;align-items:center;gap:8px}
+
+/* ===== Free daily coins: the + is its own button; popup ===== */
+.coins .coins-main{display:flex;align-items:center;gap:6px;background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;cursor:pointer}
+.coins .plus{position:relative;border:0;padding:0;cursor:pointer;font:inherit;font-weight:700}
+.coins .plus::before{content:"";position:absolute;inset:-9px}                 /* bigger tap area, same look */
+.coins .plus.has-free::after{content:"";position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--badge-red);border:2px solid var(--bg)}
+.coins:hover,.coins:active{transform:none}
+.card.free{max-width:380px;text-align:center;border-color:var(--gold);padding:24px 20px 18px;box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 28%,transparent),0 18px 50px rgba(0,0,0,.5),0 0 40px color-mix(in srgb,var(--gold) 18%,transparent);animation:popin .35s cubic-bezier(.2,.9,.3,1.15)}
+.free-ico{font-size:3.2rem;line-height:1;margin-bottom:6px}
+.card.free h2{margin:0 0 6px}
+.card .free-msg{margin:0 0 12px;font-size:1rem;line-height:1.4;color:var(--text)}
+.free-amount{display:inline-block;margin:2px 0 12px;padding:8px 22px;border-radius:999px;font-size:1.7rem;font-weight:800;color:var(--gold);background:var(--panel-2);border:1px solid var(--gold-dim)}
+.free-amount.hidden,.free-next.hidden{display:none}
+.free-next{display:grid;gap:2px;margin:4px 0 14px;padding:12px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line)}
+.free-next small{color:var(--muted);font-size:.78rem;letter-spacing:.6px;text-transform:uppercase;font-weight:700}
+.free-next b{color:var(--text);font-size:1.05rem}
+.free-next span{color:var(--gold);font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.card.free .primary.big{margin-top:2px;min-height:48px}
