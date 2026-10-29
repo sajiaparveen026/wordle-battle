@@ -44,6 +44,15 @@
       <rect x="11.8" y="25.4" width="8.4" height="2.4" rx="1.2" fill="url(#gBase)"/>
       <path d="M13.6 28.2h4.8l-.9 1.8h-3z" fill="url(#gBase)"/>
     </symbol>
+    <symbol id="p-gamepad" viewBox="0 0 24 24"><path d="M7 8.5h10a4 4 0 0 1 4 4v1.2a3 3 0 0 1-5.3 1.9L14 14h-4l-1.7 1.6A3 3 0 0 1 3 13.7v-1.2a4 4 0 0 1 4-4z"/><path d="M8 11v3M6.5 12.5h3"/><path d="M15.6 11.6h.01M17.8 13h.01" stroke-width="2.4"/></symbol>
+    <symbol id="p-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v2a3 3 0 0 0 3 3M16 6h3v2a3 3 0 0 1-3 3M12 13v4M9 20h6M10 17h4v3h-4z"/></symbol>
+    <symbol id="p-bars" viewBox="0 0 24 24"><path d="M6 20v-5M12 20V10M18 20V5" stroke-width="3"/></symbol>
+    <symbol id="p-flame" viewBox="0 0 24 24"><path d="M12 3c.6 3 5 5 5 10a5 5 0 0 1-10 0c0-1.8.9-3 2-4 .2 1.8 1 2.6 2 2.8C10.6 9 11 6 12 3z"/></symbol>
+    <symbol id="p-cal" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01" stroke-width="2.4"/></symbol>
+    <symbol id="p-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="p-edit" viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></symbol>
+    <symbol id="p-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="p-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V19a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H5a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1A2 2 0 1 1 9 4.4l.1.1a1.6 1.6 0 0 0 1.8.3h.1a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1A2 2 0 1 1 20 7.4l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></symbol>
   </defs>
 </svg>
 
@@ -233,20 +242,52 @@
 </section>
 
 <!-- SETTINGS -->
+<section id="profile" class="screen hidden">
+  <header class="top pf-top"><button class="icon" data-back aria-label="Back">←</button><b>Profile</b><button class="icon" id="pf-settings" type="button" aria-label="Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-gear"/></svg></button></header>
+
+  <div class="pf-card pf-head">
+    <div class="avatar-wrap"><div class="avatar pf-avatar" id="pf-avatar"></div><span class="lvbadge" id="pf-badge"></span></div>
+    <div class="pf-info">
+      <div class="pf-namerow"><b id="pf-name"></b><button class="pf-edit" id="pf-edit" type="button" aria-label="Edit profile"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-edit"/></svg></button><span class="acctbadge" id="p-acct"></span></div>
+      <span class="pf-level" id="pf-level"></span>
+      <div class="xp" role="progressbar" aria-label="XP progress"><i id="pf-xp"></i></div>
+      <small id="pf-xptext"></small>
+      <small id="pf-meta" class="pf-meta"></small>
+    </div>
+  </div>
+
+  <div class="pf-stats" id="pf-stats">
+    <div class="pf-stat"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-gamepad"/></svg><b id="pf-played">0</b><small>Games Played</small></div>
+    <div class="pf-stat"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-trophy"/></svg><b id="pf-won">0</b><small>Games Won</small></div>
+    <div class="pf-stat"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-bars"/></svg><b id="pf-rate">—</b><small>Win Rate</small></div>
+    <div class="pf-stat"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-flame"/></svg><b id="pf-wstreak">0</b><small>Win Streak</small></div>
+  </div>
+
+  <button class="pf-card pf-daily" type="button" data-go="daily" aria-label="Daily Challenge">
+    <span class="pf-tile"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-cal"/></svg></span>
+    <span class="pf-daily-txt"><b>Daily Challenge</b><small id="pf-daily-sub"><span id="pf-dbest"></span><span id="pf-ddone"></span></small></span>
+    <span class="pf-daily-streak"><span id="pf-dstreak"></span><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></span>
+  </button>
+
+  <section class="pf-card pf-ach" aria-labelledby="pf-ach-t">
+    <div class="pf-sechead"><span class="pf-tile"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-trophy"/></svg></span><b id="pf-ach-t">Achievements</b></div>
+    <div class="pf-empty">
+      <svg class="pf-trophy" viewBox="0 0 120 90" aria-hidden="true" focusable="false"><path d="M44 18h32v22a16 16 0 0 1-32 0V18z"/><path d="M44 24H30v8a12 12 0 0 0 12 12M76 24h14v8a12 12 0 0 1-12 12M60 56v14M48 74h24M52 70h16v4H52z"/><path d="M60 26l2.6 5.2 5.4.8-3.9 3.8.9 5.4-5-2.6-5 2.6.9-5.4-3.9-3.8 5.4-.8z" class="pf-star"/><path d="M20 28v8M16 32h8M100 20v8M96 24h8M96 60v6M93 63h6" class="pf-spark"/></svg>
+      <b>No Achievements Earned Yet</b>
+      <p>Keep playing Wordle Battle to unlock achievements in the future!</p>
+    </div>
+  </section>
+
+  <section class="pf-card pf-recent" aria-labelledby="pf-rec-t">
+    <div class="pf-sechead"><span class="pf-tile"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-clock"/></svg></span><b id="pf-rec-t">Recent Games</b><button class="pf-viewall hidden" id="pf-viewall" type="button" aria-expanded="false">View All</button></div>
+    <ul class="pf-games" id="pf-games"></ul>
+  </section>
+</section>
+
 <section id="settings" class="screen hidden">
-  <header class="top"><button class="icon" data-back>← Back</button><b>Profile</b><span></span></header>
-  <div class="player big-profile">
-    <div class="avatar-wrap"><div class="avatar" id="p-avatar"></div><span class="lvbadge" id="p-badge"></span></div>
-    <div class="pinfo"><b id="p-name"></b> <span class="acctbadge" id="p-acct"></span><small id="p-level"></small><div class="xp"><i id="p-xp"></i></div><div class="mini" id="p-stats"></div></div>
-  </div>
-  <div class="grid2">
-    <div class="panel"><h4>Daily streak</h4><div class="big" id="p-streak"></div><small id="p-streak-note"></small></div>
-    <div class="panel"><h4>Recent games</h4><div class="big" id="p-record"></div><div id="p-recent" class="chips"></div></div>
-  </div>
+  <header class="top"><button class="icon" data-back>← Back</button><b>Settings</b><span></span></header>
   <div class="panel" id="acct"></div>
   <div class="panel">
-    <h4>Username</h4><input id="s-name" maxlength="16" autocomplete="off">
-    <h4>Avatar</h4><div id="s-avatars" class="avatars"></div>
     <h4>Preferences</h4>
     <div class="actions"><button class="primary alt" id="s-theme"></button><button class="primary alt" id="s-sound"></button><button class="primary alt" id="s-motion"></button></div>
     <h4>Help</h4>
@@ -260,6 +301,12 @@
 </section>
 
 <div id="update-bar" class="hidden" role="status"><span id="update-text">A new version is available.</span><button id="update-btn" class="primary">Update App</button><button id="update-x" class="ic-x" type="button" aria-label="Dismiss update notice">✕</button></div>
+<div id="edit-profile" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ep-title">
+  <div class="card"><button id="ep-x" class="x" aria-label="Close">✕</button><h2 id="ep-title">Edit profile</h2>
+    <h4>Username</h4><input id="s-name" maxlength="16" autocomplete="off">
+    <h4>Avatar</h4><div id="s-avatars" class="avatars"></div>
+    <div class="actions"><button id="ep-done" class="primary" type="button">Done</button></div></div>
+</div>
 <div id="install-help" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ih-title">
   <div class="card"><button id="ih-x" class="x" aria-label="Close">✕</button><h2 id="ih-title">📲 Install Wordle Battle</h2><p>Your browser didn't offer the one-tap install, so do this:</p><ol id="ih-steps" class="ih-steps"></ol><div class="actions"><button id="ih-ok" class="primary" type="button">Got it</button></div></div>
 </div>
@@ -270,7 +317,7 @@
   <button data-nav="play"><i>🎮</i><span>Play</span></button>
   <button data-nav="leaderboard"><i>🏆</i><span>Leaderboard</span></button>
   <button data-nav="shop"><i>🛒</i><span>Shop</span></button>
-  <button data-nav="settings"><i>👤</i><span>Profile</span></button>
+  <button data-nav="profile"><i>👤</i><span>Profile</span></button>
 </nav>
 
 <div id="toast" role="status" aria-live="polite"></div>

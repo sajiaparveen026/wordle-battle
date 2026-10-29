@@ -238,7 +238,7 @@
   const metaKey = () => "wb_sync_" + user.id;
   const loadMeta = () => { try { return JSON.parse(localStorage.getItem("wb_sync_" + window.WB_NS)) || { rev: 0, dirty: false }; } catch { return { rev: 0, dirty: false }; } };
   const saveMeta = () => localStorage.setItem(metaKey(), JSON.stringify(meta));
-  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses"];
+  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt"];
   const snapshot = () => { const P = Player.data, player = {}; KEYS.forEach((k) => (player[k] = P[k])); return { v: 1, player, stats: window.WBApp.getStats() }; };
   function applySnapshot(s) { // sanitise before trusting remote/guest data in the local store
     if (!s || typeof s.player !== "object") return;
@@ -248,6 +248,9 @@
     P.bestGuesses = r.bestGuesses === null ? null : n(r.bestGuesses, P.bestGuesses);
     if (Array.isArray(r.dist) && r.dist.length === 6) P.dist = r.dist.map((x) => n(x, 0));
     if (Array.isArray(r.rewarded)) P.rewarded = r.rewarded.filter((x) => typeof x === "string").slice(-300);
+    if (Array.isArray(r.history)) P.history = r.history.filter((h) => h && typeof h.id === "string" && (h.mode === "practice" || h.mode === "daily") && typeof h.won === "boolean" && Number.isInteger(h.tries) && h.tries >= 1 && h.tries <= 6 && typeof h.at === "string" && !isNaN(Date.parse(h.at)))
+      .map((h) => ({ id: h.id.slice(0, 60), mode: h.mode, won: h.won, tries: h.tries, at: h.at })).slice(-50);   // older cloud saves have none: keep the local list
+    if (typeof r.joinedAt === "string" && !isNaN(Date.parse(r.joinedAt)) && Date.parse(r.joinedAt) < Date.parse(P.joinedAt)) P.joinedAt = r.joinedAt; // keep the earliest date
     if (Array.isArray(r.recent)) P.recent = r.recent.filter((x) => x === "W" || x === "L").slice(-5);
     if (r.skips && typeof r.skips === "object") P.skips = { free: n(r.skips.free, P.skips.free), credits: n(r.skips.credits, P.skips.credits || 0) };
     if (r.hints && r.hints.reveal && r.hints.remove) {
@@ -356,6 +359,12 @@
   }
   document.addEventListener("click", (e) => { if (e.target.closest("#btn-logout")) logout(); });
 
+  // Profile screen: the short player ID and join date of a signed-in account (guests have neither).
+  function profileMeta() {
+    if (!isAccount() || !user || !user.id) return {};
+    const raw = String(user.id).replace(/-/g, "");
+    return { id: raw ? "WB" + raw.slice(0, 6).toUpperCase() : null, joined: user.created_at || null };
+  }
   function renderAccount() {
     const acct = isAccount();
     $$("#d-acct,#p-acct").forEach((b) => { b.textContent = acct ? "" : "Guest"; b.classList.toggle("hidden", acct); });
@@ -374,5 +383,5 @@
     const reset = $("#s-reset"); if (reset) reset.classList.toggle("hidden", acct); // never offer to wipe a cloud-synced account
   }
 
-  window.Auth = { enabled, route, restoreSignupDraft, renderAccount, isAccount, setUsername, setAvatar, logout, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
+  window.Auth = { enabled, route, restoreSignupDraft, profileMeta, renderAccount, isAccount, setUsername, setAvatar, logout, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
 })();

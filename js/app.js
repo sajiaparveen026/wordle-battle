@@ -121,7 +121,7 @@ function show(name, fromHistory) {
   $$(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== name));
   const el = $("#" + name); el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
   $("#bottomnav").classList.toggle("hidden", name === "game" || AUTH_SCREENS.includes(name));
-  const navMap = { game: "play", battle: "play" };
+  const navMap = { game: "play", battle: "play", settings: "profile" };
   $$("#bottomnav [data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === (navMap[name] || name)));
   if (name === "leaderboard") renderLeaderboard();
   if (name === "dashboard") renderDashboard();
@@ -130,6 +130,7 @@ function show(name, fromHistory) {
   if (name === "signup" && window.Auth && Auth.restoreSignupDraft) Auth.restoreSignupDraft(); // typed email / username come back (never passwords)
   if (name === "shop") renderShop();
   if (name === "settings") renderSettings();
+  if (name === "profile") renderProfile();
   window.scrollTo(0, 0);
 }
 function go(target) {
@@ -167,20 +168,49 @@ function renderLeaderboard() {
 }
 function renderSettings() {
   if (window.PWA) PWA.renderAbout();
-  const pp = Player.data, pl = Player.levelInfo();
-  $("#p-avatar").textContent = pp.avatar; $("#p-name").textContent = pp.username; $("#p-badge").textContent = pl.level;
-  $("#p-level").textContent = `Level ${pl.level} · ${pl.xp}/${pl.need} XP`; animateXp("#p-xp", (pl.xp / pl.need) * 100);
-  $("#p-streak").textContent = `🔥 ${stats.streak}`;
-  $("#p-streak-note").textContent = stats.lastDaily === today() ? "Today's daily is done" : "Play today's daily to keep it going";
-  $("#p-record").textContent = `${pp.wins}W · ${pp.losses}L`;
-  $("#p-recent").innerHTML = pp.recent.length ? pp.recent.map((r) => `<span class="${r}">${r}</span>`).join("") : "<small>No games yet</small>";
-  $("#p-stats").textContent = `${pp.wins} wins · ${pp.losses} losses · ${pp.coins} coins`;
-  $("#s-name").value = Player.data.username;
-  $("#s-avatars").innerHTML = AVATARS.map((a) => `<button class="${a === Player.data.avatar ? "on" : ""}" data-av="${a}">${a}</button>`).join("");
   $("#s-theme").textContent = settings.theme === "dark" ? "🌙 Dark theme" : "☀️ Light theme";
   $("#s-sound").textContent = settings.mute ? "🔇 Sound off" : "🔊 Sound on";
   $("#s-motion").textContent = reduced() ? "🐢 Reduced motion: on" : "✨ Reduced motion: off";
 }
+
+// ---------- Profile (separate from Settings) ----------
+const fmtDate = (iso, long) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString([], long ? { month: "short", day: "numeric", year: "numeric" } : { month: "short", year: "numeric" }); };
+let showAllGames = false;
+function renderProfile() {
+  const p = Player.data, lv = Player.levelInfo(), meta = (window.Auth && Auth.profileMeta && Auth.profileMeta()) || {};
+  $("#pf-avatar").textContent = p.avatar; $("#pf-name").textContent = p.username; $("#pf-badge").textContent = lv.level;
+  $("#pf-level").textContent = `Level ${lv.level}`;
+  $("#pf-xptext").textContent = `${lv.xp.toLocaleString()} / ${lv.need.toLocaleString()} XP`; animateXp("#pf-xp", (lv.xp / lv.need) * 100);
+  const joined = fmtDate(meta.joined || p.joinedAt);
+  $("#pf-meta").textContent = [joined ? `${meta.id ? "Joined" : "Playing since"} ${joined}` : "", meta.id ? `ID: ${meta.id}` : ""].filter(Boolean).join(" · ");
+  const played = p.wins + p.losses;                               // real numbers from this player's save
+  $("#pf-played").textContent = played; $("#pf-won").textContent = p.wins;
+  $("#pf-rate").textContent = played ? Math.round((p.wins / played) * 100) + "%" : "—"; $("#pf-wstreak").textContent = p.streak;
+  const day = (n) => `${n} day${n === 1 ? "" : "s"}`;              // daily challenge numbers come from the daily stats
+  $("#pf-dstreak").textContent = `🔥 ${day(stats.streak)}`;
+  $("#pf-dbest").textContent = `Best streak: ${day(stats.best)}`; $("#pf-ddone").textContent = `Completed: ${stats.played}`;
+  renderRecentGames();
+}
+function renderRecentGames() {
+  const all = [...Player.data.history].reverse(), list = showAllGames ? all : all.slice(0, 5), ul = $("#pf-games");   // newest first; only finished games are listed, so no answer is ever shown
+  ul.innerHTML = "";
+  if (!all.length) { const li = document.createElement("li"); li.className = "pf-none"; li.textContent = "No games yet. Finish a game and it will show up here."; ul.append(li); }
+  list.forEach((g) => {
+    const li = document.createElement("li"); li.className = "pf-game";
+    const mode = document.createElement("span"); mode.className = "pf-mode " + g.mode; mode.textContent = g.mode === "daily" ? "Daily" : "Solo";
+    const res = document.createElement("b"); res.className = g.won ? "win" : "loss"; res.textContent = g.won ? "WIN" : "LOSS";
+    const att = document.createElement("span"); att.className = "pf-att"; att.textContent = `${g.tries} attempt${g.tries === 1 ? "" : "s"}`;
+    const dt = document.createElement("time"); dt.dateTime = g.at; dt.textContent = fmtDate(g.at, true);
+    li.append(mode, res, att, dt); ul.append(li);
+  });
+  const v = $("#pf-viewall"); v.classList.toggle("hidden", all.length <= 5); v.textContent = showAllGames ? "Show less" : "View All"; v.setAttribute("aria-expanded", String(showAllGames));
+}
+function renderEdit() {
+  $("#s-name").value = Player.data.username;
+  $("#s-avatars").innerHTML = AVATARS.map((a) => `<button class="${a === Player.data.avatar ? "on" : ""}" data-av="${a}">${a}</button>`).join("");
+}
+function openEdit() { renderEdit(); $("#edit-profile").classList.remove("hidden"); lockModal(true); $("#s-name").focus(); }
+function closeEdit() { if ($("#edit-profile").classList.contains("hidden")) return; $("#edit-profile").classList.add("hidden"); lockModal(false); renderProfile(); renderDashboard(); }
 function applySettings() { document.documentElement.dataset.theme = settings.theme; document.documentElement.dataset.motion = reduced() ? "reduced" : "full"; save("settings", settings); }
 
 // ---------- Shop ----------  (the items come from SHOP_ITEMS in store.js)
@@ -506,6 +536,7 @@ function finishGame() { // each game id can only pay out once (see Player.reward
   lastReward = null;
   if (status === "won") { lastReward = Player.reward(gameId, mode, guesses.length); }
   else Player.recordLoss(gameId);
+  Player.logGame(gameId, mode, status === "won", guesses.length);   // shown under Recent Games on the Profile (once per game)
   if (mode === "daily") { const g = load("game_daily", null); if (g && g.date === today()) { g.reward = lastReward ? { coins: lastReward.coins, xp: lastReward.xp } : { coins: 0, xp: 0 }; save("game_daily", g); } } // remember what this game earned
   if (mode === "daily" && stats.lastDaily !== today()) {
     const y = new Date(); y.setDate(y.getDate() - 1); const yesterday = isoLocal(y);
@@ -574,10 +605,15 @@ document.addEventListener("click", (e) => {
   if (t.dataset.go) go(t.dataset.go);
   else if (t.dataset.buy) buyItem(t.dataset.buy);
   else if (t.dataset.back !== undefined) show("dashboard"); // every Back button returns to the dashboard
-  else if (t.dataset.av) { Player.data.avatar = t.dataset.av; Player.save(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(t.dataset.av); renderSettings(); }
+  else if (t.dataset.av) { Player.data.avatar = t.dataset.av; Player.save(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(t.dataset.av); renderEdit(); renderProfile(); }
   else if (t.dataset.hint) useHint(t.dataset.hint);
 });
 $("#go-settings").onclick = () => show("settings");
+$("#pf-settings").onclick = () => show("settings");
+$("#pf-edit").onclick = openEdit; $("#ep-done").onclick = closeEdit; $("#ep-x").onclick = closeEdit;
+$("#edit-profile").addEventListener("click", (e) => { if (e.target.id === "edit-profile") closeEdit(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEdit(); });
+$("#pf-viewall").onclick = () => { showAllGames = !showAllGames; renderRecentGames(); };
 $$("#bottomnav [data-nav]").forEach((b) => (b.onclick = () => (b.dataset.nav === "play" ? openGame("practice") : show(b.dataset.nav))));
 $("#g-back").onclick = async () => {
   if (status === "playing" && guesses.length > 0 && !(await confirmBox("Leave this game?", "Your progress is saved, so you can continue later.", "Leave"))) return;
@@ -585,7 +621,7 @@ $("#g-back").onclick = async () => {
 };
 $("#s-name").onchange = (e) => {
   if (window.Auth && Auth.isAccount()) return Auth.setUsername(e.target.value.trim());
-  Player.data.username = e.target.value.trim().slice(0, 16) || Player.data.username; Player.save(); toast("Username saved", "success");
+  Player.data.username = e.target.value.trim().slice(0, 16) || Player.data.username; Player.save(); toast("Username saved", "success"); renderProfile();
 };
 $("#s-theme").onclick = () => { settings.theme = settings.theme === "dark" ? "light" : "dark"; applySettings(); renderSettings(); };
 $("#s-motion").onclick = () => { settings.reduceMotion = !settings.reduceMotion; applySettings(); renderSettings(); };
@@ -620,7 +656,7 @@ addEventListener("popstate", (e) => {
 
 // ---------- Start ----------
 applySettings(); buildKeyboard(); buildBoard(); refreshCoins();
-window.WBApp = { show, applyStats: (o) => { Object.assign(stats, o); save("stats", stats, true); }, getStats: () => stats, refresh: () => { refreshCoins(); if (screen === "dashboard") renderDashboard(); } };
+window.WBApp = { show, applyStats: (o) => { Object.assign(stats, o); save("stats", stats, true); }, getStats: () => stats, refresh: () => { refreshCoins(); if (screen === "dashboard") renderDashboard(); if (screen === "profile") renderProfile(); } };
 const splashMs = sessionStorage.getItem("wb_fast") ? 250 : 1600; sessionStorage.removeItem("wb_fast"); // shorter splash right after sign-in/out
 setTimeout(async () => { $("#splash").classList.add("out"); if (window.Auth) await Auth.route(); else show("dashboard"); }, splashMs);
 if (window.DEMO_MODE) console.info("Wordle Battle: local demo mode. Online battles need Supabase.");

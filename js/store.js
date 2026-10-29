@@ -27,7 +27,8 @@ const Player = (() => {
     coins: 100, xp: 0, wins: 0, losses: 0,
     hints: { reveal: { free: 2, credits: 0 }, remove: { free: 2, credits: 0 }, word: { free: HINTS.word.free, credits: 0 } },
     skips: { free: SKIP.free, credits: 0 },
-    rewarded: [], recent: []
+    rewarded: [], recent: [],
+    joinedAt: new Date().toISOString(), history: [] // history = the last 50 finished games (shown on the Profile)
   });
   let p;
   try { p = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { p = fresh(); }
@@ -35,6 +36,8 @@ const Player = (() => {
   if (typeof p.skips.credits !== "number" || p.skips.credits < 0) p.skips.credits = 0;            // skips bought in the shop
   if (!p.hints || typeof p.hints !== "object") p.hints = fresh().hints;
   if (!p.hints.word || typeof p.hints.word.free !== "number") p.hints.word = { free: HINTS.word.free, credits: 0 }; // older saves get the 5 free word hints
+  if (!Array.isArray(p.history)) p.history = [];
+  if (typeof p.joinedAt !== "string" || isNaN(Date.parse(p.joinedAt))) p.joinedAt = new Date().toISOString(); // older saves: "playing since" starts from this version
   const save = (quiet) => { localStorage.setItem(KEY, JSON.stringify(p)); if (quiet !== true) window.dispatchEvent(new Event("wb:save")); }; // quiet=true: no cloud sync
   // Migration: older saves had no win distribution/streak. Seed them from what we already know.
   if (!Array.isArray(p.dist) || p.dist.length !== 6) {
@@ -63,6 +66,12 @@ const Player = (() => {
     consumeSkip() { if (p.skips.free > 0) { p.skips.free--; save(); return true; } if (p.skips.credits > 0) { p.skips.credits--; save(); return true; } return false; }, // free skips first, then bought ones
     addSkipCredit() { p.skips.credits++; save(); },
     addHintCredit(type) { p.hints[type].credits++; save(); },
+    // Remember a finished game for the Profile (once per game id). The answer word is never stored.
+    logGame(id, kind, won, tries) {
+      if (!id || p.history.some((h) => h.id === id)) return;
+      p.history.push({ id: String(id).slice(0, 60), mode: kind === "daily" ? "daily" : "practice", won: !!won, tries: Math.min(6, Math.max(1, tries | 0)), at: new Date().toISOString() });
+      p.history = p.history.slice(-50); save();
+    },
     // Each game id can be rewarded or counted only once.
     reward(gameId, kind, tries) {
       if (p.rewarded.includes("W:" + gameId) || p.rewarded.includes("L:" + gameId)) return null;

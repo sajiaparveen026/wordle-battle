@@ -20,6 +20,7 @@
   --tw1:#FFE066; --tw2:#F5A800; --tw3:#9A6500;
   --ts1:#4A4A52; --ts2:#2B2B30; --ts3:#121214;
   --badge-red:#D62828; --badge-grey:#6B6B73;
+  --win:#39ff88; --loss:#FF6B6B; --solo-bg:#1F4D35; --solo-fg:#8CF2B5; --daily-bg:#51482D; --daily-fg:#FACC15;   /* Profile: results and mode pills */
   --tg1:#5EE0A0; --tg2:#1FA971; --tg3:#12714A;
   --red1:#E0264F; --red2:#A8123A; --red-glow:rgba(224,38,79,.6);   /* install / update cards: red so they stand out */
   --pill-r:#7A3E00; --pill-m:#471671; --pill-w:#7A5400; --pill-s:#151518;
@@ -30,6 +31,7 @@
   --bg:#F5F4EE;--panel:#FFFFFF;--panel-2:#EFEEE6;--tile:#FFFFFF;--line:#D6D4C8;--field-line:#8A8878;--text:#1A1A1B;--muted:#5F5F5A;
   --gold:#856200;--gold-dim:#EBDDA5;--on-color:#FFFFFF;--danger:#C62828;--on-danger:#FFFFFF;
   --correct:#12b85a;--present:#d9a400;--absent:#6E6E73;--on-fb:#1A1A1B;--on-absent:#fff;
+  --win:#0B7A3B; --loss:#B3261E; --solo-bg:#D5F0E0; --solo-fg:#0B5E2E; --daily-bg:#F2E6B8; --daily-fg:#5F4600;
   --ico-hi:#D9A91C;--ico-mid:#856200;--ico-lo:#5A4200;--ico-glow:#FFE9A0;--ico-st-hi:#9A9AA2;--ico-st-lo:#55555C;--ctl-shadow:rgba(0,0,0,.18);--glow-lo:rgba(184,134,11,.4);--glow-hi:rgba(217,169,28,.85);
 }
 *{box-sizing:border-box;margin:0}
@@ -697,3 +699,53 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 html[data-motion=reduced] .installcard,html[data-motion=reduced] #update-bar,html[data-motion=reduced] .ic-btn.hot,html[data-motion=reduced] .installcard::after,html[data-motion=reduced] #update-bar::after,html[data-motion=reduced] .ic-ico{animation:none!important}
 @media (prefers-reduced-motion:reduce){.installcard,#update-bar,.ic-btn.hot,.installcard::after,#update-bar::after,.ic-ico{animation:none!important}}
 @media (max-width:360px){.installcard{flex-wrap:wrap}.installcard .ic-txt{flex-basis:calc(100% - 50px)}.installcard .ic-btn{margin-left:auto}}
+
+/* ===== Profile screen (separate from Settings) ===== */
+#profile .pf-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;text-align:center;margin-bottom:12px}
+#profile .pf-top .icon{display:grid;place-items:center}
+.pf-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.pf-card{display:block;width:100%;margin:0 0 12px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;color:var(--text);text-align:left;font:inherit}
+.pf-head{display:flex;align-items:center;gap:14px}
+.pf-head .avatar-wrap{flex:none}
+.pf-avatar{width:78px;height:78px;font-size:2.5rem;border:3px solid var(--gold);display:grid;place-items:center;border-radius:50%;background:var(--panel-2)}
+.pf-info{flex:1;min-width:0;display:grid;gap:5px}
+.pf-namerow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pf-namerow b{font-size:1.3rem;overflow-wrap:anywhere}
+.pf-edit{width:32px;height:32px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--gold);cursor:pointer}
+.pf-edit .pf-ico{width:17px;height:17px}
+.pf-level{font-size:.95rem;color:var(--text)}
+.pf-info small{color:var(--muted);font-size:.8rem}
+.pf-info .pf-meta{font-size:.76rem}
+.pf-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.pf-stat{display:grid;justify-items:center;align-content:start;gap:4px;padding:12px 4px 10px;background:var(--panel);border:1px solid var(--line);border-radius:16px;text-align:center}
+.pf-stat .pf-ico{width:26px;height:26px;color:var(--gold)}
+.pf-stat b{font-size:1.3rem;line-height:1.1}
+.pf-stat small{font-size:.68rem;line-height:1.15;color:var(--muted)}
+.pf-tile{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);color:var(--gold)}
+.pf-daily{display:flex;align-items:center;gap:12px;cursor:pointer}
+.pf-daily:active{transform:scale(.99)}
+.pf-daily-txt{flex:1;min-width:0;display:grid;gap:2px}
+.pf-daily-txt b{font-size:1.05rem}.pf-daily-txt small{color:var(--muted);font-size:.78rem;line-height:1.25}
+.pf-daily-streak{display:flex;align-items:center;gap:4px;color:var(--gold);font-weight:800;white-space:nowrap}
+.pf-sechead{display:flex;align-items:center;gap:12px}
+.pf-sechead b{flex:1;font-size:1.05rem}
+.pf-empty{display:grid;justify-items:center;gap:6px;padding:14px 8px 6px;text-align:center}
+.pf-empty b{font-size:1rem}
+.pf-empty p{margin:0;max-width:30ch;color:var(--muted);font-size:.85rem;line-height:1.35}
+.pf-trophy{width:112px;height:84px;fill:none;stroke:var(--muted);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
+.pf-trophy .pf-star{fill:var(--muted);stroke:none}.pf-trophy .pf-spark{stroke:var(--gold)}
+.pf-viewall{background:none;border:0;padding:8px 4px;color:var(--gold);font-weight:800;font-size:.85rem;cursor:pointer}
+.pf-viewall.hidden{display:none}
+.pf-games{list-style:none;margin:10px 0 0;padding:0}
+.pf-game{display:grid;grid-template-columns:auto 44px 1fr auto;gap:10px;align-items:center;padding:11px 2px;border-top:1px solid var(--line);font-size:.85rem}
+.pf-mode{display:inline-block;min-width:58px;padding:5px 10px;border-radius:9px;text-align:center;font-weight:700;font-size:.78rem}
+.pf-mode.practice{background:var(--solo-bg);color:var(--solo-fg)}
+.pf-mode.daily{background:var(--daily-bg);color:var(--daily-fg)}
+.pf-game .win{color:var(--win)}.pf-game .loss{color:var(--loss)}
+.pf-att,.pf-game time{color:var(--muted)}.pf-game time{white-space:nowrap}
+.pf-none{padding:14px 2px 4px;color:var(--muted);font-size:.9rem}
+@media (max-width:340px){.pf-game{grid-template-columns:auto 40px 1fr}.pf-game time{grid-column:1/-1}.pf-stat b{font-size:1.1rem}}
+#edit-profile h4{margin:12px 0 6px}
+.pf-daily-txt b{white-space:nowrap}
+.pf-daily-txt small span{display:block}
+.pf-daily-streak{font-size:.95rem}
