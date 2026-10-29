@@ -52,25 +52,23 @@
     const v = $("#s-version"); if (!v) return;
     v.textContent = `Version ${self.APP_VERSION} (build ${self.APP_BUILD})`;
     $("#s-update-note").textContent = updateReady ? "⬆ A new version is ready." : lastCheck;
-    $("#s-update-btn").classList.toggle("hidden", !updateReady);
+    $$("[data-update-card]").forEach((e) => e.classList.toggle("hidden", !updateReady));   // red update cards in Settings (main list + About)
   }
   function setUpdateReady() {
-    updateReady = true; updating = false;
-    $("#update-text").textContent = "A new version is available.";
-    $("#update-btn").disabled = false; $("#update-btn").textContent = "Update App";
+    updateReady = true; updating = false; document.documentElement.dataset.update = "ready";   // also lights the red dots on the gear and About
+    $("#update-text").textContent = "New version available";
+    $$("[data-update-now]").forEach((b) => { b.disabled = false; b.textContent = "Update App"; });
     if (!sessionStorage.getItem("wb_update_dismissed")) $("#update-bar").classList.remove("hidden"); // ✕ hides it for this visit; Settings still offers the update
     renderAbout();
   }
   function applyUpdate() {
     if (!reg || !reg.waiting || updating) return;
     updating = true;
-    $("#update-text").textContent = "Updating..."; $("#update-btn").disabled = true;
-    $("#s-update-btn").disabled = true;
+    $("#update-text").textContent = "Updating..."; $$("[data-update-now]").forEach((b) => { b.disabled = true; b.textContent = "Updating..."; });
     reg.waiting.postMessage({ type: "SKIP_WAITING" }); // the page reloads on controllerchange (below)
   }
-  $("#update-btn").onclick = applyUpdate;
+  $$("[data-update-now]").forEach((b) => (b.onclick = applyUpdate));
   $("#update-x").onclick = () => { $("#update-bar").classList.add("hidden"); try { sessionStorage.setItem("wb_update_dismissed", "1"); } catch {} };
-  $("#s-update-btn").onclick = applyUpdate;
 
   // ----- Service worker registration & checks -----
   function track(worker) {
@@ -116,6 +114,6 @@
   const syncOnline = () => offlineBar.classList.toggle("hidden", navigator.onLine);
   addEventListener("online", syncOnline); addEventListener("offline", syncOnline); syncOnline();
 
-  window.PWA = { renderAbout, checkForUpdate, isOnline: () => navigator.onLine };
+  window.PWA = { renderAbout, isUpdateReady: () => updateReady, checkForUpdate, isOnline: () => navigator.onLine };
   renderAbout();
 })();

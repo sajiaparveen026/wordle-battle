@@ -662,7 +662,7 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 /* ===== Shop: small boxes (icon, name, price, button), 3 per row ===== */
 .t-gift{--t1:var(--tg1);--t2:var(--tg2);--t3:var(--tg3)}
 .mini-tile i{font-style:normal;font-size:1.7rem;line-height:1}
-.shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .shop-grid .gcard{flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:6px;padding:12px 8px 10px;min-width:0}
 .shop-grid .gcard:hover{transform:translateY(-2px)}
 .shop-grid .gcard .mini-tile{width:50px;height:50px;margin:0 0 2px;border-radius:15px}
@@ -671,7 +671,7 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 .shop-grid .gcard .primary{width:100%;padding:9px 4px;font-size:.92rem;min-height:40px}
 .shop-grid .gcard .primary.claimed,.shop-grid .gcard .primary.claimed:disabled{background:var(--panel-2);color:var(--muted);border:1px solid var(--line);box-shadow:none;opacity:1;cursor:default}
 .shop-grid .shop-next{color:var(--muted);font-size:.68rem;line-height:1.2}
-@media (max-width:340px){.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Shop: exactly 2 cards per row on every screen size (see the Shop glass cards block at the end of this file) */
 
 /* ===== Install and update cards: red, glowing, with a ✕ ===== */
 @keyframes redpulse{0%,100%{box-shadow:0 0 0 0 var(--red-glow),0 8px 20px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 7px rgba(224,38,79,0),0 8px 22px rgba(0,0,0,.4)}}
@@ -749,3 +749,186 @@ html[data-motion=reduced] .installcard,html[data-motion=reduced] #update-bar,htm
 .pf-daily-txt b{white-space:nowrap}
 .pf-daily-txt small span{display:block}
 .pf-daily-streak{font-size:.95rem}
+
+/* ===== Settings panel (slide-out from the left; opened by the gear on Home and Profile) =====
+   Uses only the design tokens at the top of this file, so Dark and Light themes both work with no extra rules. */
+body.sp-lock{overflow:hidden}
+.sp-root{position:fixed;inset:0;z-index:9;visibility:hidden;pointer-events:none;transition:visibility 0s linear .3s}
+.sp-root.open{visibility:visible;pointer-events:auto;transition-delay:0s}
+.sp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.62);opacity:0;transition:opacity .3s ease;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.sp-root.open .sp-backdrop{opacity:1}
+.sp{position:absolute;top:0;bottom:0;left:0;width:min(420px,92vw);display:flex;flex-direction:column;outline:none;
+  background:var(--bg) linear-gradient(180deg,color-mix(in srgb,var(--gold) 11%,var(--bg)) 0,var(--bg) 260px) no-repeat;
+  border-right:1px solid var(--gold-dim);box-shadow:14px 0 44px rgba(0,0,0,.5);
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+  transform:translateX(-103%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.sp-root.open .sp{transform:none}
+.sp-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 16px 12px}
+.sp-head h2{display:flex;align-items:center;gap:10px;margin:0;font-size:1.45rem;font-weight:800;letter-spacing:.2px}
+.sp-head h2 .pf-ico{width:26px;height:26px;color:var(--gold)}
+.sp-close{min-height:40px;padding:8px 18px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-weight:700;font-size:.9rem;transition:border-color .15s,transform .12s}
+.sp-close:hover{border-color:var(--gold-dim)}.sp-close:active{transform:scale(.96)}
+.sp-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:6px 14px 16px}
+.sp-view.hidden{display:none}
+.sp-list{display:grid;gap:10px}
+
+.sp-card{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:18px;background:var(--panel);border:1px solid var(--line);color:var(--text);text-align:left;font:inherit;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,.25);transition:border-color .15s,transform .12s,background .15s}
+button.sp-card:hover,a.sp-card:hover{border-color:var(--gold-dim)}
+button.sp-card:active,a.sp-card:active{transform:scale(.985)}
+.sp-card:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.sp-ico{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);color:var(--gold)}
+.sp-txt{flex:1;min-width:0;display:grid;gap:2px}
+.sp-txt b{font-size:1.02rem;line-height:1.2}
+.sp-txt small{color:var(--muted);font-size:.8rem;line-height:1.3}
+.sp-chev{flex:none;width:20px;height:20px;color:var(--muted)}
+.sp-danger .sp-ico,.sp-danger .sp-txt b{color:var(--danger)}
+.sp-danger{border-color:color-mix(in srgb,var(--danger) 35%,var(--line))}
+.sp-static{cursor:default}
+
+.sp-sub{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+.sp-back{flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--text)}
+.sp-back .pf-ico{transform:scaleX(-1)}
+.sp-sub h3{margin:0;font-size:1.2rem;outline:none}
+.sp-fine{color:var(--muted);font-size:.8rem;line-height:1.4;margin:10px 4px 0}
+
+/* switches */
+.sp-row{cursor:pointer}.sp-row.off{opacity:.6;cursor:not-allowed}
+.sw{flex:none;position:relative;width:58px;height:32px;padding:0;border-radius:999px;background:var(--panel-2);border:1.5px solid var(--field-line);transition:background .25s,border-color .25s,box-shadow .25s}
+.sw-knob{position:absolute;top:2px;left:2px;width:25px;height:25px;border-radius:50%;background:var(--text);display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.4);transition:transform .28s cubic-bezier(.3,1.35,.5,1),background .25s}
+.sw.on{background:var(--gold);border-color:var(--gold);box-shadow:0 0 14px color-mix(in srgb,var(--gold) 45%,transparent)}
+.sw.on .sw-knob{transform:translateX(26px);background:var(--on-color)}
+.sw:disabled{cursor:not-allowed}
+.sw-knob .pf-ico{position:absolute;width:15px;height:15px;color:var(--ico-hi);transition:opacity .2s,transform .3s}
+.sw-theme .sw-moon{opacity:0;transform:rotate(-50deg) scale(.4)}
+.sw-theme.on .sw-moon{opacity:1;transform:none}
+.sw-theme .sw-sun{opacity:1}
+.sw-theme.on .sw-sun{opacity:0;transform:rotate(50deg) scale(.4)}
+html.theme-fade,html.theme-fade *:not(.sw):not(.sw-knob):not(.sw-knob *){transition:background-color .3s ease,border-color .3s ease,color .3s ease,fill .3s ease,stroke .3s ease}
+
+/* security, notes, facts */
+.sp-note{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px}
+.sp-note p{color:var(--muted);font-size:.9rem;line-height:1.45;margin:6px 0}
+.sp-facts{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:2px 14px;margin:0 0 12px}
+.sp-facts>div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.sp-facts>div:first-child{border-top:0}
+.sp-facts dt{flex:none;color:var(--muted);font-size:.85rem}
+.sp-facts dd{margin:0;text-align:right;font-weight:600;font-size:.9rem;overflow-wrap:anywhere}
+
+/* FAQs */
+.sp-faq{display:grid;gap:8px}
+.sp-q{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.sp-q[open]{border-color:var(--gold-dim)}
+.sp-q summary{position:relative;list-style:none;cursor:pointer;min-height:48px;padding:14px 44px 14px 14px;font-weight:700;line-height:1.3}
+.sp-q summary::-webkit-details-marker{display:none}
+.sp-q summary::after{content:"";position:absolute;right:18px;top:50%;width:8px;height:8px;border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+.sp-q[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.sp-q p{margin:0;padding:0 14px 14px;color:var(--muted);font-size:.9rem;line-height:1.5}
+
+/* bug report */
+.sp-form{display:grid;gap:10px}
+.sp-form label:not(.check){font-weight:700}
+.sp-form textarea{width:100%;min-height:120px;resize:vertical;padding:12px;border-radius:12px;border:1.5px solid var(--field-line);background:var(--panel-2);color:var(--text);font:inherit;line-height:1.4}
+.sp-form textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 20%,transparent)}
+.sp-form .sp-fine{margin:-4px 2px 0;text-align:right}
+.sp-form .actions{margin-top:2px}
+
+/* about + what's new */
+.sp-about{flex-direction:column;align-items:stretch;gap:10px}
+.sp-about .about{margin:0}.sp-about .actions{margin:0}
+.sp-credits{flex-direction:column;align-items:flex-start;gap:6px;margin-top:10px}
+.sp-credits ul{margin:0;padding-left:18px;color:var(--muted);font-size:.9rem;line-height:1.6}
+.sp-credits small{color:var(--muted)}
+.sp-log{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.sp-rel{flex-direction:column;align-items:flex-start;gap:6px}
+.sp-relh{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%}
+.sp-ver{padding:3px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-weight:800;font-size:.78rem;color:var(--gold)}
+.sp-rel.latest{border-color:var(--gold-dim)}
+.sp-rel.latest .sp-ver{background:var(--gold);border-color:var(--gold);color:var(--on-color)}
+.sp-rel time{color:var(--muted);font-size:.78rem}
+.sp-rel ul{margin:2px 0 0;padding-left:18px;display:grid;gap:3px;font-size:.88rem;line-height:1.45}
+
+/* Log Out: pinned at the bottom of the panel, red */
+.sp-foot{flex:none;padding:10px 14px 14px;border-top:1px solid var(--line);background:color-mix(in srgb,var(--bg) 94%,transparent)}
+.sp-logout{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-radius:16px;font-weight:800;font-size:1rem;color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,var(--panel));border:1.5px solid color-mix(in srgb,var(--danger) 60%,transparent);transition:background .15s,transform .12s}
+.sp-logout:hover{background:color-mix(in srgb,var(--danger) 20%,var(--panel))}
+.sp-logout:active{transform:scale(.98)}
+.sp-logout:disabled{opacity:.6;cursor:wait}
+
+/* popups opened from the panel (change password / delete account) */
+#pw-modal .field,#pw-modal .meter,#pw-modal .fine,#pw-modal .authmsg{margin-bottom:10px}
+#pw-modal .meter{margin-top:0}
+#pw-form .actions,#del-modal .actions{margin-top:6px}
+.card .actions .primary.danger{width:auto;flex:1}
+#del-modal .field{margin-bottom:10px}
+#del-modal .field input{padding:14px 0}
+@media (max-height:520px){.sp-head{padding-top:12px}.sp-ico{width:40px;height:40px}}
+
+
+/* ===== Shop: glass product cards, purchase effects (purple/blue glass, neon-green accents) =====
+   Colours come from tokens (--win is neon green in Dark, a readable deep green in Light), so both themes stay readable. */
+.shop-grid{--sh-a:124,92,255;--sh-b:59,130,246;position:relative;isolation:isolate;align-items:stretch}
+.shop-grid::before{content:"";position:absolute;inset:-18px -8px;z-index:-1;pointer-events:none;filter:blur(26px);
+  background:radial-gradient(circle at 18% 8%,rgba(var(--sh-a),.42),transparent 46%),radial-gradient(circle at 88% 48%,rgba(var(--sh-b),.34),transparent 46%),radial-gradient(circle at 25% 95%,rgba(var(--sh-a),.28),transparent 44%)}
+.shop-grid .gcard{position:relative;overflow:hidden;color:var(--text);
+  background:linear-gradient(150deg,rgba(var(--sh-a),.26),rgba(var(--sh-b),.16) 55%,rgba(24,26,40,.42));
+  -webkit-backdrop-filter:blur(12px) saturate(1.3);backdrop-filter:blur(12px) saturate(1.3);
+  border:1px solid rgba(170,150,255,.38);
+  box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px rgba(var(--sh-b),.12),0 0 18px rgba(var(--sh-a),.28),inset 0 1px 0 rgba(255,255,255,.18);
+  transition:transform .2s,border-color .2s,box-shadow .25s}
+.shop-grid .gcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(160deg,rgba(255,255,255,.16),transparent 42%)}
+.shop-grid .gcard>*{position:relative}
+.shop-grid .gcard:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--win) 65%,transparent);
+  box-shadow:0 12px 28px rgba(0,0,0,.4),0 0 22px color-mix(in srgb,var(--win) 30%,transparent),0 0 18px rgba(var(--sh-a),.3),inset 0 1px 0 rgba(255,255,255,.22)}
+.shop-grid .gcard h3{font-size:.86rem;font-weight:700;color:var(--text)}
+.shop-grid .gcard .price{color:var(--win);text-shadow:0 0 10px color-mix(in srgb,var(--win) 35%,transparent)}
+.shop-grid .gcard .free-box,.shop-grid .gcard.free-box{border-color:color-mix(in srgb,var(--win) 55%,rgba(170,150,255,.3))}
+/* odd last card sits centred at the same size as the others */
+.shop-grid .gcard:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 6px)}
+/* buy / claim button: neon green */
+.shop-grid .gcard .primary:not(.claimed){background:linear-gradient(180deg,color-mix(in srgb,var(--win) 80%,#fff),var(--win));color:var(--on-color);border:0;
+  box-shadow:0 0 14px color-mix(in srgb,var(--win) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.45);transition:transform .12s,box-shadow .2s,filter .15s,opacity .2s}
+.shop-grid .gcard .primary:not(.claimed):hover{filter:brightness(1.08);box-shadow:0 0 20px color-mix(in srgb,var(--win) 55%,transparent),inset 0 1px 0 rgba(255,255,255,.45)}
+.shop-grid .gcard .primary:not(.claimed):disabled{opacity:.6;cursor:not-allowed;transform:none;filter:none}
+.shop-grid .gcard .primary.ok:disabled{opacity:1;cursor:default}
+.shop-grid .gcard .primary.claimed,.shop-grid .gcard .primary.claimed:disabled{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid rgba(170,150,255,.3)}
+.shop-grid .shop-next{color:var(--muted);font-size:.72rem;line-height:1.2;font-variant-numeric:tabular-nums;min-height:1.2em}
+.shop-grid .claimed~.shop-next{color:var(--text)}
+/* light theme: lighter glass, same accents */
+[data-theme=light] .shop-grid .gcard{background:linear-gradient(150deg,rgba(var(--sh-a),.16),rgba(var(--sh-b),.10) 55%,rgba(255,255,255,.78));border-color:rgba(98,70,220,.38);
+  box-shadow:0 8px 22px rgba(60,50,120,.16),0 0 14px rgba(var(--sh-a),.18),inset 0 1px 0 rgba(255,255,255,.9)}
+[data-theme=light] .shop-grid::before{opacity:.5}
+[data-theme=light] .shop-grid .gcard .price{text-shadow:none}
+[data-theme=light] .shop-grid .gcard .primary.claimed,[data-theme=light] .shop-grid .gcard .primary.claimed:disabled{background:rgba(255,255,255,.7)}
+@media (max-width:380px){.shop-grid{gap:10px}.shop-grid .gcard{padding:10px 6px 9px}.shop-grid .gcard h3{font-size:.8rem}.shop-grid .gcard:last-child:nth-child(odd){width:calc(50% - 5px)}}
+
+/* purchase / claim effects (js/app.js shopFx). Skipped for reduced motion. */
+.shop-grid .gcard.buy-ok{animation:shopglow 1s ease-out}
+@keyframes shopglow{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--win) 70%,transparent)}35%{border-color:var(--win);box-shadow:0 0 0 3px color-mix(in srgb,var(--win) 55%,transparent),0 0 36px color-mix(in srgb,var(--win) 65%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+.shop-coin,.shop-pop{position:fixed;z-index:30;pointer-events:none;transform:translate(-50%,-50%)}
+.shop-coin{font-size:1.15rem;line-height:1;filter:drop-shadow(0 0 6px rgba(250,204,21,.7))}
+.shop-pop{padding:4px 12px;border-radius:999px;font-weight:800;font-size:.95rem;color:var(--on-color);background:var(--win);box-shadow:0 0 18px color-mix(in srgb,var(--win) 60%,transparent);animation:shoppop 1.1s ease-out forwards}
+@keyframes shoppop{0%{opacity:0;transform:translate(-50%,-30%) scale(.7)}20%{opacity:1;transform:translate(-50%,-60%) scale(1.05)}100%{opacity:0;transform:translate(-50%,-190%) scale(1)}}
+.coins.bump{animation:coinbump .55s ease-out}
+@keyframes coinbump{0%{transform:scale(1)}30%{transform:scale(1.18);box-shadow:0 0 18px rgba(250,204,21,.6)}100%{transform:scale(1)}}
+html[data-motion=reduced] .shop-grid .gcard.buy-ok,html[data-motion=reduced] .coins.bump{animation:none}
+@media (prefers-reduced-motion:reduce){.shop-grid .gcard.buy-ok,.coins.bump{animation:none}}
+
+/* ===== Update App: as eye-catching as Install App (red, glowing, wiggling icon, slides in) ===== */
+#update-bar{display:flex;align-items:center;gap:10px;padding:10px 42px 10px 12px;border-radius:16px;animation:updin .55s cubic-bezier(.2,.9,.3,1.15),redpulse 2.4s ease-in-out .55s infinite}
+@keyframes updin{from{opacity:0;transform:translate(-50%,36px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+#update-bar .ic-ico{flex:none;font-size:1.7rem;line-height:1;transform-origin:50% 60%;animation:icwiggle 2.8s ease-in-out infinite}
+#update-bar .ic-txt{flex:1;min-width:0;line-height:1.25}
+#update-bar .ic-txt b{display:block;font-size:.95rem;font-weight:800}
+#update-bar .ic-txt small{display:block;font-size:.76rem;font-weight:600;color:#fff}
+#update-bar .ic-btn:disabled,#settings .ic-btn:disabled{opacity:.8;cursor:wait}
+@media (max-width:360px){#update-bar .ic-txt small{display:none}}
+/* inside the Settings panel */
+#settings .installcard{padding-right:12px;margin:0 0 12px}
+#settings [data-view=main] .installcard{margin-bottom:10px}
+/* red dots: gear on Home / Profile, and the About card, while an update is waiting */
+html[data-update=ready] #go-settings,html[data-update=ready] #pf-settings,html[data-update=ready] [data-sp-go=about] .sp-ico{position:relative}
+html[data-update=ready] #go-settings::after,html[data-update=ready] #pf-settings::after,html[data-update=ready] [data-sp-go=about] .sp-ico::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--red1);box-shadow:0 0 0 2px var(--bg),0 0 10px var(--red-glow);animation:redpulse 2.4s ease-in-out infinite}
+html[data-update=ready] [data-sp-go=about] .sp-ico::after{top:-4px;right:-4px;box-shadow:0 0 0 2px var(--panel),0 0 10px var(--red-glow)}
+html[data-update=ready] [data-sp-go=about] .sp-txt small{color:var(--red1);font-weight:700}
+html[data-motion=reduced] #update-bar,html[data-motion=reduced] #update-bar .ic-ico{animation:none!important}
+@media (prefers-reduced-motion:reduce){#update-bar,#update-bar .ic-ico,html[data-update=ready] #go-settings::after,html[data-update=ready] #pf-settings::after,html[data-update=ready] [data-sp-go=about] .sp-ico::after{animation:none!important}}

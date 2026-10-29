@@ -321,6 +321,7 @@
     <div class="sp-body" id="sp-body">
       <!-- main list -->
       <section class="sp-view" data-view="main" aria-label="Settings options">
+        <div class="installcard hidden" data-update-card id="sp-update-main" role="region" aria-label="App update"><span class="ic-ico" aria-hidden="true">⬆️</span><div class="ic-txt"><b>New version ready</b><small>Latest features and fixes</small></div><button class="ic-btn" type="button" data-update-now>Update App</button></div>
         <div class="sp-list">
           <button class="sp-card" type="button" data-sp-act="profile"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-user"/></svg></span><span class="sp-txt"><b>Account</b><small id="sp-d-account">Profile, avatar &amp; sign-in</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
           <button class="sp-card" type="button" data-sp-go="appearance"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-contrast"/></svg></span><span class="sp-txt"><b>Appearance</b><small id="sp-d-appearance">Dark mode</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
@@ -418,10 +419,11 @@
       <!-- About -->
       <section class="sp-view hidden" data-view="about" aria-labelledby="sp-t-about">
         <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-about" tabindex="-1">About</h3></div>
+        <div class="installcard hidden" data-update-card id="s-update-card" role="region" aria-label="App update"><span class="ic-ico" aria-hidden="true">⬆️</span><div class="ic-txt"><b>New version ready</b><small>Latest features and fixes</small></div><button class="ic-btn" type="button" id="s-update-btn" data-update-now>Update App</button></div>
         <div class="sp-card sp-static sp-about">
           <div class="logo sm">Wordle <span>Battle</span></div>
           <div class="about"><b id="s-version"></b><small id="s-update-note"></small></div>
-          <div class="actions"><button class="primary alt" id="s-check-btn" type="button">Check for updates</button><button class="primary hidden" id="s-update-btn" type="button">Update App</button></div>
+          <div class="actions"><button class="primary alt" id="s-check-btn" type="button">Check for updates</button></div>
           <div class="actions hidden" data-install-wrap><button class="primary ic-btn hot" type="button" data-install>📲 Install App</button></div>
         </div>
         <div class="sp-card sp-static sp-credits">
@@ -474,7 +476,7 @@
   </div>
 </div>
 
-<div id="update-bar" class="hidden" role="status"><span id="update-text">A new version is available.</span><button id="update-btn" class="primary">Update App</button><button id="update-x" class="ic-x" type="button" aria-label="Dismiss update notice">✕</button></div>
+<div id="update-bar" class="hidden" role="status"><span class="ic-ico" aria-hidden="true">⬆️</span><div class="ic-txt"><b id="update-text">New version available</b><small>Get the latest features and fixes</small></div><button id="update-btn" class="ic-btn" type="button" data-update-now>Update App</button><button id="update-x" class="ic-x" type="button" aria-label="Dismiss update notice">✕</button></div>
 <div id="edit-profile" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ep-title">
   <div class="card"><button id="ep-x" class="x" aria-label="Close">✕</button><h2 id="ep-title">Edit profile</h2>
     <h4>Username</h4><input id="s-name" maxlength="16" autocomplete="off">

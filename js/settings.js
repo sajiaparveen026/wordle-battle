@@ -68,7 +68,8 @@
     $("#sw-vibe-d").textContent = canVibrate() ? "A short buzz for wrong words, wins and hints." : "Your device or browser doesn\u2019t support vibration.";
     $("#sp-d-appearance").textContent = dark ? "Dark mode \u00b7 On" : "Dark mode \u00b7 Off";
     $("#sp-d-game").textContent = `Sound ${sound ? "on" : "off"} \u00b7 Vibration ${vib ? "on" : "off"}`;
-    $("#sp-d-about").textContent = `Version ${self.APP_VERSION} \u00b7 Credits`;
+    if (window.PWA) PWA.renderAbout();   // shows / hides the red update cards
+    $("#sp-d-about").textContent = window.PWA && PWA.isUpdateReady() ? `Update available \u00b7 v${self.APP_VERSION}` : `Version ${self.APP_VERSION} \u00b7 Credits`;
     $("#sp-d-new").textContent = `Latest updates \u00b7 v${CHANGELOG[0].v}`;
     $("#sp-d-account").textContent = isAcct() ? "Profile, avatar & sign-in" : "Profile & create account";
     $("#sp-d-delete").textContent = isAcct() ? "Permanently remove your account" : "Clear all progress on this device";
