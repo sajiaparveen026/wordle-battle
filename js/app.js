@@ -103,7 +103,19 @@ function confetti() {
 
 // ---------- Screens ----------
 let screen = "dashboard", prevScreen = "dashboard";
-function show(name) {
+// Sign-in screens get browser-history entries (#signup, #login, ...) so Back / Forward / refresh stay on the right form.
+const HIST_SCREENS = ["welcome", "signup", "login", "forgot"];
+let histReady = false;
+function syncHistory(name) {
+  try {
+    const url = ["signup", "login", "forgot"].includes(name) ? "#" + name : location.pathname + location.search, cur = history.state && history.state.screen;
+    if (!histReady) { history.replaceState({ screen: name }, "", url); histReady = true; }
+    else if (HIST_SCREENS.includes(name) && cur !== name) history.pushState({ screen: name }, "", url);
+    else if (!HIST_SCREENS.includes(name) && location.hash) history.replaceState({ screen: name }, "", url);
+  } catch {}
+}
+function show(name, fromHistory) {
+  if (!fromHistory) syncHistory(name);
   if (name !== screen) prevScreen = screen;
   screen = name;
   $$(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== name));
@@ -115,6 +127,7 @@ function show(name) {
   if (name === "dashboard") renderDashboard();
   if (name === "dashboard" && window.Tutorial) Tutorial.maybeAutoShow();
   if (window.Auth) Auth.renderAccount();
+  if (name === "signup" && window.Auth && Auth.restoreSignupDraft) Auth.restoreSignupDraft(); // typed email / username come back (never passwords)
   if (name === "shop") renderShop();
   if (name === "settings") renderSettings();
   window.scrollTo(0, 0);
@@ -595,6 +608,14 @@ document.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
   if (k === "enter") { e.preventDefault(); if (e.repeat) return; } // stops a focused button from also firing
   if (k === "enter") press("enter"); else if (k === "backspace") press("back"); else if (/^[a-z]$/.test(k)) press(k);
+});
+
+// Browser Back / Forward between sign-in screens (never lands on the dashboard unless that is where the player was)
+addEventListener("popstate", (e) => {
+  const name = (e.state && e.state.screen) || location.hash.replace(/^#/, "");
+  if (!name || !document.getElementById(name) || !document.getElementById(name).classList.contains("screen") || name === "game") return;
+  if (HIST_SCREENS.includes(name) && window.Auth && Auth.isAccount && Auth.isAccount()) return show("dashboard", true); // signed in: no sign-in screens
+  show(name, true);
 });
 
 // ---------- Start ----------

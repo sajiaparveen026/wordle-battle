@@ -1,2 +1,2 @@
 // Human-readable release number. Bump this when you ship a release.
-self.APP_VERSION = "1.9.0";
+self.APP_VERSION = "1.9.1";

@@ -6,17 +6,46 @@
   const $$ = (s) => [...document.querySelectorAll(s)];
   let reg = null, deferredInstall = null, updating = false, updateReady = false, lastCheck = "";
 
-  // ----- Install button (Chrome on Android/desktop fires beforeinstallprompt when installable) -----
+  // ----- Install card / button -----
+  // One-tap install where the browser offers it (beforeinstallprompt); otherwise a short "how to install" popup for this browser.
+  // The card on the sign-in screens and dashboard has a ✕ that hides it for 3 days. It never touches login or signup.
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-  const showInstall = (on) => $$("[data-install-wrap]").forEach((e) => e.classList.toggle("hidden", !on));
-  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; if (!standalone) showInstall(true); });
-  addEventListener("appinstalled", () => { deferredInstall = null; showInstall(false); });
+  const SNOOZE_KEY = "wb_install_snooze", DAY = 864e5;
+  let installed = false;
+  const snoozed = () => { try { return Number(localStorage.getItem(SNOOZE_KEY) || 0) > Date.now(); } catch { return false; } };
+  const renderInstall = () => {
+    $$("[data-install-card]").forEach((e) => e.classList.toggle("hidden", standalone || installed || snoozed()));
+    $$("[data-install-wrap]").forEach((e) => e.classList.toggle("hidden", standalone || installed));
+  };
+  function installSteps() {
+    const ua = navigator.userAgent, ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (ios) return /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)
+      ? ["Open this page in Safari (installing only works there on iPhone and iPad).", "Tap the Share button, then “Add to Home Screen”.", "Tap “Add”. Wordle Battle now opens like an app."]
+      : ["Tap the Share button at the bottom of Safari (the square with an arrow).", "Scroll down and tap “Add to Home Screen”.", "Tap “Add”. Wordle Battle now opens like an app."];
+    if (/Android/i.test(ua)) return ["Tap the ⋮ menu at the top right of your browser.", "Tap “Install app” (or “Add to Home screen”).", "Tap “Install”."];
+    if (/Firefox/.test(ua)) return ["Firefox on computers can't install web apps.", "Open this page in Chrome or Edge, then click the install icon in the address bar."];
+    return ["Click the install icon (a screen with a down arrow) at the right end of the address bar.", "Or open the browser menu (⋮) and choose “Install Wordle Battle”.", "Confirm with “Install”."];
+  }
+  function openInstallHelp() {
+    const ol = $("#ih-steps"); ol.innerHTML = ""; installSteps().forEach((t) => { const li = document.createElement("li"); li.textContent = t; ol.append(li); });
+    $("#install-help").classList.remove("hidden"); if (typeof lockModal === "function") lockModal(true); $("#ih-ok").focus();
+  }
+  function closeInstallHelp() { $("#install-help").classList.add("hidden"); if (typeof lockModal === "function") lockModal(false); }
+  $("#ih-ok").onclick = closeInstallHelp; $("#ih-x").onclick = closeInstallHelp;
+  $("#install-help").addEventListener("click", (e) => { if (e.target.id === "install-help") closeInstallHelp(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#install-help").classList.contains("hidden")) closeInstallHelp(); });
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; renderInstall(); });
+  addEventListener("appinstalled", () => { deferredInstall = null; installed = true; renderInstall(); });
   document.addEventListener("click", async (e) => {
-    if (!e.target.closest("[data-install]") || !deferredInstall) return;
-    deferredInstall.prompt();
-    await deferredInstall.userChoice;
-    deferredInstall = null; showInstall(false);
+    if (e.target.closest("[data-install-x]")) { try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + 3 * DAY)); } catch {} return renderInstall(); }
+    if (!e.target.closest("[data-install]")) return;
+    if (!deferredInstall) return openInstallHelp();       // no one-tap prompt here: show how to install in this browser
+    const prompt = deferredInstall; deferredInstall = null; // a prompt can only be used once
+    prompt.prompt();
+    try { if ((await prompt.userChoice).outcome === "accepted") installed = true; } catch {}
+    renderInstall();
   });
+  renderInstall();
 
   // ----- Update UI -----
   function renderAbout() {
@@ -29,7 +58,8 @@
     updateReady = true; updating = false;
     $("#update-text").textContent = "A new version is available.";
     $("#update-btn").disabled = false; $("#update-btn").textContent = "Update App";
-    $("#update-bar").classList.remove("hidden"); renderAbout();
+    if (!sessionStorage.getItem("wb_update_dismissed")) $("#update-bar").classList.remove("hidden"); // ✕ hides it for this visit; Settings still offers the update
+    renderAbout();
   }
   function applyUpdate() {
     if (!reg || !reg.waiting || updating) return;
@@ -39,6 +69,7 @@
     reg.waiting.postMessage({ type: "SKIP_WAITING" }); // the page reloads on controllerchange (below)
   }
   $("#update-btn").onclick = applyUpdate;
+  $("#update-x").onclick = () => { $("#update-bar").classList.add("hidden"); try { sessionStorage.setItem("wb_update_dismissed", "1"); } catch {} };
   $("#s-update-btn").onclick = applyUpdate;
 
   // ----- Service worker registration & checks -----

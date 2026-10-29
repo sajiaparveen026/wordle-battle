@@ -14,6 +14,15 @@
   --danger:#FF6B6B; --on-danger:#1A1A1B;
   /* game feedback colours (unchanged so guesses stay easy to read) */
   --correct:#39ff88; --present:#f2c230; --absent:#4A4A4E; --on-fb:#1A1A1B; --on-absent:#fff;
+  /* hint-tile colours (their own palette, independent of the theme) */
+  --tr1:#FFB347; --tr2:#F57C00; --tr3:#A84F00;
+  --tm1:#D08CFF; --tm2:#8E2DE2; --tm3:#52188F;
+  --tw1:#FFE066; --tw2:#F5A800; --tw3:#9A6500;
+  --ts1:#4A4A52; --ts2:#2B2B30; --ts3:#121214;
+  --badge-red:#D62828; --badge-grey:#6B6B73;
+  --tg1:#5EE0A0; --tg2:#1FA971; --tg3:#12714A;
+  --red1:#E0264F; --red2:#A8123A; --red-glow:rgba(224,38,79,.6);   /* install / update cards: red so they stand out */
+  --pill-r:#7A3E00; --pill-m:#471671; --pill-w:#7A5400; --pill-s:#151518;
   /* control-icon artwork (gold metal + steel) */
   --ico-hi:#FFE680;--ico-mid:#FACC15;--ico-lo:#B8860B;--ico-glow:#FFF3B0;--ico-st-hi:#D9D9DE;--ico-st-lo:#6B6B73;--ctl-shadow:rgba(0,0,0,.4);--glow-lo:rgba(250,204,21,.45);--glow-hi:rgba(255,224,102,.95)
 }
@@ -394,8 +403,8 @@ input{background:var(--panel-2);border-color:var(--field-line)}
 .ex .row{width:min(100%,230px);margin:0 auto 6px}
 .ex .tile{font-size:1.15rem}
 .ex p{font-size:.88rem;display:flex;align-items:center;gap:8px;margin:0 0 4px}
-.chip{flex:none;width:20px;height:20px;border-radius:6px;display:inline-grid;place-items:center;font-size:.7rem;font-weight:800;color:var(--on-fb)}
-.chip.c{background:var(--correct)}.chip.p{background:var(--present);font-size:1rem}.chip.a{background:var(--absent)}
+.ex .chip{flex:none;width:20px;height:20px;border-radius:6px;display:inline-grid;place-items:center;font-size:.7rem;font-weight:800;color:var(--on-fb)}
+.ex .chip.c{background:var(--correct)}.ex .chip.p{background:var(--present);font-size:1rem}.ex .chip.a{background:var(--absent)}
 .demo-cap{min-height:2.6em;font-weight:600;color:var(--gold)!important}
 .hcard{display:flex;align-items:center;gap:12px;text-align:left;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:0 0 8px;animation:popin .4s both}
 .hcard:nth-of-type(2){animation-delay:.08s}.hcard:nth-of-type(3){animation-delay:.16s}
@@ -558,3 +567,133 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 .clue-old .clue-kind{background:none;padding:0;font-size:.66rem;color:var(--muted)}
 .card .clue-old .clue-text{font-size:.92rem;margin:4px 0 0;font-weight:500;color:var(--text)}
 .card.clue .primary.big{margin-top:14px;min-height:48px}
+
+/* ===== Change 5: coloured glossy hint tiles, count badge + price pill, SCORE label, raised keys/Submit, result screen ===== */
+/* tile colours belong to the icons, not to the theme */
+.t-reveal,[data-hint=reveal]{--t1:var(--tr1);--t2:var(--tr2);--t3:var(--tr3);--pill:var(--pill-r)}
+.t-remove,[data-hint=remove]{--t1:var(--tm1);--t2:var(--tm2);--t3:var(--tm3);--pill:var(--pill-m)}
+.t-word,[data-hint=word]{--t1:var(--tw1);--t2:var(--tw2);--t3:var(--tw3);--pill:var(--pill-w)}
+.t-skip,#btn-skip{--t1:var(--ts1);--t2:var(--ts2);--t3:var(--ts3);--pill:var(--pill-s)}
+.mini-tile{position:relative;flex:none;display:grid;place-items:center;border-radius:14px;background:linear-gradient(180deg,var(--t1),var(--t2));box-shadow:inset 0 2px 1px rgba(255,255,255,.55),inset 0 -3px 4px rgba(0,0,0,.18),0 3px 0 var(--t3)}
+.mini-tile svg{width:62%;height:62%;fill:none;stroke:none;stroke-width:0;filter:drop-shadow(0 2px 1px rgba(0,0,0,.3))}
+.hcard .mini-tile{width:40px;height:40px;border-radius:12px}
+.gcard .mini-tile{width:48px;height:48px;margin-right:4px}
+.buy-ico.mini-tile{width:60px;height:60px;border-radius:17px}
+.clue-bulb.mini-tile{width:84px;height:84px;border-radius:24px;background:linear-gradient(180deg,var(--t1),var(--t2));animation:none;box-shadow:inset 0 3px 2px rgba(255,255,255,.55),inset 0 -5px 6px rgba(0,0,0,.18),0 5px 0 var(--t3),0 0 34px rgba(255,200,40,.55)}
+.clue-bulb.mini-tile svg{width:60%;height:60%;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+
+/* bottom bar */
+#game .controls{--tile:46px;--cg:16px;--side:calc(var(--tile) * 2 + var(--cg));gap:8px;padding:2px 9px 14px;align-items:center}
+#game .ctl-group{gap:var(--cg)}
+#game .controls .ctl{position:relative;flex:none;width:var(--tile);height:var(--tile);padding:0;overflow:visible;border:0;border-radius:15px;color:#fff;
+  background:linear-gradient(180deg,var(--t1),var(--t2));
+  box-shadow:inset 0 2px 1px rgba(255,255,255,.55),inset 0 -3px 4px rgba(0,0,0,.18),0 4px 0 var(--t3),0 8px 12px rgba(0,0,0,.35);
+  transform:none;transition:transform .08s,box-shadow .08s,opacity .15s,filter .15s}
+#game .controls .ctl::before{content:"";position:absolute;left:5px;right:5px;top:3px;height:42%;border-radius:12px 12px 18px 18px;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0));pointer-events:none}
+#game .controls .ctl:hover{transform:none;border:0;filter:brightness(1.06)}
+#game .controls .ctl:active{transform:translateY(3px);box-shadow:inset 0 2px 1px rgba(255,255,255,.4),inset 0 -2px 3px rgba(0,0,0,.2),0 1px 0 var(--t3),0 3px 6px rgba(0,0,0,.3)}
+#game .controls .ctl[data-hint=word]:not(.paid):not(:disabled){box-shadow:inset 0 2px 1px rgba(255,255,255,.55),inset 0 -3px 4px rgba(0,0,0,.18),0 4px 0 var(--t3),0 0 18px rgba(255,200,40,.5),0 8px 12px rgba(0,0,0,.3)}
+#game .controls .ctl:disabled,#game .controls .ctl.off{opacity:.5;filter:saturate(.45)}
+#game .controls .ctl:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+#game .ctl .cico{position:relative;width:30px;height:30px;display:grid;place-items:center;animation:none}
+#game .ctl .cico svg{width:100%;height:100%;animation:none;filter:drop-shadow(0 2px 1px rgba(0,0,0,.32))}
+#game .ctl:active .cico svg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.3)) brightness(1.05)}
+/* remaining free uses: round badge at the icon's bottom-right */
+#game .ctl .cnt{top:auto;bottom:-7px;right:-7px;min-width:20px;height:20px;border-radius:10px;border:2px solid var(--bg);background:var(--badge-red);background-image:none;color:#fff;font-size:.7rem;box-shadow:0 2px 3px rgba(0,0,0,.4)}
+#game #btn-skip .cnt{background:var(--badge-grey)}
+#game .ctl.paid .cnt{display:none}
+/* price pill when no free uses are left */
+#game .controls .ctl small.badge{display:none}
+#game .controls .ctl.paid small.badge{display:flex;align-items:center;justify-content:center;position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);height:20px;padding:0 8px;border-radius:10px;border:2px solid var(--bg);
+  background:var(--pill);color:#fff;font-size:.7rem;font-weight:800;line-height:1;white-space:nowrap;box-shadow:0 2px 3px rgba(0,0,0,.35)}
+/* top bar: SCORE label above the number */
+.winscore{flex-direction:column;justify-content:center;gap:0;height:44px;padding:0 6px;background:none;border:0;line-height:1}
+.winscore .sc-l{font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.winscore .win-val{font-size:1.45rem;color:var(--gold);line-height:1.05}
+/* keys and Submit with a raised bottom edge (grey and gold theme kept) */
+#game .key{box-shadow:0 3px 0 rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.07)}
+#game .key:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.5)}
+#game .submit-btn{height:54px;border-radius:16px;text-transform:uppercase;letter-spacing:1.2px;font-size:1.05rem;box-shadow:0 5px 0 color-mix(in srgb,var(--gold) 52%,black),0 9px 14px rgba(0,0,0,.3);transition:transform .08s,box-shadow .08s}
+#game .submit-btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--gold) 52%,black)}
+#game .submit-btn:disabled{box-shadow:0 5px 0 rgba(0,0,0,.35)}
+@media (max-width:380px){#game .controls{--tile:44px;--cg:12px}#game .submit-btn{font-size:.95rem;letter-spacing:.8px}}
+@media (max-width:340px){#game .controls{--cg:6px;gap:4px;padding-inline:6px}#game .submit-btn{font-size:.85rem;letter-spacing:.4px}#game .submit-btn svg{display:none}}
+@media (max-height:600px){#game .controls{--tile:44px}#game .submit-btn{height:46px}#game .ctl .cico{width:26px;height:26px}}
+
+/* result screen */
+.r-meaning{font-size:1.02rem;line-height:1.35;font-style:italic;color:var(--text)!important;max-width:32ch;margin:-8px auto 14px!important}
+.card.dd .r-meaning{margin:2px auto 10px!important}
+.r-balance{display:block;margin:2px 0 8px;font-weight:700;color:var(--text)!important}
+.r-actions{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:14px}
+.again-link{background:none;border:0;min-height:44px;padding:8px 18px;color:var(--text);font-size:1.2rem;font-weight:700;text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:6px;cursor:pointer}
+.again-link:hover{color:var(--gold)}
+.r-icons{display:flex;gap:18px;justify-content:center}
+.r-icon{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:84px;padding:10px 12px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line);color:var(--text);cursor:pointer;transition:transform .1s,border-color .15s}
+.r-icon span{font-size:1.8rem;line-height:1}.r-icon small{font-size:.72rem;font-weight:700;color:var(--muted)}
+.r-icon:hover{border-color:var(--gold-dim)}.r-icon:active{transform:scale(.95)}
+.share-link{background:none;border:0;padding:8px;color:var(--muted);font-size:.85rem;text-decoration:underline;cursor:pointer}
+#game .submit-btn svg{flex:none;width:18px;height:18px}
+
+/* SCORE centred at the top of the game screen (in flow on very narrow phones, so it can never overlap the buttons) */
+#game .gtop{position:relative}
+#game .winscore{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:0}
+#game .gleft{display:flex;align-items:center;gap:8px}
+
+/* ===== Free daily coins: the + is its own button; popup ===== */
+.coins .coins-main{display:flex;align-items:center;gap:6px;background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;cursor:pointer}
+.coins .plus{position:relative;border:0;padding:0;cursor:pointer;font:inherit;font-weight:700}
+.coins .plus::before{content:"";position:absolute;inset:-9px}                 /* bigger tap area, same look */
+.coins .plus.has-free::after{content:"";position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:var(--badge-red);border:2px solid var(--bg)}
+.coins:hover,.coins:active{transform:none}
+.card.free{max-width:380px;text-align:center;border-color:var(--gold);padding:24px 20px 18px;box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 28%,transparent),0 18px 50px rgba(0,0,0,.5),0 0 40px color-mix(in srgb,var(--gold) 18%,transparent);animation:popin .35s cubic-bezier(.2,.9,.3,1.15)}
+.free-ico{font-size:3.2rem;line-height:1;margin-bottom:6px}
+.card.free h2{margin:0 0 6px}
+.card .free-msg{margin:0 0 12px;font-size:1rem;line-height:1.4;color:var(--text)}
+.free-amount{display:inline-block;margin:2px 0 12px;padding:8px 22px;border-radius:999px;font-size:1.7rem;font-weight:800;color:var(--gold);background:var(--panel-2);border:1px solid var(--gold-dim)}
+.free-amount.hidden,.free-next.hidden{display:none}
+.free-next{display:grid;gap:2px;margin:4px 0 14px;padding:12px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line)}
+.free-next small{color:var(--muted);font-size:.78rem;letter-spacing:.6px;text-transform:uppercase;font-weight:700}
+.free-next b{color:var(--text);font-size:1.05rem}
+.free-next span{color:var(--gold);font-weight:800;font-size:1.25rem;font-variant-numeric:tabular-nums}
+.card.free .primary.big{margin-top:2px;min-height:48px}
+
+/* ===== Shop: small boxes (icon, name, price, button), 3 per row ===== */
+.t-gift{--t1:var(--tg1);--t2:var(--tg2);--t3:var(--tg3)}
+.mini-tile i{font-style:normal;font-size:1.7rem;line-height:1}
+.shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.shop-grid .gcard{flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:6px;padding:12px 8px 10px;min-width:0}
+.shop-grid .gcard:hover{transform:translateY(-2px)}
+.shop-grid .gcard .mini-tile{width:50px;height:50px;margin:0 0 2px;border-radius:15px}
+.shop-grid .gcard h3{margin:0;font-size:.8rem;line-height:1.2;min-height:2.4em;padding:0 2px;display:flex;align-items:center;justify-content:center;overflow-wrap:anywhere}
+.shop-grid .gcard .price{margin:0;font-size:1rem;font-weight:800;color:var(--gold)}
+.shop-grid .gcard .primary{width:100%;padding:9px 4px;font-size:.92rem;min-height:40px}
+.shop-grid .gcard .primary.claimed,.shop-grid .gcard .primary.claimed:disabled{background:var(--panel-2);color:var(--muted);border:1px solid var(--line);box-shadow:none;opacity:1;cursor:default}
+.shop-grid .shop-next{color:var(--muted);font-size:.68rem;line-height:1.2}
+@media (max-width:340px){.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ===== Install and update cards: red, glowing, with a ✕ ===== */
+@keyframes redpulse{0%,100%{box-shadow:0 0 0 0 var(--red-glow),0 8px 20px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 7px rgba(224,38,79,0),0 8px 22px rgba(0,0,0,.4)}}
+@keyframes redshine{0%,55%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
+@keyframes icwiggle{0%,60%,100%{transform:rotate(0)}68%{transform:rotate(-14deg)}76%{transform:rotate(12deg)}84%{transform:rotate(-8deg)}92%{transform:rotate(4deg)}}
+.installcard,#update-bar{color:#fff;background-color:var(--red1);background-image:linear-gradient(135deg,var(--red1),var(--red2));border:1px solid rgba(255,255,255,.3);overflow:hidden;animation:redpulse 2.4s ease-in-out infinite}
+.installcard::after,#update-bar::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.26) 50%,transparent 62%);animation:redshine 3.6s ease-in-out infinite}
+.installcard{position:relative;display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:10px 40px 10px 12px;border-radius:16px}
+.screen.auth>.installcard{width:min(440px,100%);margin:0 auto}
+.installcard.hidden{display:none}
+.installcard .ic-ico{flex:none;font-size:1.7rem;line-height:1;transform-origin:50% 60%;animation:icwiggle 2.8s ease-in-out infinite}
+.installcard .ic-txt{flex:1;min-width:0;line-height:1.25}
+.installcard .ic-txt b{display:block;font-size:.95rem;font-weight:800}
+.installcard .ic-txt small{display:block;font-size:.76rem;font-weight:600;color:#fff}
+.ic-btn,#update-bar .primary{flex:none;border:0;border-radius:999px;padding:9px 14px;background:#fff;color:var(--red2);font-weight:800;font-size:.86rem;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.28);min-height:38px}
+.ic-btn:hover,#update-bar .primary:hover{filter:none;transform:translateY(-1px)}
+.ic-btn:active,#update-bar .primary:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.ic-btn.hot{background-color:var(--red1);background-image:linear-gradient(135deg,var(--red1),var(--red2));color:#fff;border:1px solid rgba(255,255,255,.3);animation:redpulse 2.4s ease-in-out infinite}
+.ic-x{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.25);color:#fff;font-size:.78rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;z-index:1}
+.ic-x::before{content:"";position:absolute;inset:-9px}
+.ic-x:hover{background:rgba(0,0,0,.45)}
+#update-bar{padding-right:42px;border-color:rgba(255,255,255,.3)}
+#update-bar .ic-x{top:50%;transform:translateY(-50%)}
+.ih-steps{margin:8px 0 14px;padding-left:20px;display:grid;gap:8px;line-height:1.4}
+html[data-motion=reduced] .installcard,html[data-motion=reduced] #update-bar,html[data-motion=reduced] .ic-btn.hot,html[data-motion=reduced] .installcard::after,html[data-motion=reduced] #update-bar::after,html[data-motion=reduced] .ic-ico{animation:none!important}
+@media (prefers-reduced-motion:reduce){.installcard,#update-bar,.ic-btn.hot,.installcard::after,#update-bar::after,.ic-ico{animation:none!important}}
+@media (max-width:360px){.installcard{flex-wrap:wrap}.installcard .ic-txt{flex-basis:calc(100% - 50px)}.installcard .ic-btn{margin-left:auto}}

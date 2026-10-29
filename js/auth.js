@@ -77,7 +77,7 @@
     $("#welcome-setup").classList.toggle("hidden", enabled);
     setMsg("welcome-notice", notice || "", notice ? "ok" : ""); go("welcome");
   }
-  const startGuest = () => { localStorage.setItem("wb_mode", "guest"); go("dashboard"); };
+  const startGuest = () => { clearSignupDraft(); localStorage.setItem("wb_mode", "guest"); go("dashboard"); };
   ["btn-guest", "su-guest", "li-guest"].forEach((id) => ($("#" + id).onclick = startGuest));
 
   // ---------- Google (button appears only if the provider is really enabled in Supabase) ----------
@@ -96,6 +96,23 @@
   }));
 
   // ---------- sign up ----------
+  // What the player typed survives a trip to Terms / Privacy, a refresh and Back/Forward.
+  // Only email, username and the terms tick are kept (in this tab's session storage). Passwords are NEVER stored anywhere.
+  const DRAFT_KEY = "wb_signup_draft";
+  function saveSignupDraft() { try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ email: $("#su-email").value, user: $("#su-user").value, terms: $("#su-terms").checked })); } catch {} }
+  function restoreSignupDraft() {
+    try {
+      const d = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || "null"); if (!d) return;
+      if (!$("#su-email").value && typeof d.email === "string") $("#su-email").value = d.email.slice(0, 254);
+      if (!$("#su-user").value && typeof d.user === "string") $("#su-user").value = d.user.slice(0, 16);
+      if (d.terms === true) $("#su-terms").checked = true;
+    } catch {}
+  }
+  const clearSignupDraft = () => { try { sessionStorage.removeItem(DRAFT_KEY); } catch {} };
+  ["#su-email", "#su-user"].forEach((s) => $(s).addEventListener("input", saveSignupDraft));
+  $("#su-terms").addEventListener("change", saveSignupDraft);
+  $("#signup").addEventListener("click", (e) => { if (e.target.closest("a[href]")) saveSignupDraft(); }); // leaving for Terms / Privacy
+  addEventListener("pagehide", () => { if (!$("#signup").classList.contains("hidden")) saveSignupDraft(); });
   let pendingEmail = "", resendCount = 0;
   function showVerify(email) {
     pendingEmail = email; $("#vf-email").textContent = email; setMsg("vf-msg", ""); go("verify"); cooldown($("#vf-resend"), 60, "Resend email");
@@ -115,7 +132,7 @@
       if (av.data === false) return setMsg("su-msg", "That username is taken. Try another.", "error");
       const { data, error } = await sb.auth.signUp({ email, password: p1, options: { data: { username, accepted_terms_at: new Date().toISOString() }, emailRedirectTo: redirectUrl() } });
       if (error) return setMsg("su-msg", mapError(error, "signup"), "error");
-      $("#su-pass").value = $("#su-pass2").value = "";
+      $("#su-pass").value = $("#su-pass2").value = ""; clearSignupDraft();
       if (data.session) { setMsg("su-msg", "Account created! Signing you in...", "ok"); applySession(data.session); }
       else showVerify(email); // same screen whether or not the email already existed (no account enumeration)
     } finally { busy(btn, false); }
@@ -205,6 +222,8 @@
       if (!navigator.onLine) { user = { id: window.WB_NS, offline: true }; meta = loadMeta(); return go("dashboard"); } // offline: use the cached copy
       sessionStorage.setItem("wb_notice", "Your session expired. Please log in again."); return endAccountMode();
     }
+    const wanted = enabled ? location.hash.replace(/^#/, "") : "";
+    if (["signup", "login", "forgot"].includes(wanted) && !startupNotice) { restoreSignupDraft(); return go(wanted); } // refresh or Back on a sign-in form: stay there, even for a guest
     if (isGuest() && !startupNotice) return go("dashboard");
     showWelcome(notice);
   }
@@ -355,5 +374,5 @@
     const reset = $("#s-reset"); if (reset) reset.classList.toggle("hidden", acct); // never offer to wipe a cloud-synced account
   }
 
-  window.Auth = { enabled, route, renderAccount, isAccount, setUsername, setAvatar, logout, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
+  window.Auth = { enabled, route, restoreSignupDraft, renderAccount, isAccount, setUsername, setAvatar, logout, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
 })();
