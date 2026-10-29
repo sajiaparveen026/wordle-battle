@@ -10,6 +10,11 @@ Do these once. Nothing below needs a paid plan.
 Run `supabase/migrations/002_tutorial_flag.sql` the same way. (Without it the tutorial still works, but it is only
 remembered on each device instead of on your account.)
 
+### 1c. Allow "Delete Account" (Settings > Privacy & Security)
+Run `supabase/migrations/004_delete_account.sql` the same way. It adds one small function that lets a signed-in player
+delete only their own account (their profile, cloud save and free-coin record are removed with it). Without it, Delete
+Account shows "Account deletion isn't set up yet" and nothing is deleted. (Free coins, migration 003, is separate.)
+
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`
@@ -50,6 +55,8 @@ Choose ONE way:
 4. Forgot password > email > link opens "Choose a new password" > save > you return to Log In.
 5. Play a game, reload: coins/XP/stats are still there. Log in on another device: the same progress appears.
 6. As a guest with some progress, create an account and log in: you are asked once whether to move guest progress.
-7. Profile > Log out: you return to Welcome; "Play as Guest" shows your old guest progress.
+7. Home > gear (Settings) > Log Out > confirm: you return to Welcome; "Play as Guest" shows your old guest progress.
+7b. Settings > Privacy & Security > Change Password (needs your current password), Account Security (shows your email;
+   "Sign out other devices" logs out your other phones/computers) and Delete Account (type DELETE; needs migration 004).
 8. Table Editor: `profiles` and `solo_saves` rows exist; try editing `coins` with the anon key from the browser console
    (it must be refused).

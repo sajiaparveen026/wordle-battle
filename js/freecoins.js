@@ -98,19 +98,23 @@
   function refreshDot() { const free = !claimedToday("game"); document.querySelectorAll("[data-free-coins]").forEach((b) => b.classList.toggle("has-free", free)); }
 
   // ---------- shop: the Free Coins box ----------
+  let shopTick = null;                                                // live countdown on the Shop's Free Coins box
+  const stopShopTick = () => { clearInterval(shopTick); shopTick = null; };
   function syncShopButton() {
-    const b = $("[data-free-shop]"); if (!b) return;
+    const b = $("[data-free-shop]"); if (!b) return stopShopTick();
     const done = claimedToday("shop"), note = b.parentElement.querySelector("[data-free-next]");
     b.textContent = done ? "Claimed" : "Claim"; b.disabled = done; b.classList.toggle("claimed", done);
     b.setAttribute("aria-label", done ? "Free coins claimed. Come back tomorrow." : `Claim ${AMOUNT} free coins`);
-    if (note) note.textContent = done ? `Next: ${whenText().replace("Tomorrow at ", "tomorrow ")}` : "Once a day";
+    if (note) note.textContent = done ? `Next claim in ${clock(nextMidnight() - Date.now())}` : "Once a day";
+    if (!done) stopShopTick();                                        // reset reached: the button is enabled again
+    else if (!shopTick) shopTick = setInterval(() => { const s = $("#shop"); if (!s || s.classList.contains("hidden")) return stopShopTick(); syncShopButton(); }, 1000);
   }
   async function syncShop() { syncShopButton(); if (isAcct()) { await syncFromServer(); syncShopButton(); } }
   async function claimFromShop(b) {
     b.disabled = true;
     const r = await claim("shop");
     if (r.status === "busy") return;
-    if (r.status === "claimed") toast(`+${AMOUNT} free coins added!`, "success");
+    if (r.status === "claimed") { toast(`+${AMOUNT} free coins added!`, "success"); if (typeof shopFx === "function") shopFx(b.closest(".gcard"), `+${AMOUNT} 🪙`, "gain"); }
     else if (r.status === "already") toast(ALREADY, "error", 3200);
     else toast(r.note || UNAVAILABLE, "error", 3200);
     syncShopButton();

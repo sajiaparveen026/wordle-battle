@@ -11,6 +11,8 @@ const save = (k, v, quiet) => { localStorage.setItem(wbKey(k), JSON.stringify(v)
 const AUTH_SCREENS = ["welcome", "signup", "login", "forgot", "reset", "verify"];
 let settings = load("settings", { theme: "dark", mute: false });
 if (settings.reduceMotion === undefined) settings.reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (settings.theme !== "light") settings.theme = "dark";   // only two themes exist
+if (typeof settings.vibrate !== "boolean") settings.vibrate = true;   // Settings > Game Preferences
 const reduced = () => !!settings.reduceMotion;
 let stats = load("stats", { played: 0, wins: 0, streak: 0, best: 0, dist: [0, 0, 0, 0, 0, 0], lastDaily: "" });
 
@@ -50,11 +52,14 @@ function beep(freq, dur = 0.08, type = "sine") {
     o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + dur);
   } catch {}
 }
+// ---------- Vibration (Settings > Game Preferences). Not every device supports it (e.g. iPhone), so it is always optional. ----------
+const canVibrate = () => typeof navigator.vibrate === "function";
+function vibe(pattern) { if (!settings.vibrate || !canVibrate()) return; try { navigator.vibrate(pattern); } catch {} }
 const sfx = {
-  key: () => beep(520, 0.04), bad: () => beep(150, 0.18, "square"), coin: () => { beep(880, 0.07); setTimeout(() => beep(1320, 0.1), 70); },
+  key: () => beep(520, 0.04), bad: () => { beep(150, 0.18, "square"); vibe(60); }, coin: () => { beep(880, 0.07); setTimeout(() => beep(1320, 0.1), 70); vibe(25); },
   flip: (i) => beep(400 + i * 60, 0.07),
-  win: () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, 0.15), i * 110)),
-  lose: () => [300, 240, 180].forEach((f, i) => setTimeout(() => beep(f, 0.2, "triangle"), i * 150))
+  win: () => { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, 0.15), i * 110)); vibe([70, 50, 70, 50, 150]); },
+  lose: () => { [300, 240, 180].forEach((f, i) => setTimeout(() => beep(f, 0.2, "triangle"), i * 150)); vibe(220); }
 };
 
 // ---------- Small UI helpers ----------
@@ -121,7 +126,7 @@ function show(name, fromHistory) {
   $$(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== name));
   const el = $("#" + name); el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
   $("#bottomnav").classList.toggle("hidden", name === "game" || AUTH_SCREENS.includes(name));
-  const navMap = { game: "play", battle: "play", settings: "profile" };
+  const navMap = { game: "play", battle: "play" };
   $$("#bottomnav [data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === (navMap[name] || name)));
   if (name === "leaderboard") renderLeaderboard();
   if (name === "dashboard") renderDashboard();
@@ -129,11 +134,12 @@ function show(name, fromHistory) {
   if (window.Auth) Auth.renderAccount();
   if (name === "signup" && window.Auth && Auth.restoreSignupDraft) Auth.restoreSignupDraft(); // typed email / username come back (never passwords)
   if (name === "shop") renderShop();
-  if (name === "settings") renderSettings();
   if (name === "profile") renderProfile();
   window.scrollTo(0, 0);
 }
+function openSettings() { if (window.Settings) window.Settings.open(); }
 function go(target) {
+  if (target === "settings") return openSettings();
   if (target === "practice" || target === "daily") return openGame(target);
   show(target);
 }
@@ -157,7 +163,7 @@ function renderDashboard() {
   refreshCoins();
 }
 
-// ---------- Settings ----------
+// ---------- Small renderers ----------
 function animateXp(sel, pct) { // bar fills from 0 each time it is shown
   const e = $(sel); e.style.width = "0%";
   requestAnimationFrame(() => requestAnimationFrame(() => (e.style.width = pct + "%")));
@@ -165,12 +171,6 @@ function animateXp(sel, pct) { // bar fills from 0 each time it is shown
 function renderLeaderboard() {
   const p = Player.data, lv = Player.levelInfo();
   $("#lb-list").innerHTML = `<li class="me"><span class="rank">1</span><span class="av">${p.avatar}</span><b>${p.username}</b><em>Lv ${lv.level} · ${p.xp} XP</em></li>`;
-}
-function renderSettings() {
-  if (window.PWA) PWA.renderAbout();
-  $("#s-theme").textContent = settings.theme === "dark" ? "🌙 Dark theme" : "☀️ Light theme";
-  $("#s-sound").textContent = settings.mute ? "🔇 Sound off" : "🔊 Sound on";
-  $("#s-motion").textContent = reduced() ? "🐢 Reduced motion: on" : "✨ Reduced motion: off";
 }
 
 // ---------- Profile (separate from Settings) ----------
@@ -211,7 +211,18 @@ function renderEdit() {
 }
 function openEdit() { renderEdit(); $("#edit-profile").classList.remove("hidden"); lockModal(true); $("#s-name").focus(); }
 function closeEdit() { if ($("#edit-profile").classList.contains("hidden")) return; $("#edit-profile").classList.add("hidden"); lockModal(false); renderProfile(); renderDashboard(); }
-function applySettings() { document.documentElement.dataset.theme = settings.theme; document.documentElement.dataset.motion = reduced() ? "reduced" : "full"; save("settings", settings); }
+const THEME_COLOR = { dark: "#1A1A1B", light: "#F5F4EE" };   // browser / phone status bar colour (matches --bg)
+function applySettings() {
+  document.documentElement.dataset.theme = settings.theme; document.documentElement.dataset.motion = reduced() ? "reduced" : "full";
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = THEME_COLOR[settings.theme] || THEME_COLOR.dark;
+  save("settings", settings);
+}
+// "Reset all progress" (guest devices only). Settings > Privacy & Security > Delete Account uses it for guests, after its own confirmation.
+async function resetAllProgress(alreadyConfirmed) {
+  if (alreadyConfirmed || await confirmBox("Reset everything?", "This deletes your coins, hints, stats and streaks. It can't be undone.", "Reset")) {
+    Object.keys(localStorage).filter((k) => k.startsWith("wb_") && k !== "wb_settings").forEach((k) => localStorage.removeItem(k)); location.reload();   // keeps your theme / sound choices
+  }
+}
 
 // ---------- Shop ----------  (the items come from SHOP_ITEMS in store.js)
 function shopCard(it) {
@@ -227,16 +238,40 @@ async function needCoins(cost) {
   const pick = await dialog("Not enough coins", `You need ${missing} more coin${missing === 1 ? "" : "s"}. Win games to earn coins: ${REWARDS.practice.coins} for a solo win, ${REWARDS.daily.coins} for the daily challenge.`, ["Dashboard", "Earn coins"]);
   if (pick === 0) show("dashboard"); else openGame("practice", true);
 }
+// Purchase / claim feedback: glow on the card, coins flying between the balance and the card, a floating label.
+// dir "spend": coins leave the balance and land on the card | dir "gain": coins fly from the card up to the balance. Skipped for reduced motion.
+function shopFx(card, label, dir) {
+  const bal = document.querySelector("#shop .coins");
+  if (bal) { bal.classList.remove("bump"); void bal.offsetWidth; bal.classList.add("bump"); setTimeout(() => bal.classList.remove("bump"), 650); }
+  if (!card || reduced()) return;
+  card.classList.remove("buy-ok"); void card.offsetWidth; card.classList.add("buy-ok"); setTimeout(() => card.classList.remove("buy-ok"), 1100);
+  const a = card.getBoundingClientRect(), t = bal ? bal.getBoundingClientRect() : { left: a.left, top: a.top - 200, width: 0, height: 0 };
+  const cardPt = { x: a.left + a.width / 2, y: a.top + a.height * 0.62 }, balPt = { x: t.left + t.width / 2, y: t.top + t.height / 2 };
+  const [from, to] = dir === "spend" ? [balPt, cardPt] : [cardPt, balPt];
+  const pop = document.createElement("span"); pop.className = "shop-pop"; pop.textContent = label; pop.style.left = cardPt.x + "px"; pop.style.top = cardPt.y + "px";
+  document.body.append(pop); setTimeout(() => pop.remove(), 1300);
+  for (let i = 0; i < 6; i++) {
+    const c = document.createElement("span"); c.className = "shop-coin"; c.textContent = "🪙"; c.style.left = from.x + "px"; c.style.top = from.y + "px"; document.body.append(c);
+    const dx = to.x - from.x, dy = to.y - from.y, sp = (i - 2.5) * 12;
+    const an = c.animate([{ transform: "translate(-50%,-50%) scale(.6)", opacity: 0 }, { transform: `translate(calc(-50% + ${sp}px),calc(-50% - 26px)) scale(1.1)`, opacity: 1, offset: 0.25 }, { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.55)`, opacity: 0.95 }], { duration: 720 + i * 70, delay: i * 55, easing: "cubic-bezier(.4,0,.2,1)", fill: "both" });
+    an.onfinish = () => c.remove(); setTimeout(() => c.remove(), 2000);
+  }
+}
 async function buyItem(id) {                              // one purchase at a time; the price is checked again at the moment of payment
-  if (spendLock) return; spendLock = true;
+  if (spendLock) return; spendLock = true; let cool = 0;
+  const btn = document.querySelector(`#shop-cards [data-buy="${id}"]`), all = $$("#shop-cards [data-buy]");
+  all.forEach((b) => (b.disabled = true));                // every Buy button is locked while this purchase runs: repeated taps can't buy twice
   try {
     const it = SHOP_ITEMS.find((i) => i.id === id); if (!it || it.kind === "free") return;
     if (Player.data.coins < it.price) return needCoins(it.price);
     if (!(await confirmSpend("Buy", `Buy 1 "${it.name}" for ${it.price} coins?`, it.price, it.icon))) return;
     if (!Player.spend(it.price)) return toast("Not enough coins", "error");
     if (it.kind === "hint") Player.addHintCredit(it.type); else if (it.kind === "skip") Player.addSkipCredit();
-    sfx.coin(); toast(`Bought: ${it.name}`, "success"); renderShop(); updateHintButtons();   // updateHintButtons also refreshes every coin counter
-  } finally { spendLock = false; }
+    sfx.coin(); toast(`Bought: ${it.name}`, "success"); updateHintButtons();   // updateHintButtons also refreshes every coin counter
+    cool = reduced() ? 400 : 1000;                         // keep the buttons locked while the success effect plays
+    if (btn) { btn.textContent = "✓ Bought"; btn.classList.add("ok"); setTimeout(() => { btn.textContent = "Buy"; btn.classList.remove("ok"); }, cool); }
+    shopFx(btn && btn.closest(".gcard"), `-${it.price} 🪙`, "spend");
+  } finally { setTimeout(() => { spendLock = false; all.forEach((b) => (b.disabled = false)); }, cool); }
 }
 
 // ---------- Board & keyboard ----------
@@ -608,8 +643,8 @@ document.addEventListener("click", (e) => {
   else if (t.dataset.av) { Player.data.avatar = t.dataset.av; Player.save(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(t.dataset.av); renderEdit(); renderProfile(); }
   else if (t.dataset.hint) useHint(t.dataset.hint);
 });
-$("#go-settings").onclick = () => show("settings");
-$("#pf-settings").onclick = () => show("settings");
+$("#go-settings").onclick = openSettings;
+$("#pf-settings").onclick = openSettings;
 $("#pf-edit").onclick = openEdit; $("#ep-done").onclick = closeEdit; $("#ep-x").onclick = closeEdit;
 $("#edit-profile").addEventListener("click", (e) => { if (e.target.id === "edit-profile") closeEdit(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEdit(); });
@@ -623,14 +658,6 @@ $("#s-name").onchange = (e) => {
   if (window.Auth && Auth.isAccount()) return Auth.setUsername(e.target.value.trim());
   Player.data.username = e.target.value.trim().slice(0, 16) || Player.data.username; Player.save(); toast("Username saved", "success"); renderProfile();
 };
-$("#s-theme").onclick = () => { settings.theme = settings.theme === "dark" ? "light" : "dark"; applySettings(); renderSettings(); };
-$("#s-motion").onclick = () => { settings.reduceMotion = !settings.reduceMotion; applySettings(); renderSettings(); };
-$("#s-sound").onclick = () => { settings.mute = !settings.mute; applySettings(); renderSettings(); };
-$("#s-reset").onclick = async () => {
-  if (await confirmBox("Reset everything?", "This deletes your coins, hints, stats and streaks. It can't be undone.", "Reset")) {
-    Object.keys(localStorage).filter((k) => k.startsWith("wb_")).forEach((k) => localStorage.removeItem(k)); location.reload();
-  }
-};
 $("#modal-close").onclick = closeModal;
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#clue").classList.contains("hidden")) closeClue(); if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); if (e.key === "Escape" && !$("#daily-done").classList.contains("hidden")) closeDailyDone(); });
 $("#dd-ok").onclick = closeDailyDone;
@@ -640,7 +667,7 @@ $("#btn-again").onclick = () => { closeModal(); openGame("practice", true); };
 $("#btn-share").onclick = async () => ((await copyText(shareText())) ? toast("Result copied to clipboard", "success") : toast("Couldn't copy result", "error"));
 document.addEventListener("keydown", (e) => {
   if (e.target.closest && e.target.closest("input,textarea,select")) return; // typing in a form: leave Enter/letters alone
-  if (e.ctrlKey || e.metaKey || e.altKey || !$("#modal").classList.contains("hidden") || !$("#dialog").classList.contains("hidden") || !$("#tutorial").classList.contains("hidden") || !$("#daily-done").classList.contains("hidden") || !$("#info").classList.contains("hidden") || !$("#clue").classList.contains("hidden") || !$("#free").classList.contains("hidden")) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || document.body.classList.contains("sp-lock") || !$("#modal").classList.contains("hidden") || !$("#dialog").classList.contains("hidden") || !$("#tutorial").classList.contains("hidden") || !$("#daily-done").classList.contains("hidden") || !$("#info").classList.contains("hidden") || !$("#clue").classList.contains("hidden") || !$("#free").classList.contains("hidden")) return;
   const k = e.key.toLowerCase();
   if (k === "enter") { e.preventDefault(); if (e.repeat) return; } // stops a focused button from also firing
   if (k === "enter") press("enter"); else if (k === "backspace") press("back"); else if (/^[a-z]$/.test(k)) press(k);
@@ -656,7 +683,7 @@ addEventListener("popstate", (e) => {
 
 // ---------- Start ----------
 applySettings(); buildKeyboard(); buildBoard(); refreshCoins();
-window.WBApp = { show, applyStats: (o) => { Object.assign(stats, o); save("stats", stats, true); }, getStats: () => stats, refresh: () => { refreshCoins(); if (screen === "dashboard") renderDashboard(); if (screen === "profile") renderProfile(); } };
+window.WBApp = { show, applySettings, resetAll: resetAllProgress, applyStats: (o) => { Object.assign(stats, o); save("stats", stats, true); }, getStats: () => stats, refresh: () => { refreshCoins(); if (screen === "dashboard") renderDashboard(); if (screen === "profile") renderProfile(); } };
 const splashMs = sessionStorage.getItem("wb_fast") ? 250 : 1600; sessionStorage.removeItem("wb_fast"); // shorter splash right after sign-in/out
 setTimeout(async () => { $("#splash").classList.add("out"); if (window.Auth) await Auth.route(); else show("dashboard"); }, splashMs);
 if (window.DEMO_MODE) console.info("Wordle Battle: local demo mode. Online battles need Supabase.");

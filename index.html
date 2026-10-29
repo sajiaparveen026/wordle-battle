@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wordle Battle</title>
 <meta name="theme-color" content="#1A1A1B">
+<script>(function(){try{var s=JSON.parse(localStorage.getItem("wb_settings")||"null");if(s&&s.theme==="light"){document.documentElement.setAttribute("data-theme","light");var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content","#F5F4EE");}}catch(e){}})();</script>
 <meta name="description" content="Wordle Battle: daily word puzzles, hints and coins.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
@@ -56,6 +57,30 @@
   </defs>
 </svg>
 
+<!-- Icons for the Settings panel (stroke icons, same style as the Profile icons) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="s-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></symbol>
+    <symbol id="s-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="s-shield" viewBox="0 0 24 24"><path d="M12 3l7 2.8v5.6c0 4.4-2.8 7.6-7 9.6-4.2-2-7-5.2-7-9.6V5.8z"/><path d="M8.8 12l2.3 2.3 4.2-4.4"/></symbol>
+    <symbol id="s-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.8"/><path d="M12 16.6h.01" stroke-width="2.6"/></symbol>
+    <symbol id="s-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.2"/><path d="M12 7.7h.01" stroke-width="2.6"/></symbol>
+    <symbol id="s-sparkle" viewBox="0 0 24 24"><path d="M11 4l1.9 5 5 1.9-5 1.9-1.9 5-1.9-5-5-1.9 5-1.9z"/><path d="M19 15.5v4M17 17.5h4"/></symbol>
+    <symbol id="s-logout" viewBox="0 0 24 24"><path d="M9 4.5H6.5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2H9"/><path d="M15 8l4 4-4 4M19 12H9.5"/></symbol>
+    <symbol id="s-moon" viewBox="0 0 24 24"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2z"/></symbol>
+    <symbol id="s-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.8"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></symbol>
+    <symbol id="s-volume" viewBox="0 0 24 24"><path d="M4.5 9.8v4.4h3.2l4.3 3.6V6.2L7.7 9.8z"/><path d="M15.4 9a4 4 0 0 1 0 6M17.8 6.6a7.4 7.4 0 0 1 0 10.8"/></symbol>
+    <symbol id="s-vibrate" viewBox="0 0 24 24"><rect x="8" y="3.5" width="8" height="17" rx="2"/><path d="M4.5 8.5v7M19.5 8.5v7M2 10.5v3M22 10.5v3"/></symbol>
+    <symbol id="s-motion" viewBox="0 0 24 24"><path d="M3.5 9c2.2-2.4 4.4-2.4 6.6 0s4.4 2.4 6.6 0M3.5 15c2.2-2.4 4.4-2.4 6.6 0s4.4 2.4 6.6 0"/></symbol>
+    <symbol id="s-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2.4"/><path d="M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5"/><path d="M12 14.4v2.2"/></symbol>
+    <symbol id="s-devices" viewBox="0 0 24 24"><rect x="3" y="5" width="13" height="9" rx="1.6"/><path d="M1.5 18.5h16"/><rect x="16.5" y="9.5" width="5" height="9" rx="1.2"/></symbol>
+    <symbol id="s-doc" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4M9.6 12h5.8M9.6 15.4h5.8"/></symbol>
+    <symbol id="s-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.8h4V7M7 7l.8 12.2h8.4L17 7M10.2 10.6v5.4M13.8 10.6v5.4"/></symbol>
+    <symbol id="s-book" viewBox="0 0 24 24"><path d="M12 6.5C10.2 5.2 7.6 4.8 4.5 5v12.5c3.1-.2 5.7.2 7.5 1.5 1.8-1.3 4.4-1.7 7.5-1.5V5c-3.1-.2-5.7.2-7.5 1.5z"/><path d="M12 6.5V19"/></symbol>
+    <symbol id="s-bug" viewBox="0 0 24 24"><path d="M9 7.5a3 3 0 0 1 6 0"/><rect x="7.5" y="7.5" width="9" height="11" rx="4.5"/><path d="M12 11v7M3.5 12.5h4M16.5 12.5h4M4.5 18l3-1.6M19.5 18l-3-1.6M4.5 7l3 1.8M19.5 7l-3 1.8"/></symbol>
+    <symbol id="s-ext" viewBox="0 0 24 24"><path d="M14 4.5h5.5V10M19 5l-8 8M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 5 18.5v-10A1.5 1.5 0 0 1 6.5 7H11"/></symbol>
+  </defs>
+</svg>
 
 <div id="splash">
   <div class="orb o1"></div><div class="orb o2"></div>
@@ -69,7 +94,7 @@
   <header class="dash-head">
     <div class="logo sm">Wordle <span>Battle</span></div>
     <div class="head-right">
-      <button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button>
+      <button class="streak" data-go="profile" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button>
       <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
       <button id="go-settings" class="icon" aria-label="Settings">⚙️</button>
     </div>
@@ -125,7 +150,7 @@
 
 <!-- SHOP -->
 <section id="shop" class="screen hidden">
-  <header class="top"><button class="icon" data-back>← Back</button><b>Shop</b><div class="head-right"><button class="streak" data-go="settings" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><div class="coins">🪙 <b class="coin-val"></b></div></div></header>
+  <header class="top"><button class="icon" data-back>← Back</button><b>Shop</b><div class="head-right"><button class="streak" data-go="profile" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><div class="coins">🪙 <b class="coin-val"></b></div></div></header>
   <div class="cards shop-grid" id="shop-cards"></div>
 </section>
 
@@ -284,21 +309,170 @@
   </section>
 </section>
 
-<section id="settings" class="screen hidden">
-  <header class="top"><button class="icon" data-back>← Back</button><b>Settings</b><span></span></header>
-  <div class="panel" id="acct"></div>
-  <div class="panel">
-    <h4>Preferences</h4>
-    <div class="actions"><button class="primary alt" id="s-theme"></button><button class="primary alt" id="s-sound"></button><button class="primary alt" id="s-motion"></button></div>
-    <h4>Help</h4>
-    <div class="actions"><button class="primary alt" data-howto type="button">📖 How to Play</button></div>
-    <h4>About</h4>
-    <div class="about"><b id="s-version"></b><small id="s-update-note"></small></div>
-    <div class="actions"><button class="primary alt" id="s-check-btn">Check for updates</button><button class="primary hidden" id="s-update-btn">Update App</button></div>
-    <div class="actions hidden" data-install-wrap><button class="primary ic-btn hot" type="button" data-install>📲 Install App</button></div>
-    <h4>Data</h4><button class="primary danger" id="s-reset">Reset all progress</button>
+<!-- SETTINGS: slide-out panel (opened from the gear on Home and on Profile). Profile stays a separate screen. -->
+<div id="settings" class="sp-root" aria-hidden="true" inert>
+  <div class="sp-backdrop" data-sp-close></div>
+  <aside class="sp" role="dialog" aria-modal="true" aria-labelledby="sp-title" tabindex="-1">
+    <header class="sp-head">
+      <h2 id="sp-title"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-gear"/></svg><span>Settings</span></h2>
+      <button class="sp-close" id="sp-close" type="button">Close</button>
+    </header>
+
+    <div class="sp-body" id="sp-body">
+      <!-- main list -->
+      <section class="sp-view" data-view="main" aria-label="Settings options">
+        <div class="sp-list">
+          <button class="sp-card" type="button" data-sp-act="profile"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-user"/></svg></span><span class="sp-txt"><b>Account</b><small id="sp-d-account">Profile, avatar &amp; sign-in</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="appearance"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-contrast"/></svg></span><span class="sp-txt"><b>Appearance</b><small id="sp-d-appearance">Dark mode</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="game"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#p-gamepad"/></svg></span><span class="sp-txt"><b>Game Preferences</b><small id="sp-d-game">Sound &amp; vibration</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="privacy"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-shield"/></svg></span><span class="sp-txt"><b>Privacy &amp; Security</b><small>Password, data &amp; legal</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="help"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-help"/></svg></span><span class="sp-txt"><b>Help &amp; Support</b><small>How to play, FAQs &amp; bug reports</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="about"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-info"/></svg></span><span class="sp-txt"><b>About</b><small id="sp-d-about">Version &amp; credits</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="new"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-sparkle"/></svg></span><span class="sp-txt"><b>What’s New</b><small id="sp-d-new">Latest updates</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+        </div>
+      </section>
+
+      <!-- Appearance -->
+      <section class="sp-view hidden" data-view="appearance" aria-labelledby="sp-t-appearance">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-appearance" tabindex="-1">Appearance</h3></div>
+        <div class="sp-list">
+          <div class="sp-card sp-row" data-sw-row="sw-dark"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-contrast"/></svg></span><span class="sp-txt"><b id="sw-dark-l">Dark Mode</b><small id="sw-dark-d">Easy on the eyes. Turn off for the light theme.</small></span><button class="sw sw-theme" id="sw-dark" type="button" role="switch" aria-checked="false" aria-labelledby="sw-dark-l sw-dark-d"><span class="sw-knob" aria-hidden="true"><svg class="pf-ico sw-moon" viewBox="0 0 24 24" focusable="false"><use href="#s-moon"/></svg><svg class="pf-ico sw-sun" viewBox="0 0 24 24" focusable="false"><use href="#s-sun"/></svg></span></button></div>
+          <div class="sp-card sp-row" data-sw-row="sw-motion"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-motion"/></svg></span><span class="sp-txt"><b id="sw-motion-l">Reduce Motion</b><small id="sw-motion-d">Calmer animations and no confetti.</small></span><button class="sw " id="sw-motion" type="button" role="switch" aria-checked="false" aria-labelledby="sw-motion-l sw-motion-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
+        </div>
+        <p class="sp-fine">Your choice is saved on this device and used every time you open Wordle Battle.</p>
+      </section>
+
+      <!-- Game Preferences -->
+      <section class="sp-view hidden" data-view="game" aria-labelledby="sp-t-game">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-game" tabindex="-1">Game Preferences</h3></div>
+        <div class="sp-list">
+          <div class="sp-card sp-row" data-sw-row="sw-sound"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-volume"/></svg></span><span class="sp-txt"><b id="sw-sound-l">Sound Effects</b><small id="sw-sound-d">Key taps, hints, coins and win jingles.</small></span><button class="sw " id="sw-sound" type="button" role="switch" aria-checked="false" aria-labelledby="sw-sound-l sw-sound-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
+          <div class="sp-card sp-row" data-sw-row="sw-vibe"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-vibrate"/></svg></span><span class="sp-txt"><b id="sw-vibe-l">Vibration</b><small id="sw-vibe-d">A short buzz for wrong words, wins and hints.</small></span><button class="sw " id="sw-vibe" type="button" role="switch" aria-checked="false" aria-labelledby="sw-vibe-l sw-vibe-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
+        </div>
+        <p class="sp-fine">Both apply straight away, in every game mode.</p>
+      </section>
+
+      <!-- Privacy & Security -->
+      <section class="sp-view hidden" data-view="privacy" aria-labelledby="sp-t-privacy">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-privacy" tabindex="-1">Privacy &amp; Security</h3></div>
+        <div class="sp-list">
+          <button class="sp-card" type="button" data-sp-act="password"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-lock"/></svg></span><span class="sp-txt"><b>Change Password</b><small>Update your sign-in password</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="security"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-devices"/></svg></span><span class="sp-txt"><b>Account Security</b><small>Email, sign-in &amp; devices</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <a class="sp-card" href="privacy.html" target="_blank" rel="noopener"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-doc"/></svg></span><span class="sp-txt"><b>Privacy Policy</b><small>How your data is used</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#s-ext"/></svg></a>
+          <a class="sp-card" href="terms.html" target="_blank" rel="noopener"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-doc"/></svg></span><span class="sp-txt"><b>Terms of Service</b><small>The rules of play</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#s-ext"/></svg></a>
+          <button class="sp-card sp-danger" type="button" data-sp-act="delete"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-trash"/></svg></span><span class="sp-txt"><b>Delete Account</b><small id="sp-d-delete">Permanently remove your account</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+        </div>
+      </section>
+
+      <!-- Account Security -->
+      <section class="sp-view hidden" data-view="security" aria-labelledby="sp-t-security">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-security" tabindex="-1">Account Security</h3></div>
+        <div id="sec-guest" class="sp-note hidden">
+          <b>You’re playing as a guest</b>
+          <p>Your progress is saved on this device only. Create an account to protect it and use it on other devices.</p>
+          <div class="actions"><button class="primary" type="button" data-sp-act="signup">Create account</button><button class="primary alt" type="button" data-sp-act="login">Log in</button></div>
+        </div>
+        <div id="sec-acct" class="hidden">
+          <dl class="sp-facts">
+            <div><dt>Email</dt><dd id="sec-email"></dd></div>
+            <div><dt>Email status</dt><dd id="sec-verified"></dd></div>
+            <div><dt>Sign-in method</dt><dd id="sec-method"></dd></div>
+            <div><dt>Last sign-in</dt><dd id="sec-last"></dd></div>
+            <div><dt>Account created</dt><dd id="sec-created"></dd></div>
+          </dl>
+          <div class="sp-list">
+            <button class="sp-card" type="button" data-sp-act="password"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-lock"/></svg></span><span class="sp-txt"><b>Change Password</b><small>Update your sign-in password</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+            <button class="sp-card" type="button" id="sec-others"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-devices"/></svg></span><span class="sp-txt"><b>Sign out other devices</b><small>Keeps this device signed in</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          </div>
+          <p class="sp-fine">Passwords are handled by Supabase and are never stored by the game.</p>
+        </div>
+      </section>
+
+      <!-- Help & Support -->
+      <section class="sp-view hidden" data-view="help" aria-labelledby="sp-t-help">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-help" tabindex="-1">Help &amp; Support</h3></div>
+        <div class="sp-list">
+          <button class="sp-card" type="button" data-sp-act="howto"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-book"/></svg></span><span class="sp-txt"><b>How to Play</b><small>The rules, in a few quick steps</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="faq"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-help"/></svg></span><span class="sp-txt"><b>FAQs</b><small>Answers to common questions</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+          <button class="sp-card" type="button" data-sp-go="bug"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-bug"/></svg></span><span class="sp-txt"><b>Report a Bug</b><small>Tell us what went wrong</small></span><svg class="pf-ico sp-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
+        </div>
+      </section>
+
+      <section class="sp-view hidden" data-view="faq" aria-labelledby="sp-t-faq">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-faq" tabindex="-1">FAQs</h3></div>
+        <div id="sp-faq" class="sp-faq"></div>
+      </section>
+
+      <section class="sp-view hidden" data-view="bug" aria-labelledby="sp-t-bug">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-bug" tabindex="-1">Report a Bug</h3></div>
+        <form id="bug-form" class="sp-form" novalidate>
+          <label for="bug-text">What went wrong?</label>
+          <textarea id="bug-text" maxlength="1000" rows="6" placeholder="What were you doing, and what happened instead?"></textarea>
+          <small id="bug-count" class="sp-fine">0 / 1000</small>
+          <label class="check"><input type="checkbox" id="bug-info" checked><span>Include app info (version, browser, screen size)</span></label>
+          <p class="authmsg" id="bug-msg" role="status"></p>
+          <div class="actions"><button class="primary alt" id="bug-copy" type="button">Copy report</button><button class="primary" id="bug-send" type="submit">Send by email</button></div>
+        </form>
+      </section>
+
+      <!-- About -->
+      <section class="sp-view hidden" data-view="about" aria-labelledby="sp-t-about">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-about" tabindex="-1">About</h3></div>
+        <div class="sp-card sp-static sp-about">
+          <div class="logo sm">Wordle <span>Battle</span></div>
+          <div class="about"><b id="s-version"></b><small id="s-update-note"></small></div>
+          <div class="actions"><button class="primary alt" id="s-check-btn" type="button">Check for updates</button><button class="primary hidden" id="s-update-btn" type="button">Update App</button></div>
+          <div class="actions hidden" data-install-wrap><button class="primary ic-btn hot" type="button" data-install>📲 Install App</button></div>
+        </div>
+        <div class="sp-card sp-static sp-credits">
+          <b>Credits</b>
+          <ul>
+            <li>Created by the Wordle Battle team</li>
+            <li>Accounts and cloud save by Supabase</li>
+            <li>A daily word puzzle in the spirit of classic word-guessing games</li>
+          </ul>
+          <small>© 2026 Wordle Battle. All rights reserved.</small>
+        </div>
+      </section>
+
+      <!-- What's New -->
+      <section class="sp-view hidden" data-view="new" aria-labelledby="sp-t-new">
+        <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-new" tabindex="-1">What’s New</h3></div>
+        <ol id="sp-log" class="sp-log"></ol>
+      </section>
+    </div>
+
+    <footer class="sp-foot" id="sp-foot">
+      <button class="sp-logout" id="sp-logout" type="button"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#s-logout"/></svg><span id="sp-logout-t">Log Out</span></button>
+    </footer>
+  </aside>
+</div>
+
+<!-- Change password (opened from Settings > Privacy & Security) -->
+<div id="pw-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="pw-title">
+  <div class="card"><button id="pw-x" class="x" type="button" aria-label="Close">✕</button>
+    <h2 id="pw-title">Change password</h2>
+    <form id="pw-form" novalidate>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="cp-cur" type="password" autocomplete="current-password" placeholder="Current password" ><button type="button" class="eye" data-eye="cp-cur" aria-label="Show password">👁</button></label>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="cp-new" type="password" autocomplete="new-password" placeholder="New password" ><button type="button" class="eye" data-eye="cp-new" aria-label="Show password">👁</button></label>
+      <div class="meter"><i id="cp-meter"></i></div><small id="cp-hint" class="fine">8+ characters with upper, lower case and a number.</small>
+      <label class="field"><span aria-hidden="true">🔒</span><input id="cp-new2" type="password" autocomplete="new-password" placeholder="Confirm new password" ><button type="button" class="eye" data-eye="cp-new2" aria-label="Show password">👁</button></label>
+      <p class="authmsg error" id="cp-msg" role="alert"></p>
+      <div class="actions"><button class="primary alt" id="pw-cancel" type="button">Cancel</button><button class="primary" id="pw-save" type="submit"><span class="spin"></span><b>Update password</b></button></div>
+    </form>
   </div>
-</section>
+</div>
+
+<!-- Delete account: needs the word DELETE typed, so it can't happen by accident -->
+<div id="del-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="del-title">
+  <div class="card"><button id="del-x" class="x" type="button" aria-label="Close">✕</button>
+    <h2 id="del-title">Delete your account?</h2>
+    <p>This permanently deletes your account, coins, hints, stats and cloud save. It can’t be undone.</p>
+    <label class="field"><input id="del-type" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Type DELETE to confirm" aria-label="Type DELETE to confirm"></label>
+    <p class="authmsg error" id="del-msg" role="alert"></p>
+    <div class="actions"><button class="primary alt" id="del-cancel" type="button">Cancel</button><button class="primary danger" id="del-go" type="button" disabled><span class="spin"></span><b>Delete account</b></button></div>
+  </div>
+</div>
 
 <div id="update-bar" class="hidden" role="status"><span id="update-text">A new version is available.</span><button id="update-btn" class="primary">Update App</button><button id="update-x" class="ic-x" type="button" aria-label="Dismiss update notice">✕</button></div>
 <div id="edit-profile" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ep-title">
@@ -486,6 +660,7 @@
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>
 <script src="js/tutorial.js"></script>
+<script src="js/settings.js"></script>
 <script src="js/freecoins.js"></script>
 <script src="js/pwa.js"></script>
 </body>

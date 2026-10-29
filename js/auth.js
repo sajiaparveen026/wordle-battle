@@ -45,7 +45,7 @@
       $("#" + hintId).textContent = !p ? "8+ characters with upper, lower case and a number." : iss.length ? "Still needs: " + iss.join(", ") : ["", "Weak", "Okay", "Good", "Strong"][s] + " password";
     });
   }
-  meter("su-pass", "su-meter", "su-hint"); meter("rp-pass", "rp-meter", "rp-hint");
+  meter("su-pass", "su-meter", "su-hint"); meter("rp-pass", "rp-meter", "rp-hint"); meter("cp-new", "cp-meter", "cp-hint"); // cp-* = Settings > Change password
 
   // ---------- small UI helpers ----------
   const setMsg = (id, text, kind) => { const e = $("#" + id); e.textContent = text || ""; e.className = "authmsg" + (kind ? " " + kind : ""); };
@@ -359,6 +359,51 @@
   }
   document.addEventListener("click", (e) => { if (e.target.closest("#btn-logout")) logout(); });
 
+  // ---------- Settings > Privacy & Security ----------
+  // Everything here goes through the official Supabase client (or a server function). No passwords are stored or logged by the game.
+  function accountInfo() { // small, read-only summary for the Account Security screen (null for guests)
+    if (!isAccount() || !user) return null;
+    const providers = (user.app_metadata && Array.isArray(user.app_metadata.providers)) ? user.app_metadata.providers : [];
+    return { email: user.email || "", offline: !!user.offline, verified: !!user.email_confirmed_at, providers, password: !providers.length || providers.includes("email"), lastSignIn: user.last_sign_in_at || null, created: user.created_at || null };
+  }
+  const needOnline = () => (!enabled || !isAccount() || !user || user.offline ? "Sign in to your account to do this." : !navigator.onLine ? "You're offline. Connect to the internet and try again." : "");
+  async function changePassword(current, next) { // re-checks the current password first, then asks Supabase to set the new one
+    const why = needOnline(); if (why) return { error: why };
+    if (!accountInfo().password) return { error: "This account signs in with Google, so there is no password to change here." };
+    if (!current) return { error: "Enter your current password." };
+    const iss = pwIssues(next); if (iss.length) return { error: "New password needs: " + iss.join(", ") + "." };
+    if (next === current) return { error: "Choose a password different from your current one." };
+    try {
+      const re = await sb.auth.signInWithPassword({ email: user.email, password: current });
+      if (re.error) return { error: /invalid|credentials/i.test((re.error.code || "") + (re.error.message || "")) ? "Your current password is incorrect." : mapError(re.error, "x") };
+      const { error } = await sb.auth.updateUser({ password: next });
+      if (error) return { error: error.code === "same_password" ? "Choose a password different from your current one." : mapError(error, "x") };
+      return { ok: true };
+    } catch { return { error: "Can't reach the server. Check your connection and try again." }; }
+  }
+  async function signOutOthers() { // ends every other signed-in device; this one stays signed in
+    const why = needOnline(); if (why) return { error: why };
+    try { const { error } = await sb.auth.signOut({ scope: "others" }); return error ? { error: mapError(error, "x") } : { ok: true }; } catch { return { error: "Can't reach the server. Check your connection and try again." }; }
+  }
+  async function deleteAccount() { // the server function (supabase/migrations/004_delete_account.sql) deletes the auth user; every table cascades from it
+    const why = needOnline(); if (why) return { error: why };
+    try {
+      const r = await sb.rpc("delete_my_account");
+      if (r.error) return { error: ["PGRST202", "42883"].includes(r.error.code) ? "Account deletion isn't set up yet (database migration 004 is missing)." : mapError(r.error, "x") };
+    } catch { return { error: "Can't reach the server. Check your connection and try again." }; }
+    const id = user.id; user = null; clearTimeout(pushTimer);   // no more cloud saves for an account that no longer exists
+    sessionStorage.setItem("wb_notice", "Your account has been deleted.");
+    try { await sb.auth.signOut({ scope: "local" }); } catch {}
+    Object.keys(localStorage).filter((k) => k.startsWith("wb_") && k.endsWith("_" + id)).forEach((k) => localStorage.removeItem(k)); // this account's copy on this device only; guest data is untouched
+    endAccountMode(); return { ok: true };
+  }
+  async function leaveGuest() { // "Log out" for a guest: back to the welcome screen, guest progress stays on this device
+    if (isAccount()) return logout();
+    if (!(await confirmBox("Log out?", "You're playing as a guest. Your progress stays saved on this device; choose Play as Guest later to continue.", "Log out"))) return;
+    sessionStorage.setItem("wb_notice", "You left guest mode. Your guest progress is still saved on this device.");
+    endAccountMode();
+  }
+
   // Profile screen: the short player ID and join date of a signed-in account (guests have neither).
   function profileMeta() {
     if (!isAccount() || !user || !user.id) return {};
@@ -383,5 +428,5 @@
     const reset = $("#s-reset"); if (reset) reset.classList.toggle("hidden", acct); // never offer to wipe a cloud-synced account
   }
 
-  window.Auth = { enabled, route, restoreSignupDraft, profileMeta, renderAccount, isAccount, setUsername, setAvatar, logout, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
+  window.Auth = { enabled, route, restoreSignupDraft, profileMeta, renderAccount, isAccount, setUsername, setAvatar, logout, leaveGuest, accountInfo, changePassword, signOutOthers, deleteAccount, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
 })();
