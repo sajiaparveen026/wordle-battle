@@ -126,7 +126,7 @@
       <button id="g-back" class="ibtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button>
       <button id="g-info" class="ibtn" aria-label="How to play"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg></button>
     </div>
-    <div class="winscore" role="status" aria-label="Wins" title="Total wins"><span class="sc-l">Score</span><b class="win-val">0</b></div>
+    <div class="winscore" role="status" aria-label="Wins" title="Total wins"><span class="sc-l">Score</span><b class="win-val">0</b><b class="g-date" id="g-date"></b></div>
     <div class="gright">
       <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
     </div>
@@ -500,7 +500,7 @@
 
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="card result">
-    <button id="modal-close" class="x" aria-label="Close results">✕</button>
+    <div id="r-dailyhead" class="r-dailyhead hidden"><h3>Daily Challenge Completed</h3><p id="r-dailydate"></p></div>
     <div class="r-emoji" id="r-emoji"></div>
     <h2 id="modal-title"></h2>
     <p id="modal-msg"></p>
@@ -529,7 +529,7 @@
 <div id="daily-done" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="dd-title">
   <div class="card result dd">
     <div class="r-emoji" id="dd-emoji" aria-hidden="true">🏆</div>
-    <h2 id="dd-title">Daily Challenge</h2>
+    <h2 id="dd-title">Daily Challenge Completed</h2>
     <p class="dd-date" id="dd-date"></p>
     <p class="dd-status" id="dd-status"></p>
     <div class="tgrid" id="dd-grid" aria-hidden="true"></div>

@@ -105,15 +105,28 @@
   }
   const back = () => view(PARENT[current] || "main");
 
+  // Slide in from the left / slide back out (backdrop fades). With Reduce Motion on it is a short fade instead of a slide.
+  const backdrop = root.querySelector(".sp-backdrop"); let anims = [], token = 0;
+  function play(opening) {
+    anims.forEach((a) => a.cancel()); anims = []; const my = ++token;
+    if (!panel.animate) { if (!opening) root.classList.remove("open"); return; }
+    const slide = !reduced(), dur = slide ? (opening ? 340 : 260) : 150;
+    const pk = slide ? (opening ? [{ transform: "translateX(-104%)" }, { transform: "translateX(0)" }] : [{ transform: "translateX(0)" }, { transform: "translateX(-104%)" }]) : (opening ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }]);
+    const bk = opening ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }];
+    const ease = opening ? "cubic-bezier(.2,.8,.2,1)" : "cubic-bezier(.4,0,1,1)";
+    const a = panel.animate(pk, { duration: dur, easing: ease, fill: "both" }), b = backdrop.animate(bk, { duration: dur, easing: "ease", fill: "both" });
+    anims = [a, b];
+    a.onfinish = () => { if (my !== token) return; if (opening) anims.forEach((x) => x.cancel()); else { root.classList.remove("open"); anims.forEach((x) => x.cancel()); } anims = []; };
+  }
   function open(name) {
     if (isOpen) return; isOpen = true; opener = document.activeElement;
     root.removeAttribute("inert"); root.setAttribute("aria-hidden", "false");
-    view(name || "main", false); root.classList.add("open"); document.body.classList.add("sp-lock");
+    view(name || "main", false); root.classList.add("open"); document.body.classList.add("sp-lock"); play(true);
     setTimeout(() => { const t = root.querySelector('[data-view="main"]:not(.hidden) .sp-card') || $("#sp-close"); if (t && isOpen) t.focus({ preventScroll: true }); }, 60);
   }
   function close(restoreFocus = true) {
     if (!isOpen) return; isOpen = false;
-    root.classList.remove("open"); root.setAttribute("aria-hidden", "true"); root.setAttribute("inert", ""); document.body.classList.remove("sp-lock");
+    root.setAttribute("aria-hidden", "true"); root.setAttribute("inert", ""); document.body.classList.remove("sp-lock"); play(false);   // .open is removed when the slide-out ends
     if (restoreFocus && opener && opener.isConnected && opener.focus) opener.focus({ preventScroll: true });
   }
 

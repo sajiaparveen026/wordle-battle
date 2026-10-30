@@ -24,6 +24,7 @@ let hintState = newHint();
 // Dates use the player's LOCAL day, so the daily resets at their own midnight.
 const isoLocal = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const today = () => isoLocal();
+const longDate = (d = new Date()) => d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });   // 29 October 2026
 const dailyWord = () => ANSWERS[Math.floor(new Date(today()).getTime() / 864e5) % ANSWERS.length];
 const randomWord = () => ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
 
@@ -255,6 +256,31 @@ function shopFx(card, label, dir) {
     const dx = to.x - from.x, dy = to.y - from.y, sp = (i - 2.5) * 12;
     const an = c.animate([{ transform: "translate(-50%,-50%) scale(.6)", opacity: 0 }, { transform: `translate(calc(-50% + ${sp}px),calc(-50% - 26px)) scale(1.1)`, opacity: 1, offset: 0.25 }, { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.55)`, opacity: 0.95 }], { duration: 720 + i * 70, delay: i * 55, easing: "cubic-bezier(.4,0,.2,1)", fill: "both" });
     an.onfinish = () => c.remove(); setTimeout(() => c.remove(), 2000);
+  }
+}
+// Coins fly from `src` (an element) into the visible coin balance, then the number counts up to the real balance.
+// Used by Free Coins (game screen) and by win rewards. The balance itself is always updated first by the caller (Player.addCoins / Player.reward);
+// this only changes what is DRAWN, so it can never pay twice. Works with viewport coordinates, so it is the same on desktop and mobile.
+function visibleCoins() { return $$(".coins").find((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.closest(".hidden"); }) || null; }
+function coinsToBalance(src, amount, opts = {}) {
+  const to = visibleCoins(), vals = $$(".coin-val"), real = () => Player.data.coins, before = Math.max(0, real() - amount);
+  const finish = () => { refreshCoins(); if (opts.onTick) opts.onTick(real()); if (to) { to.classList.remove("bump"); void to.offsetWidth; to.classList.add("bump"); setTimeout(() => to.classList.remove("bump"), 650); } };
+  if (!src || !to || reduced() || !src.getBoundingClientRect) return finish();
+  const a = src.getBoundingClientRect(), t = to.getBoundingClientRect();
+  if (!a.width || !t.width) return finish();
+  const from = { x: a.left + a.width / 2, y: a.top + a.height / 2 }, dest = { x: t.left + t.width / 2, y: t.top + t.height / 2 };
+  vals.forEach((v) => (v.textContent = before)); if (opts.onTick) opts.onTick(before);       // the balance shows the old number until the coins land
+  const n = 8; let landed = 0, done = false;
+  const land = () => {
+    if (done) return; done = true; const to2 = real(), t0 = performance.now();
+    const step = (now) => { const k = Math.min(1, (now - t0) / 450), v = Math.round(before + (to2 - before) * (1 - Math.pow(1 - k, 3))); vals.forEach((e) => (e.textContent = v)); if (opts.onTick) opts.onTick(v); if (k < 1) requestAnimationFrame(step); else finish(); };
+    requestAnimationFrame(step);
+  };
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement("span"); c.className = "shop-coin"; c.textContent = "🪙"; c.style.left = from.x + "px"; c.style.top = from.y + "px"; document.body.append(c);
+    const dx = dest.x - from.x, dy = dest.y - from.y, sx = (i - (n - 1) / 2) * 12, sy = -18 - (i % 3) * 8;
+    const an = c.animate([{ transform: "translate(-50%,-50%) scale(.5)", opacity: 0 }, { transform: `translate(calc(-50% + ${sx}px),calc(-50% + ${sy}px)) scale(1.1)`, opacity: 1, offset: 0.22 }, { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.55)`, opacity: 0.95 }], { duration: 760 + i * 60, delay: i * 55, easing: "cubic-bezier(.45,0,.2,1)", fill: "both" });
+    an.onfinish = () => { c.remove(); if (++landed === n) land(); }; setTimeout(() => { c.remove(); land(); }, 2600);   // safety net: the balance always ends correct
   }
 }
 async function buyItem(id) {                              // one purchase at a time; the price is checked again at the moment of payment
@@ -502,7 +528,7 @@ function closeDailyDone() { clearInterval(ddTimer); $("#daily-done").classList.a
 function showDailyDone(r) {
   const m = $("#daily-done"); m.classList.toggle("win", r.won === true); m.classList.toggle("loss", r.won === false);
   $("#dd-emoji").textContent = r.won === false ? "💪" : "🏆";
-  $("#dd-date").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+  $("#dd-date").textContent = longDate();
   $("#dd-status").textContent = r.won === true ? "✓ Solved" : r.won === false ? "✗ Not solved this time" : "Completed";
   const grid = $("#dd-grid"); grid.innerHTML = "";
   const row = document.createElement("div"); row.className = "row"; // only the final row (the answer), not every guess
@@ -536,6 +562,8 @@ function startGame(newPractice = false) {
     gameId = gameId || "p-" + Date.now();
   } else { answer = randomWord(); gameId = "p-" + Date.now() + Math.random().toString(36).slice(2, 6); guesses = []; status = "playing"; hintState = newHint(); }
   $("#g-title").textContent = mode === "daily" ? "Daily Challenge" : "Solo Practice";
+  const ws = $("#game .winscore"); ws.classList.toggle("is-date", mode === "daily"); $("#g-date").textContent = longDate();   // Daily: today's date takes the place of the score
+  ws.setAttribute("aria-label", mode === "daily" ? "Today's date" : "Wins"); ws.title = mode === "daily" ? "Today's Daily Challenge" : "Total wins";
   guesses.forEach((g, i) => reveal(i, g, false));
   colorKeys(); renderHintTiles(); updateAttempts(); updateHintButtons(); saveProgress();
   if (status !== "playing") setTimeout(showResult, 300);
@@ -566,7 +594,7 @@ function submit() {
   });
 }
 
-let lastReward = null;
+let lastReward = null, rewardFxFor = null;
 function finishGame() { // each game id can only pay out once (see Player.reward)
   lastReward = null;
   if (status === "won") { lastReward = Player.reward(gameId, mode, guesses.length); }
@@ -599,6 +627,7 @@ function meaningOf(w) { // first clue of each word is its short meaning (js/clue
 function showResult() {
   const won = status === "won", r = lastReward, n = guesses.length;
   const m = $("#modal"); m.classList.toggle("win", won); m.classList.toggle("loss", !won);
+  $("#r-dailyhead").classList.toggle("hidden", mode !== "daily"); $("#r-dailydate").textContent = longDate();   // Daily: "Daily Challenge Completed" + the date
   $("#r-emoji").textContent = won ? "🏆" : "💪";
   $("#modal-title").textContent = won ? "You got it!" : "Nice try!";
   $("#modal-msg").textContent = won ? `Solved in ${n} ${n === 1 ? "guess" : "guesses"}` : "The word was";
@@ -610,6 +639,12 @@ function showResult() {
     const lv = Player.levelInfo();
     countUp($("#r-coins"), r.coins, "+"); countUp($("#r-xpv"), r.xp, "+");
     $("#r-balance").textContent = `Balance: ${Player.data.coins} 🪙`; // the real balance after this win was added
+    if (rewardFxFor !== gameId && r.coins > 0) {                       // animate each win once; reopening the same result never replays or re-pays
+      rewardFxFor = gameId; const bal = Player.data.coins;
+      setTimeout(() => coinsToBalance($("#r-coins"), r.coins, { onTick: (v) => ($("#r-balance").textContent = `Balance: ${v} 🪙`) }), reduced() ? 0 : 1050);
+      const old = Math.max(0, bal - r.coins);                         // until the coins land, both balances show the number from before this win
+      $("#r-balance").textContent = `Balance: ${old} 🪙`; $$(".coin-val").forEach((v) => (v.textContent = old));
+    }
     $("#r-level").textContent = `Level ${lv.level} · ${lv.xp}/${lv.need} XP`; animateXp("#r-xp", (lv.xp / lv.need) * 100);
     confetti(); setTimeout(sfx.coin, 400);
   }
@@ -658,7 +693,6 @@ $("#s-name").onchange = (e) => {
   if (window.Auth && Auth.isAccount()) return Auth.setUsername(e.target.value.trim());
   Player.data.username = e.target.value.trim().slice(0, 16) || Player.data.username; Player.save(); toast("Username saved", "success"); renderProfile();
 };
-$("#modal-close").onclick = closeModal;
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#clue").classList.contains("hidden")) closeClue(); if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); if (e.key === "Escape" && !$("#daily-done").classList.contains("hidden")) closeDailyDone(); });
 $("#dd-ok").onclick = closeDailyDone;
 $("#btn-home").onclick = () => { closeModal(); show("dashboard"); };

@@ -753,16 +753,14 @@ html[data-motion=reduced] .installcard,html[data-motion=reduced] #update-bar,htm
 /* ===== Settings panel (slide-out from the left; opened by the gear on Home and Profile) =====
    Uses only the design tokens at the top of this file, so Dark and Light themes both work with no extra rules. */
 body.sp-lock{overflow:hidden}
-.sp-root{position:fixed;inset:0;z-index:9;visibility:hidden;pointer-events:none;transition:visibility 0s linear .3s}
-.sp-root.open{visibility:visible;pointer-events:auto;transition-delay:0s}
-.sp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.62);opacity:0;transition:opacity .3s ease;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
-.sp-root.open .sp-backdrop{opacity:1}
+/* the slide-in / slide-out itself is played by js/settings.js (Web Animations), so it also works with Reduce Motion on (shorter fade) */
+.sp-root{position:fixed;inset:0;z-index:9;visibility:hidden;pointer-events:none}
+.sp-root.open{visibility:visible;pointer-events:auto}
+.sp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.62);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 .sp{position:absolute;top:0;bottom:0;left:0;width:min(420px,92vw);display:flex;flex-direction:column;outline:none;
   background:var(--bg) linear-gradient(180deg,color-mix(in srgb,var(--gold) 11%,var(--bg)) 0,var(--bg) 260px) no-repeat;
   border-right:1px solid var(--gold-dim);box-shadow:14px 0 44px rgba(0,0,0,.5);
-  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
-  transform:translateX(-103%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
-.sp-root.open .sp{transform:none}
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);will-change:transform}
 .sp-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 16px 12px}
 .sp-head h2{display:flex;align-items:center;gap:10px;margin:0;font-size:1.45rem;font-weight:800;letter-spacing:.2px}
 .sp-head h2 .pf-ico{width:26px;height:26px;color:var(--gold)}
@@ -912,3 +910,34 @@ html.theme-fade,html.theme-fade *:not(.sw):not(.sw-knob):not(.sw-knob *){transit
 @keyframes coinbump{0%{transform:scale(1)}30%{transform:scale(1.18);box-shadow:0 0 18px rgba(250,204,21,.6)}100%{transform:scale(1)}}
 html[data-motion=reduced] .shop-grid .gcard.buy-ok,html[data-motion=reduced] .coins.bump{animation:none}
 @media (prefers-reduced-motion:reduce){.shop-grid .gcard.buy-ok,.coins.bump{animation:none}}
+
+/* ===== Update App: as eye-catching as Install App (red, glowing, wiggling icon, slides in) ===== */
+#update-bar{display:flex;align-items:center;gap:10px;padding:10px 42px 10px 12px;border-radius:16px;animation:updin .55s cubic-bezier(.2,.9,.3,1.15),redpulse 2.4s ease-in-out .55s infinite}
+@keyframes updin{from{opacity:0;transform:translate(-50%,36px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+#update-bar .ic-ico{flex:none;font-size:1.7rem;line-height:1;transform-origin:50% 60%;animation:icwiggle 2.8s ease-in-out infinite}
+#update-bar .ic-txt{flex:1;min-width:0;line-height:1.25}
+#update-bar .ic-txt b{display:block;font-size:.95rem;font-weight:800}
+#update-bar .ic-txt small{display:block;font-size:.76rem;font-weight:600;color:#fff}
+#update-bar .ic-btn:disabled,#settings .ic-btn:disabled{opacity:.8;cursor:wait}
+@media (max-width:360px){#update-bar .ic-txt small{display:none}}
+/* inside the Settings panel */
+#settings .installcard{padding-right:12px;margin:0 0 12px}
+#settings [data-view=main] .installcard{margin-bottom:10px}
+/* red dots: gear on Home / Profile, and the About card, while an update is waiting */
+html[data-update=ready] #go-settings,html[data-update=ready] #pf-settings,html[data-update=ready] [data-sp-go=about] .sp-ico{position:relative}
+html[data-update=ready] #go-settings::after,html[data-update=ready] #pf-settings::after,html[data-update=ready] [data-sp-go=about] .sp-ico::after{content:"";position:absolute;top:2px;right:2px;width:10px;height:10px;border-radius:50%;background:var(--red1);box-shadow:0 0 0 2px var(--bg),0 0 10px var(--red-glow);animation:redpulse 2.4s ease-in-out infinite}
+html[data-update=ready] [data-sp-go=about] .sp-ico::after{top:-4px;right:-4px;box-shadow:0 0 0 2px var(--panel),0 0 10px var(--red-glow)}
+html[data-update=ready] [data-sp-go=about] .sp-txt small{color:var(--red1);font-weight:700}
+html[data-motion=reduced] #update-bar,html[data-motion=reduced] #update-bar .ic-ico{animation:none!important}
+@media (prefers-reduced-motion:reduce){#update-bar,#update-bar .ic-ico,html[data-update=ready] #go-settings::after,html[data-update=ready] #pf-settings::after,html[data-update=ready] [data-sp-go=about] .sp-ico::after{animation:none!important}}
+
+
+/* ===== Daily Challenge: date in the game header, "Completed" heading in the result ===== */
+.winscore .g-date{display:none}
+.winscore.is-date .sc-l,.winscore.is-date .win-val{display:none}
+.winscore.is-date .g-date{display:block;font-size:.92rem;font-weight:800;line-height:1.15;color:var(--gold);white-space:nowrap;letter-spacing:.2px;text-align:center}
+@media (max-width:400px){.winscore.is-date .g-date{font-size:.8rem;white-space:normal;max-width:84px}}
+.r-dailyhead{margin:0 0 4px}
+.r-dailyhead h3{margin:0;font-size:1.05rem;font-weight:800;letter-spacing:.3px;color:var(--gold)}
+.card.result .r-dailyhead p{margin:2px 0 4px;color:var(--muted);font-size:.9rem;font-weight:600}
+#daily-done h2{font-size:1.5rem}

@@ -92,7 +92,7 @@
     el.btn.disabled = true;
     const r = await claim("game");
     if (r.status === "busy") return;
-    if (r.status === "claimed") { toast(`+${AMOUNT} free coins!`, "success"); return render("success"); }
+    if (r.status === "claimed") { toast(`+${AMOUNT} free coins!`, "success"); render("success"); if (typeof coinsToBalance === "function") coinsToBalance(el.amt, AMOUNT); return; }   // coins fly to the balance (it was already added once by claim())
     render(r.status === "already" ? "already" : "error", r.note);
   }
   function refreshDot() { const free = !claimedToday("game"); document.querySelectorAll("[data-free-coins]").forEach((b) => b.classList.toggle("has-free", free)); }
