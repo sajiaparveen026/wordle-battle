@@ -28,10 +28,13 @@ const Player = (() => {
     hints: { reveal: { free: 2, credits: 0 }, remove: { free: 2, credits: 0 }, word: { free: HINTS.word.free, credits: 0 } },
     skips: { free: SKIP.free, credits: 0 },
     rewarded: [], recent: [],
-    joinedAt: new Date().toISOString(), history: [] // history = the last 50 finished games (shown on the Profile)
+    joinedAt: new Date().toISOString(), history: [], // history = the last 50 finished games (shown on the Profile)
+    // Achievements (js/achievements.js): lifetime counters + the unlock record { id: ISO date }, each achievement is stored once and never removed
+    earned: 0, noHintWins: 0, sessionsPlayed: 0, lastSession: "", lastGameAt: 0, battles: { played: 0, won: 0 }, ach: {}
   });
   let p;
-  try { p = Object.assign(fresh(), JSON.parse(localStorage.getItem(KEY)) || {}); } catch { p = fresh(); }
+  let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY)); } catch {}
+  try { p = Object.assign(fresh(), saved || {}); } catch { p = fresh(); }
   if (!p.skips || typeof p.skips.free !== "number") p.skips = { free: SKIP.free, credits: 0 }; // older saves get the default 3 free skips
   if (typeof p.skips.credits !== "number" || p.skips.credits < 0) p.skips.credits = 0;            // skips bought in the shop
   if (!p.hints || typeof p.hints !== "object") p.hints = fresh().hints;
@@ -47,6 +50,16 @@ const Player = (() => {
     p.streak = s; p.bestStreak = s;
     const idx = p.dist.findIndex((n) => n > 0); p.bestGuesses = idx >= 0 ? idx + 1 : null;
   }
+  // Achievement counters (older saves get safe values; "earned" is estimated once from the wins they already have: 50 per Daily win, 30 per other win)
+  const cnt = (v) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+  if (saved && typeof saved.earned !== "number") { const dw = p.rewarded.filter((x) => typeof x === "string" && x.startsWith("W:daily-")).length; p.earned = dw * REWARDS.daily.coins + Math.max(0, p.wins - dw) * REWARDS.practice.coins; }
+  p.earned = cnt(p.earned); p.noHintWins = cnt(p.noHintWins); p.sessionsPlayed = cnt(p.sessionsPlayed); p.lastGameAt = cnt(p.lastGameAt); p.lastSession = typeof p.lastSession === "string" ? p.lastSession.slice(0, 40) : "";
+  if (!p.battles || typeof p.battles !== "object") p.battles = { played: 0, won: 0 };
+  p.battles = { played: cnt(p.battles.played), won: Math.min(cnt(p.battles.won), cnt(p.battles.played)) };
+  if (!p.ach || typeof p.ach !== "object" || Array.isArray(p.ach)) p.ach = {};
+  // A "session" = one app visit. A game finished in a new visit (or 30+ minutes after the last game) counts as a new session.
+  const sid = () => { try { let s = sessionStorage.getItem("wb_sid"); if (!s) { s = Math.random().toString(36).slice(2); sessionStorage.setItem("wb_sid", s); } return s; } catch { return "x"; } };
+  function countSession() { const now = Date.now(), s = sid(); if (p.lastSession !== s || now - p.lastGameAt > 30 * 60 * 1000) p.sessionsPlayed++; p.lastSession = s; p.lastGameAt = now; }
   save();
   const need = (lv) => 100 + (lv - 1) * 50;
 
@@ -62,7 +75,7 @@ const Player = (() => {
       if (h.credits > 0) { h.credits--; save(); return "credit"; }
       return null;
     },
-    addCoins(n) { if (!Number.isInteger(n) || n <= 0 || n > 1000) return false; p.coins += n; save(); return true; }, // used by the daily free-coins claim
+    addCoins(n) { if (!Number.isInteger(n) || n <= 0 || n > 1000) return false; p.coins += n; p.earned += n; save(); return true; }, // used by the daily free-coins claim
     consumeSkip() { if (p.skips.free > 0) { p.skips.free--; save(); return true; } if (p.skips.credits > 0) { p.skips.credits--; save(); return true; } return false; }, // free skips first, then bought ones
     addSkipCredit() { p.skips.credits++; save(); },
     addHintCredit(type) { p.hints[type].credits++; save(); },
@@ -73,19 +86,21 @@ const Player = (() => {
       p.history = p.history.slice(-50); save();
     },
     // Each game id can be rewarded or counted only once.
-    reward(gameId, kind, tries) {
+    reward(gameId, kind, tries, hintsUsed) {
       if (p.rewarded.includes("W:" + gameId) || p.rewarded.includes("L:" + gameId)) return null;
       const r = REWARDS[kind], before = this.levelInfo().level;
-      p.coins += r.coins; p.xp += r.xp; p.wins++;
+      p.coins += r.coins; p.earned += r.coins; p.xp += r.xp; p.wins++; if (!hintsUsed) p.noHintWins++; countSession();
       if (tries >= 1 && tries <= 6) { p.dist[tries - 1]++; p.bestGuesses = p.bestGuesses ? Math.min(p.bestGuesses, tries) : tries; }
       p.streak++; p.bestStreak = Math.max(p.bestStreak, p.streak);
       p.rewarded.push("W:" + gameId); p.recent = [...p.recent, "W"].slice(-5);
       p.rewarded = p.rewarded.slice(-300); save();
       return { ...r, levelUp: this.levelInfo().level > before };
     },
+    // For the future online mode: call once per finished online battle (never from the client for real rewards, see the note at the top).
+    recordBattle(won) { p.battles.played++; if (won) p.battles.won++; save(); },
     recordLoss(gameId) {
       if (p.rewarded.includes("W:" + gameId) || p.rewarded.includes("L:" + gameId)) return;
-      p.losses++; p.streak = 0; p.rewarded.push("L:" + gameId); p.recent = [...p.recent, "L"].slice(-5); save();
+      p.losses++; p.streak = 0; countSession(); p.rewarded.push("L:" + gameId); p.recent = [...p.recent, "L"].slice(-5); save();
     }
   };
 })();

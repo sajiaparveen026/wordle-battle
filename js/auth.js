@@ -238,7 +238,7 @@
   const metaKey = () => "wb_sync_" + user.id;
   const loadMeta = () => { try { return JSON.parse(localStorage.getItem("wb_sync_" + window.WB_NS)) || { rev: 0, dirty: false }; } catch { return { rev: 0, dirty: false }; } };
   const saveMeta = () => localStorage.setItem(metaKey(), JSON.stringify(meta));
-  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt"];
+  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt", "earned", "noHintWins", "sessionsPlayed", "lastSession", "lastGameAt", "battles", "ach"];
   const snapshot = () => { const P = Player.data, player = {}; KEYS.forEach((k) => (player[k] = P[k])); return { v: 1, player, stats: window.WBApp.getStats() }; };
   function applySnapshot(s) { // sanitise before trusting remote/guest data in the local store
     if (!s || typeof s.player !== "object") return;
@@ -257,6 +257,11 @@
       const w = r.hints.word && typeof r.hints.word === "object" ? r.hints.word : P.hints.word; // older cloud saves have no word hints yet: keep the local count
       P.hints = { reveal: { free: n(r.hints.reveal.free, 0), credits: n(r.hints.reveal.credits, 0) }, remove: { free: n(r.hints.remove.free, 0), credits: n(r.hints.remove.credits, 0) }, word: { free: n(w.free, 0), credits: n(w.credits, 0) } };
     }
+    // achievements: counters from the cloud (older cloud saves have none: keep the local ones); unlocks are merged, never lost, earliest date wins
+    P.earned = n(r.earned, P.earned); P.noHintWins = n(r.noHintWins, P.noHintWins); P.sessionsPlayed = n(r.sessionsPlayed, P.sessionsPlayed); P.lastGameAt = n(r.lastGameAt, P.lastGameAt);
+    if (typeof r.lastSession === "string") P.lastSession = r.lastSession.slice(0, 40);
+    if (r.battles && typeof r.battles === "object") { const pl = n(r.battles.played, P.battles.played); P.battles = { played: pl, won: Math.min(n(r.battles.won, P.battles.won), pl) }; }
+    if (r.ach && typeof r.ach === "object" && !Array.isArray(r.ach)) Object.keys(r.ach).forEach((id) => { const d = r.ach[id]; if (/^[a-z0-9-]{1,40}$/.test(id) && typeof d === "string" && !isNaN(Date.parse(d)) && (!P.ach[id] || Date.parse(d) < Date.parse(P.ach[id]))) P.ach[id] = d; });
     Player.save(true);
     if (s.stats && typeof s.stats === "object") window.WBApp.applyStats(s.stats);
   }

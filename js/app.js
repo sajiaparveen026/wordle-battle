@@ -191,6 +191,7 @@ function renderProfile() {
   $("#pf-dstreak").textContent = `🔥 ${day(stats.streak)}`;
   $("#pf-dbest").textContent = `Best streak: ${day(stats.best)}`; $("#pf-ddone").textContent = `Completed: ${stats.played}`;
   renderRecentGames();
+  if (window.Achievements) Achievements.render();   // achievements carousel + counter
 }
 function renderRecentGames() {
   const all = [...Player.data.history].reverse(), list = showAllGames ? all : all.slice(0, 5), ul = $("#pf-games");   // newest first; only finished games are listed, so no answer is ever shown
@@ -597,7 +598,8 @@ function submit() {
 let lastReward = null, rewardFxFor = null;
 function finishGame() { // each game id can only pay out once (see Player.reward)
   lastReward = null;
-  if (status === "won") { lastReward = Player.reward(gameId, mode, guesses.length); }
+  const usedHint = Object.keys(hintState.reveals).length > 0 || hintState.disabled.length > 0 || hintState.clues.length > 0;   // any Reveal / Remove / Word hint in this game (Skip is not a hint)
+  if (status === "won") { lastReward = Player.reward(gameId, mode, guesses.length, usedHint); }
   else Player.recordLoss(gameId);
   Player.logGame(gameId, mode, status === "won", guesses.length);   // shown under Recent Games on the Profile (once per game)
   if (mode === "daily") { const g = load("game_daily", null); if (g && g.date === today()) { g.reward = lastReward ? { coins: lastReward.coins, xp: lastReward.xp } : { coins: 0, xp: 0 }; save("game_daily", g); } } // remember what this game earned
@@ -609,6 +611,7 @@ function finishGame() { // each game id can only pay out once (see Player.reward
     stats.lastDaily = today(); save("stats", stats);
   }
   refreshCoins();
+  if (window.Achievements) Achievements.check({ announce: true });   // unlock anything this game just earned (each only once)
 }
 
 // ---------- Results & stats modal ----------
@@ -717,7 +720,8 @@ addEventListener("popstate", (e) => {
 
 // ---------- Start ----------
 applySettings(); buildKeyboard(); buildBoard(); refreshCoins();
-window.WBApp = { show, applySettings, resetAll: resetAllProgress, applyStats: (o) => { Object.assign(stats, o); save("stats", stats, true); }, getStats: () => stats, refresh: () => { refreshCoins(); if (screen === "dashboard") renderDashboard(); if (screen === "profile") renderProfile(); } };
+window.WBApp = { show, applySettings, resetAll: resetAllProgress, applyStats: (o) => { Object.assign(stats, o); save("stats", stats, true); }, getStats: () => stats, refresh: () => { refreshCoins(); if (window.Achievements) Achievements.check({ announce: false });   // after a cloud sync: quietly unlock what the loaded save already earned
+    if (screen === "dashboard") renderDashboard(); if (screen === "profile") renderProfile(); } };
 const splashMs = sessionStorage.getItem("wb_fast") ? 250 : 1600; sessionStorage.removeItem("wb_fast"); // shorter splash right after sign-in/out
 setTimeout(async () => { $("#splash").classList.add("out"); if (window.Auth) await Auth.route(); else show("dashboard"); }, splashMs);
 if (window.DEMO_MODE) console.info("Wordle Battle: local demo mode. Online battles need Supabase.");

@@ -12,6 +12,10 @@
 
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
+    { v: "1.12.0", date: "2026-10-30", title: "Achievements", items: [
+      "25 achievements in Bronze, Silver and Gold plates on your Profile.",
+      "Swipe through the carousel, tap a badge for details and see your progress.",
+      "Unlocks are saved once to your guest or account progress."] },
     { v: "1.11.0", date: "2026-10-29", title: "New Settings panel", items: [
       "A slide-out Settings panel with Appearance, Game Preferences, Privacy & Security, Help & Support, About and What\u2019s New.",
       "Dark Mode switch that is remembered every time you open the app.",

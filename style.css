@@ -753,16 +753,14 @@ html[data-motion=reduced] .installcard,html[data-motion=reduced] #update-bar,htm
 /* ===== Settings panel (slide-out from the left; opened by the gear on Home and Profile) =====
    Uses only the design tokens at the top of this file, so Dark and Light themes both work with no extra rules. */
 body.sp-lock{overflow:hidden}
-.sp-root{position:fixed;inset:0;z-index:9;visibility:hidden;pointer-events:none;transition:visibility 0s linear .3s}
-.sp-root.open{visibility:visible;pointer-events:auto;transition-delay:0s}
-.sp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.62);opacity:0;transition:opacity .3s ease;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
-.sp-root.open .sp-backdrop{opacity:1}
+/* the slide-in / slide-out itself is played by js/settings.js (Web Animations), so it also works with Reduce Motion on (shorter fade) */
+.sp-root{position:fixed;inset:0;z-index:9;visibility:hidden;pointer-events:none}
+.sp-root.open{visibility:visible;pointer-events:auto}
+.sp-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.62);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
 .sp{position:absolute;top:0;bottom:0;left:0;width:min(420px,92vw);display:flex;flex-direction:column;outline:none;
   background:var(--bg) linear-gradient(180deg,color-mix(in srgb,var(--gold) 11%,var(--bg)) 0,var(--bg) 260px) no-repeat;
   border-right:1px solid var(--gold-dim);box-shadow:14px 0 44px rgba(0,0,0,.5);
-  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
-  transform:translateX(-103%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
-.sp-root.open .sp{transform:none}
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);will-change:transform}
 .sp-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 16px 12px}
 .sp-head h2{display:flex;align-items:center;gap:10px;margin:0;font-size:1.45rem;font-weight:800;letter-spacing:.2px}
 .sp-head h2 .pf-ico{width:26px;height:26px;color:var(--gold)}
@@ -932,3 +930,40 @@ html[data-update=ready] [data-sp-go=about] .sp-ico::after{top:-4px;right:-4px;bo
 html[data-update=ready] [data-sp-go=about] .sp-txt small{color:var(--red1);font-weight:700}
 html[data-motion=reduced] #update-bar,html[data-motion=reduced] #update-bar .ic-ico{animation:none!important}
 @media (prefers-reduced-motion:reduce){#update-bar,#update-bar .ic-ico,html[data-update=ready] #go-settings::after,html[data-update=ready] #pf-settings::after,html[data-update=ready] [data-sp-go=about] .sp-ico::after{animation:none!important}}
+
+
+/* ===== Daily Challenge: date in the game header, "Completed" heading in the result ===== */
+.winscore .g-date{display:none}
+.winscore.is-date .sc-l,.winscore.is-date .win-val{display:none}
+.winscore.is-date .g-date{display:block;font-size:.92rem;font-weight:800;line-height:1.15;color:var(--gold);white-space:nowrap;letter-spacing:.2px;text-align:center}
+@media (max-width:400px){.winscore.is-date .g-date{font-size:.8rem;white-space:normal;max-width:84px}}
+.r-dailyhead{margin:0 0 4px}
+.r-dailyhead h3{margin:0;font-size:1.05rem;font-weight:800;letter-spacing:.3px;color:var(--gold)}
+.card.result .r-dailyhead p{margin:2px 0 4px;color:var(--muted);font-size:.9rem;font-weight:600}
+#daily-done h2{font-size:1.5rem}
+
+
+/* ===== Profile: premium 3D-style icons (filled art in index.html: extrusion + gradient face + gloss) ===== */
+.i3{flex:none;width:34px;height:34px;display:block;overflow:visible;filter:drop-shadow(0 3px 2.5px rgba(0,0,0,.42)) drop-shadow(0 0 7px rgba(var(--c,255,255,255),.28));transition:transform .25s cubic-bezier(.3,1.4,.5,1),filter .25s}
+.c-purple{--c:140,100,255}.c-gold{--c:255,196,30}.c-green{--c:54,224,122}.c-orange{--c:255,143,31}.c-red{--c:234,74,53}.c-blue{--c:74,134,240}
+.pf-stat{position:relative;overflow:hidden;background:radial-gradient(120% 85% at 50% -5%,rgba(var(--c,255,196,30),.2),transparent 62%),var(--panel);border-color:color-mix(in srgb,rgb(var(--c,255,196,30)) 28%,var(--line));box-shadow:0 6px 16px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07);transition:transform .2s,border-color .2s,box-shadow .2s}
+.pf-stat .i3{width:46px;height:46px;margin-bottom:2px}
+.pf-stat:hover{transform:translateY(-2px);border-color:color-mix(in srgb,rgb(var(--c)) 55%,var(--line));box-shadow:0 10px 22px rgba(0,0,0,.3),0 0 18px rgba(var(--c),.18),inset 0 1px 0 rgba(255,255,255,.1)}
+.pf-stat:hover .i3{transform:translateY(-3px) scale(1.1) rotate(-3deg)}
+.pf-tile:has(.i3){position:relative;width:46px;height:46px;border-radius:14px;background:radial-gradient(circle at 30% 18%,rgba(var(--c),.34),transparent 68%),linear-gradient(160deg,var(--panel-2),var(--panel));border-color:color-mix(in srgb,rgb(var(--c)) 38%,var(--line));box-shadow:0 4px 10px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12)}
+.pf-tile .i3{width:34px;height:34px}
+.pf-daily:hover .pf-tile .i3,.pf-sechead:hover .pf-tile .i3{transform:scale(1.1) rotate(-4deg)}
+.pf-top .icon .i3{width:30px;height:30px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
+.pf-top .icon:hover .i3{transform:rotate(60deg) scale(1.05)}
+.pf-edit{background:radial-gradient(circle at 30% 20%,rgba(255,196,30,.3),var(--panel-2))}
+.pf-edit .i3{width:24px;height:24px;filter:drop-shadow(0 2px 1.5px rgba(0,0,0,.45))}
+.pf-edit:hover .i3{transform:rotate(-12deg) scale(1.12)}
+#profile.screen:not(.hidden) .pf-stat .i3{animation:i3pop .55s cubic-bezier(.2,.9,.3,1.3) both}
+#profile.screen:not(.hidden) .pf-stat:nth-child(2) .i3{animation-delay:.07s}#profile.screen:not(.hidden) .pf-stat:nth-child(3) .i3{animation-delay:.14s}#profile.screen:not(.hidden) .pf-stat:nth-child(4) .i3{animation-delay:.21s}
+@keyframes i3pop{from{opacity:0;transform:translateY(8px) scale(.6) rotate(-10deg)}to{opacity:1;transform:none}}
+[data-theme=light] .i3{filter:drop-shadow(0 3px 2.5px rgba(40,30,80,.28)) drop-shadow(0 0 6px rgba(var(--c,255,255,255),.2))}
+[data-theme=light] .pf-stat{background:radial-gradient(120% 85% at 50% -5%,rgba(var(--c,255,196,30),.16),transparent 62%),var(--panel);box-shadow:0 5px 14px rgba(60,50,120,.12),inset 0 1px 0 #fff}
+[data-theme=light] .pf-tile:has(.i3){box-shadow:0 4px 10px rgba(60,50,120,.16),inset 0 1px 0 #fff}
+@media (max-width:340px){.pf-stat .i3{width:34px;height:34px}}
+html[data-motion=reduced] #profile .pf-stat .i3{animation:none}
+@media (prefers-reduced-motion:reduce){#profile .pf-stat .i3{animation:none!important}.i3{transition:none}}
