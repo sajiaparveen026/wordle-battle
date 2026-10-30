@@ -114,7 +114,7 @@
     b.disabled = true;
     const r = await claim("shop");
     if (r.status === "busy") return;
-    if (r.status === "claimed") { toast(`+${AMOUNT} free coins added!`, "success"); if (typeof shopFx === "function") shopFx(b.closest(".gcard"), `+${AMOUNT} 🪙`, "gain"); }
+    if (r.status === "claimed") { toast(`+${AMOUNT} free coins added!`, "success"); if (typeof shopFx === "function") shopFx(b.closest(".gcard"), `+${AMOUNT} 🪙`, "gain", AMOUNT); }
     else if (r.status === "already") toast(ALREADY, "error", 3200);
     else toast(r.note || UNAVAILABLE, "error", 3200);
     syncShopButton();

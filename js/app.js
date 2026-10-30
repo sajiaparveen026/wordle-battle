@@ -10,7 +10,9 @@ const load = (k, d) => { try { return JSON.parse(localStorage.getItem(wbKey(k)))
 const save = (k, v, quiet) => { localStorage.setItem(wbKey(k), JSON.stringify(v)); if (k === "stats" && !quiet) window.dispatchEvent(new Event("wb:save")); };
 const AUTH_SCREENS = ["welcome", "signup", "login", "forgot", "reset", "verify"];
 let settings = load("settings", { theme: "dark", mute: false });
-if (settings.reduceMotion === undefined) settings.reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Reduce Motion is ONLY what the player chose in Settings. The phone's own animation setting (Android battery saver / "remove animations")
+// must not switch off the coin-fly effect, so it is no longer copied in. Older saves that copied it automatically (no motionUser flag) are cleared once.
+if (!settings.motionUser) settings.reduceMotion = false;
 if (settings.theme !== "light") settings.theme = "dark";   // only two themes exist
 if (typeof settings.vibrate !== "boolean") settings.vibrate = true;   // Settings > Game Preferences
 const reduced = () => !!settings.reduceMotion;
@@ -242,14 +244,19 @@ async function needCoins(cost) {
 }
 // Purchase / claim feedback: glow on the card, coins flying between the balance and the card, a floating label.
 // dir "spend": coins leave the balance and land on the card | dir "gain": coins fly from the card up to the balance. Skipped for reduced motion.
-function shopFx(card, label, dir) {
+function shopFx(card, label, dir, amount) {
   const bal = document.querySelector("#shop .coins");
-  if (bal) { bal.classList.remove("bump"); void bal.offsetWidth; bal.classList.add("bump"); setTimeout(() => bal.classList.remove("bump"), 650); }
+  if (dir !== "gain" && bal) { bal.classList.remove("bump"); void bal.offsetWidth; bal.classList.add("bump"); setTimeout(() => bal.classList.remove("bump"), 650); }   // gains bump when the coins land (coinsToBalance)
   if (!card || reduced()) return;
   card.classList.remove("buy-ok"); void card.offsetWidth; card.classList.add("buy-ok"); setTimeout(() => card.classList.remove("buy-ok"), 1100);
   const a = card.getBoundingClientRect(), t = bal ? bal.getBoundingClientRect() : { left: a.left, top: a.top - 200, width: 0, height: 0 };
   const cardPt = { x: a.left + a.width / 2, y: a.top + a.height * 0.62 }, balPt = { x: t.left + t.width / 2, y: t.top + t.height / 2 };
   const [from, to] = dir === "spend" ? [balPt, cardPt] : [cardPt, balPt];
+  if (dir === "gain" && amount > 0) {                                  // same effect as wins and the game-screen claim: coins fly into the total, then the number counts up
+    const pop2 = document.createElement("span"); pop2.className = "shop-pop"; pop2.textContent = label; pop2.style.left = cardPt.x + "px"; pop2.style.top = cardPt.y + "px";
+    document.body.append(pop2); setTimeout(() => pop2.remove(), 1300);
+    return coinsToBalance(card, amount);
+  }
   const pop = document.createElement("span"); pop.className = "shop-pop"; pop.textContent = label; pop.style.left = cardPt.x + "px"; pop.style.top = cardPt.y + "px";
   document.body.append(pop); setTimeout(() => pop.remove(), 1300);
   for (let i = 0; i < 6; i++) {

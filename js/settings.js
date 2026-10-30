@@ -80,7 +80,7 @@
   }
   function toggle(id) {
     if (id === "sw-dark") { settings.theme = settings.theme === "dark" ? "light" : "dark"; fadeTheme(); }
-    else if (id === "sw-motion") settings.reduceMotion = !settings.reduceMotion;
+    else if (id === "sw-motion") { settings.reduceMotion = !settings.reduceMotion; settings.motionUser = true; }   // motionUser: this is the player's own choice
     else if (id === "sw-sound") settings.mute = !settings.mute;
     else if (id === "sw-vibe") { if (!canVibrate()) return; settings.vibrate = !settings.vibrate; }
     applySettings(); sync();
