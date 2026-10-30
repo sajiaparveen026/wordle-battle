@@ -1,6 +1,6 @@
 // Achievements: 25 badges (Bronze, Silver, Gold) shown as a carousel on the Profile.
 // Every condition is read from real game data (Player.data + the daily `stats`). An unlock is written ONCE to Player.data.ach { id: ISO date }
-// and never removed, so it can't repeat. That record lives in the same save as coins/XP, so it follows guest progress, a signed-in account
+// and never removed, so it can't repeat. New unlocks are celebrated with a full-screen card (queued one by one, see "Celebration card" below). That record lives in the same save as coins/XP, so it follows guest progress, a signed-in account
 // (cloud save), and the "move guest progress" step. Online-battle achievements read Player.data.battles, which stays 0 until online play exists.
 (() => {
   "use strict";
@@ -149,7 +149,7 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
 
   // ---------- engine ----------
   const status = () => { const p = Player.data; return LIST.map((a) => { const unlocked = !!p.ach[a.id], cur = Math.max(0, Math.floor(Number(a.value(p)) || 0)); return { ...a, unlocked, at: p.ach[a.id] || null, cur: unlocked ? a.target : Math.min(cur, a.target), met: cur >= a.target }; }); };
-  let checking = false, toastQ = 0;
+  let checking = false;
   // Unlocks everything whose condition is met and isn't unlocked yet. announce:false = quiet (page load, loading a save).
   function check(opts) {
     if (checking) return []; checking = true;
@@ -158,13 +158,9 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
       if (!fresh.length) return [];
       const now = new Date().toISOString(); fresh.forEach((a) => (p.ach[a.id] = now));   // each id is written once; already unlocked ones are never touched
       Player.save();                                                                        // also queues the cloud save for signed-in players
-      if (!(opts && opts.announce === false)) {
-        const say = (text, i) => setTimeout(() => { toast(text, "success", 3200); if (typeof sfx !== "undefined" && sfx.coin) sfx.coin(); }, 900 + (toastQ + i) * 1400);
-        if (fresh.length > 3) say(`🏅 ${fresh.length} achievements unlocked! See your Profile`, 0), toastQ += 1;   // many at once (e.g. an older save): one summary
-        else fresh.forEach((a, i) => say(`🏅 Achievement unlocked: ${a.name}`, i)), toastQ += fresh.length;
-        setTimeout(() => (toastQ = 0), 900 + (toastQ + 1) * 1400 + 3500);
-      }
-      render(); return fresh;
+      render();
+      if (!(opts && opts.announce === false)) enqueue(fresh);   // celebrate each new unlock once, one card at a time
+      return fresh;
     } finally { checking = false; }
   }
 
@@ -211,6 +207,166 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
   }
   function close() { const m = $("#ach-modal"); if (!m || m.classList.contains("hidden")) return; m.classList.add("hidden"); if (typeof lockModal === "function") lockModal(false); if (opener && document.contains(opener)) opener.focus({ preventScroll: true }); }
 
+  // ---------- Celebration card ----------
+  // Every newly unlocked achievement gets a centred card with an "Awesome!" button (no X, no tap-outside to close).
+  // Several unlocks at once are queued Bronze -> Silver -> Gold and shown one by one ("ACHIEVEMENT UNLOCKED 1/3"). New unlocks that arrive
+  // while a card is open join the end of the queue. Quiet checks (page load, cloud sync) never celebrate, so old badges don't pop up again.
+  // The not-yet-acknowledged ids are kept in localStorage (wb_achq, per guest / account) so a refresh in the middle doesn't lose a card;
+  // an id is removed the moment the player taps "Awesome!", so it is celebrated exactly once.
+  const CEL_CSS = `
+html.ach-celebrating,body.ach-celebrating{overflow:hidden}
+.ach-cel{position:fixed;inset:0;z-index:60;display:flex;padding:16px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:radial-gradient(ellipse at 50% 42%,rgba(0,0,0,.55),rgba(0,0,0,.84));-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);animation:achcel-fade .3s ease both}
+.ach-cel.hidden{display:none}
+.ach-cel.out{animation:achcel-fadeout .28s ease both;pointer-events:none}
+.ach-cel-card{--m1:#ffd2a1;--m2:#d98c4a;--m3:#8a4a1b;--m4:#f0b078;--glow:rgba(217,140,74,.5);--ink:#2a1405;--medal:clamp(116px,34vw,160px);
+  position:relative;isolation:isolate;overflow:hidden;margin:auto;width:min(380px,100%);padding:22px 20px 20px;border-radius:26px;text-align:center;color:var(--text);border:3px solid transparent;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--m2) 18%,var(--panel)),var(--panel) 52%,color-mix(in srgb,var(--m3) 16%,var(--panel))) padding-box,linear-gradient(135deg,var(--m1),var(--m2) 30%,var(--m3) 55%,var(--m4) 78%,var(--m1)) border-box;
+  box-shadow:0 26px 64px rgba(0,0,0,.6),0 0 46px var(--glow),inset 0 1px 0 rgba(255,255,255,.18)}
+.ach-cel-card.tier-silver{--m1:#ffffff;--m2:#c4ccd8;--m3:#7c8794;--m4:#eef2f7;--glow:rgba(200,212,230,.45);--ink:#1d242e}
+.ach-cel-card.tier-gold{--m1:#fff6b8;--m2:#f7c82a;--m3:#a9780a;--m4:#ffe58a;--glow:rgba(250,204,21,.6);--ink:#2d1d02;box-shadow:0 26px 70px rgba(0,0,0,.6),0 0 64px var(--glow),inset 0 1px 0 rgba(255,255,255,.25)}
+.ach-cel-card>*{position:relative;z-index:1}
+.ach-cel-card.in{animation:achcel-in .6s cubic-bezier(.2,1.1,.3,1) both}
+.ach-cel-card.leaving{animation:achcel-out .22s ease-in both;pointer-events:none}
+.ach-cel-shine{position:absolute!important;z-index:0!important;inset:-30% -70%;pointer-events:none;background:linear-gradient(105deg,transparent 43%,rgba(255,255,255,.2) 50%,transparent 57%);transform:translateX(-70%);animation:achcel-sheen 4.2s ease-in-out .9s infinite}
+.ach-cel-card.tier-gold .ach-cel-shine{animation-duration:3.2s;background:linear-gradient(105deg,transparent 42%,rgba(255,244,190,.34) 50%,transparent 58%)}
+.ach-cel-head{margin:2px 0 0;font-size:clamp(.8rem,3.7vw,1rem);font-weight:900;letter-spacing:2px;line-height:1.25;text-transform:uppercase;background:linear-gradient(90deg,var(--m3),var(--m2),var(--m3));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.ach-cel-card.tier-gold .ach-cel-head{animation:achcel-text 3s linear infinite}
+[data-theme=dark] .ach-cel-head{background-image:linear-gradient(90deg,var(--m2),var(--m1),var(--m2))}
+.ach-cel-stage{position:relative;display:grid;place-items:center;width:calc(var(--medal) * 1.6);height:calc(var(--medal) * 1.6);margin:2px auto 0;max-width:100%}
+.ach-cel-aura{position:absolute;inset:6%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,var(--glow) 0%,transparent 66%);animation:achcel-aura 2.6s ease-in-out infinite}
+.ach-cel-rays{position:absolute;inset:-4%;border-radius:50%;pointer-events:none;opacity:0;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--m2) 60%,transparent) 0 7deg,transparent 7deg 22deg);-webkit-mask-image:radial-gradient(circle,#000 18%,transparent 68%);mask-image:radial-gradient(circle,#000 18%,transparent 68%);animation:achcel-spin 26s linear infinite}
+.ach-cel-card.tier-silver .ach-cel-rays{opacity:.22}.ach-cel-card.tier-gold .ach-cel-rays{opacity:.55}
+.ach-cel .ach-medal{width:var(--medal);height:var(--medal);animation:achcel-reveal .95s cubic-bezier(.2,1.1,.3,1) .22s both,achcel-breathe 3.4s ease-in-out 1.4s infinite}
+.ach-cel .ach-medal::after{animation-duration:2.8s;animation-delay:1s}
+.ach-cel-flash{position:absolute;inset:14%;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff 0%,rgba(255,255,255,0) 68%);opacity:0;animation:achcel-flash .8s ease-out .3s both}
+.ach-ring{position:absolute;inset:18%;border-radius:50%;pointer-events:none;border:2px solid var(--m2);opacity:0;animation:achcel-ring 1.1s ease-out .4s both}
+.ach-ring.r2{animation-delay:.62s;border-color:var(--m1)}
+.ach-sp{position:absolute;left:50%;top:50%;width:calc(14px * var(--s,1));height:calc(14px * var(--s,1));margin:calc(-7px * var(--s,1)) 0 0 calc(-7px * var(--s,1));pointer-events:none;opacity:0;background:linear-gradient(135deg,#fff,var(--m1) 45%,var(--m2));clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.ach-sp.burst{animation:achcel-burst 1.15s cubic-bezier(.15,.7,.3,1) var(--d,.3s) both}
+.ach-sp.tw{left:var(--l);top:var(--t);margin:calc(-7px * var(--s,1)) 0 0 calc(-7px * var(--s,1));animation:achcel-twinkle 2.4s ease-in-out var(--d,1s) infinite}
+.ach-cel-tier{display:inline-block;margin:6px 0 8px;padding:5px 16px;border-radius:999px;font-size:.72rem;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;color:var(--ink);background:linear-gradient(135deg,var(--m1),var(--m2) 45%,var(--m3));border:1px solid color-mix(in srgb,var(--m1) 70%,transparent);box-shadow:0 2px 10px var(--glow),inset 0 1px 0 rgba(255,255,255,.55)}
+.ach-cel-name{margin:0 0 6px;font-size:clamp(1.3rem,6vw,1.65rem);line-height:1.15;color:var(--text)}
+.ach-cel-desc{margin:0 auto;max-width:30ch;color:var(--muted);font-size:.95rem;line-height:1.4}
+.ach-cel-card .ach-cel-btn{display:block;flex:none;width:min(100%,260px);margin:20px auto 0;min-height:50px;font-size:1.06rem;letter-spacing:.3px;position:relative;overflow:hidden}
+.ach-cel-btn::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.4) 50%,transparent 60%);transform:translateX(-120%);animation:achcel-btnshine 3.4s ease-in-out 1.6s infinite}
+@keyframes achcel-fade{from{opacity:0}}
+@keyframes achcel-fadeout{to{opacity:0}}
+@keyframes achcel-in{from{opacity:0;transform:translateY(26px) scale(.82)}60%{opacity:1;transform:translateY(-4px) scale(1.025)}}
+@keyframes achcel-out{to{opacity:0;transform:translateY(-10px) scale(.93)}}
+@keyframes achcel-reveal{0%{opacity:0;transform:scale(.25) rotate(-28deg)}55%{opacity:1;transform:scale(1.14) rotate(5deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes achcel-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes achcel-aura{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes achcel-spin{to{transform:rotate(360deg)}}
+@keyframes achcel-flash{0%{opacity:.95;transform:scale(.3)}100%{opacity:0;transform:scale(2.1)}}
+@keyframes achcel-ring{0%{opacity:.9;transform:scale(.55)}100%{opacity:0;transform:scale(1.9)}}
+@keyframes achcel-burst{0%{opacity:0;transform:translate(0,0) scale(0)}18%{opacity:1}100%{opacity:0;transform:translate(calc(var(--x) * var(--medal)),calc(var(--y) * var(--medal))) scale(1) rotate(90deg)}}
+@keyframes achcel-twinkle{0%,100%{opacity:0;transform:scale(.2)}50%{opacity:.95;transform:scale(1)}}
+@keyframes achcel-sheen{0%,45%{transform:translateX(-70%)}100%{transform:translateX(70%)}}
+@keyframes achcel-text{to{background-position:-200% 0}}
+@keyframes achcel-btnshine{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+@media (max-width:380px){.ach-cel{padding:12px}.ach-cel-card{padding:18px 14px 16px;border-radius:22px}.ach-cel-desc{font-size:.9rem}}
+@media (max-height:640px){.ach-cel-card{--medal:clamp(92px,26vh,124px);padding-top:16px}.ach-cel-card .ach-cel-btn{margin-top:14px;min-height:46px}}
+/* Reduce Motion (Settings): the card still appears, but with no particles, rays, shine or movement */
+html[data-motion=reduced] .ach-cel,html[data-motion=reduced] .ach-cel *,html[data-motion=reduced] .ach-cel *::before,html[data-motion=reduced] .ach-cel *::after{animation:none!important;transition:none!important}
+html[data-motion=reduced] .ach-sp,html[data-motion=reduced] .ach-ring,html[data-motion=reduced] .ach-cel-flash,html[data-motion=reduced] .ach-cel-rays,html[data-motion=reduced] .ach-cel-shine,html[data-motion=reduced] .ach-cel-btn::after{display:none}
+`;
+  if (!document.getElementById("ach-cel-css")) { const st = document.createElement("style"); st.id = "ach-cel-css"; st.textContent = CEL_CSS; document.head.append(st); }
+
+  const TIER_ORDER = { bronze: 0, silver: 1, gold: 2 };
+  const cel = { q: [], cur: null, shown: 0, busy: false, el: null, opener: null, wait: 0 };
+  const motionOff = () => typeof reduced === "function" && reduced();
+  const ms = (n) => (motionOff() ? 0 : n);
+  const QKEY = () => wbKey("achq");
+  const readPending = () => { try { const a = JSON.parse(localStorage.getItem(QKEY())); return Array.isArray(a) ? a.filter((x) => typeof x === "string") : []; } catch { return []; } };
+  const writePending = () => {   // the ids still waiting to be acknowledged (the open card + the queue); previews are never saved
+    try { const ids = (cel.cur ? [cel.cur] : []).concat(cel.q).filter((a) => !a.preview).map((a) => a.id); if (ids.length) localStorage.setItem(QKEY(), JSON.stringify(ids)); else localStorage.removeItem(QKEY()); } catch {}
+  };
+  const ensureDefs = () => { if (!$("#ach-defs")) { const d = document.createElement("div"); d.id = "ach-defs"; d.innerHTML = defs(); document.body.append(d); } };
+  const celOpen = () => !!cel.el && !cel.el.classList.contains("hidden");
+  const total = () => cel.shown + (cel.cur ? 1 : 0) + cel.q.length;
+  const headText = () => (total() > 1 ? `ACHIEVEMENT UNLOCKED ${cel.shown + 1}/${total()}` : "ACHIEVEMENT UNLOCKED!");
+  // not while the splash screen or a sign-in screen is showing (matters when a saved, unacknowledged card is resumed after a refresh)
+  const celReady = () => { const sp = document.getElementById("splash"); return (!sp || sp.classList.contains("out")) && !(typeof AUTH_SCREENS !== "undefined" && typeof screen === "string" && AUTH_SCREENS.includes(screen)); };
+
+  function enqueue(items) {
+    const have = new Set(cel.q.map((a) => a.id)); if (cel.cur) have.add(cel.cur.id);
+    const add = items.filter((a) => a && !have.has(a.id) && (a.preview || Player.data.ach[a.id]) && (have.add(a.id), true));   // never the same achievement twice
+    if (!add.length) return;
+    cel.q.push(...add); cel.q.sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || a.n - b.n);   // only the waiting part is sorted; cards already shown never move
+    writePending();
+    if (cel.cur) { const h = cel.el && cel.el.querySelector(".ach-cel-head"); if (h) h.textContent = headText(); }   // a new unlock joined: 1/2 becomes 1/3
+    else { clearTimeout(cel.wait); cel.wait = setTimeout(pump, ms(350)); }                                            // a short beat so the win / flip animation isn't cut off
+  }
+  function pump() {
+    if (cel.cur || cel.busy || !cel.q.length) return;
+    if (!celReady()) { clearTimeout(cel.wait); cel.wait = setTimeout(pump, 400); return; }
+    cel.cur = cel.q.shift(); showCard(true);
+  }
+
+  function sparkHTML(tier) {
+    const nBurst = { bronze: 10, silver: 15, gold: 26 }[tier], nTw = { bronze: 5, silver: 7, gold: 11 }[tier], r = (a, b) => a + Math.random() * (b - a);
+    let h = `<i class="ach-cel-flash"></i><i class="ach-ring"></i>${tier === "gold" ? '<i class="ach-ring r2"></i>' : ""}`;
+    for (let i = 0; i < nBurst; i++) { const ang = (i / nBurst) * Math.PI * 2 + r(-0.25, 0.25), d = r(0.55, tier === "gold" ? 1.15 : 0.95); h += `<i class="ach-sp burst" style="--x:${(Math.cos(ang) * d).toFixed(2)};--y:${(Math.sin(ang) * d).toFixed(2)};--s:${r(0.5, 1.25).toFixed(2)};--d:${r(0.3, 0.7).toFixed(2)}s"></i>`; }
+    for (let i = 0; i < nTw; i++) { const ang = (i / nTw) * Math.PI * 2 + r(-0.3, 0.3), d = r(36, 47); h += `<i class="ach-sp tw" style="--l:${(50 + Math.cos(ang) * d).toFixed(1)}%;--t:${(50 + Math.sin(ang) * d).toFixed(1)}%;--s:${r(0.5, 1).toFixed(2)};--d:${r(1.1, 3.6).toFixed(2)}s"></i>`; }
+    return h;
+  }
+  function chime(tier) {   // uses the game's own sound (respects Mute) and vibration (respects the Vibration setting)
+    if (typeof beep !== "function") return;
+    const notes = { bronze: [660, 880], silver: [660, 880, 1175], gold: [523, 659, 784, 1046, 1318] }[tier];
+    notes.forEach((f, i) => setTimeout(() => beep(f, tier === "gold" && i === notes.length - 1 ? 0.28 : 0.12), 250 + i * 110));
+    if (typeof vibe === "function") vibe(tier === "gold" ? [40, 40, 40, 40, 110] : 30);
+  }
+
+  function showCard(first) {
+    const a = cel.cur; ensureDefs();
+    if (!cel.el) {
+      const o = document.createElement("div"); o.className = "ach-cel hidden"; o.setAttribute("role", "alertdialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-labelledby", "ach-cel-head"); o.setAttribute("aria-describedby", "ach-cel-name ach-cel-desc");
+      // no close button, and tapping the dim background does nothing; it just keeps the focus on "Awesome!"
+      o.addEventListener("pointerdown", (e) => { if (!e.target.closest("button")) { e.preventDefault(); const b = o.querySelector(".ach-cel-btn"); if (b) b.focus({ preventScroll: true }); } });
+      o.addEventListener("touchmove", (e) => { if (o.scrollHeight <= o.clientHeight) e.preventDefault(); }, { passive: false });
+      document.body.append(o); cel.el = o;
+    }
+    const o = cel.el, old = o.querySelector(".ach-cel-card"); if (old) old.remove();
+    const card = document.createElement("div"); card.className = `ach-cel-card tier-${a.tier}`;
+    card.innerHTML = `<span class="ach-cel-shine" aria-hidden="true"></span>
+      <h2 class="ach-cel-head" id="ach-cel-head">${headText()}</h2>
+      <div class="ach-cel-stage" aria-hidden="true"><i class="ach-cel-aura"></i><i class="ach-cel-rays"></i>${sparkHTML(a.tier)}${badge(a, false)}</div>
+      <span class="ach-cel-tier">${TIER[a.tier]} plate</span>
+      <h3 class="ach-cel-name" id="ach-cel-name">${a.name}</h3>
+      <p class="ach-cel-desc" id="ach-cel-desc">${a.desc}</p>
+      <button type="button" class="primary big ach-cel-btn">Awesome!</button>`;
+    o.append(card); void card.offsetWidth; card.classList.add("in");
+    card.querySelector(".ach-cel-btn").onclick = nextCard;
+    if (!celOpen()) {
+      cel.opener = document.activeElement && document.activeElement !== document.body ? document.activeElement : null;
+      document.documentElement.classList.add("ach-celebrating"); document.body.classList.add("ach-celebrating");   // no scrolling behind the card
+      o.classList.remove("hidden", "out");
+    }
+    card.querySelector(".ach-cel-btn").focus({ preventScroll: true });
+    chime(a.tier); writePending();
+  }
+  function nextCard() {
+    if (cel.busy || !cel.cur) return; cel.busy = true;
+    cel.shown++; cel.cur = null; writePending();   // acknowledged: it will never be shown again
+    const card = cel.el.querySelector(".ach-cel-card"); if (card) card.classList.add("leaving");
+    setTimeout(() => { cel.busy = false; if (cel.q.length) { cel.cur = cel.q.shift(); showCard(false); } else closeCel(); }, ms(230));
+  }
+  function closeCel() {
+    const o = cel.el; if (!o) return; cel.busy = true; o.classList.add("out");
+    setTimeout(() => {
+      o.classList.add("hidden"); o.classList.remove("out"); const c = o.querySelector(".ach-cel-card"); if (c) c.remove();
+      document.documentElement.classList.remove("ach-celebrating"); document.body.classList.remove("ach-celebrating");
+      cel.shown = 0; cel.busy = false; const op = cel.opener; cel.opener = null; if (op && document.contains(op)) { try { op.focus({ preventScroll: true }); } catch {} }
+      pump();   // something may have been queued while the card was fading out
+    }, ms(280));
+  }
+  // while a card is open the game must not react to the keyboard (no typing letters / Enter / Escape behind it); Enter or Space still press "Awesome!"
+  window.addEventListener("keydown", (e) => {
+    if (!celOpen()) return;
+    e.stopPropagation();
+    if (e.key === "Tab" || e.key === "Escape") { e.preventDefault(); const b = cel.el.querySelector(".ach-cel-btn"); if (b) b.focus({ preventScroll: true }); }
+  }, true);
+
   // ---------- events ----------
   const track = $("#ach-track");
   if (track) {
@@ -233,5 +389,9 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
   let t = null; addEventListener("wb:save", () => { clearTimeout(t); t = setTimeout(() => { if (!checking) check({ announce: true }); }, 250); });
 
   check({ announce: false });   // quiet scan on load: existing players get the badges they already earned without a pile of pop-ups
-  window.Achievements = { list: () => status(), check, render, open, close, total: LIST.length };
+  // A card the player never acknowledged (page refreshed mid-celebration) comes back once; ids that are no longer unlocked are dropped.
+  enqueue(readPending().map((id) => LIST.find((a) => a.id === id)).filter(Boolean));
+  window.Achievements = { list: () => status(), check, render, open, close, total: LIST.length,
+    // Try the celebration without unlocking anything or touching the save, e.g. in the browser console: Achievements.preview(["first-victory", "unstoppable", "winning-machine"])
+    preview: (ids) => enqueue((ids || ["first-victory"]).map((id) => LIST.find((a) => a.id === id)).filter(Boolean).map((a) => ({ ...a, preview: true }))) };
 })();
