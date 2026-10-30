@@ -449,6 +449,7 @@ input{background:var(--panel-2);border-color:var(--field-line)}
 .ibtn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--text);transition:transform .12s,border-color .15s,color .15s}
 .ibtn svg,.winscore svg,.ctl svg,.submit-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ibtn:hover{border-color:var(--gold-dim);color:var(--gold)}.ibtn:active{transform:scale(.94)}
+#game #g-info{width:36px;height:44px;padding:0;background:none!important;border:0!important;box-shadow:none}#game #g-info svg.ico3d{width:34px;height:34px;fill:none;stroke:none;overflow:visible;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}   /* 3D green cursive "i" (sprite symbol #i-info), no box */
 .winscore{display:flex;align-items:center;gap:6px;height:44px;padding:0 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:800;font-variant-numeric:tabular-nums}
 .winscore svg{width:20px;height:20px;color:var(--gold)}
 #game .coins{height:44px}
@@ -543,7 +544,7 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 /* purchase popup (cost + balance), reuses the shared dialog */
 .buybox{display:grid;gap:6px;margin:4px 0 10px;padding:12px;border-radius:12px;background:var(--panel-2);border:1px solid color-mix(in srgb,var(--gold-dim) 70%,var(--line))}
 .buybox.hidden{display:none}
-.buy-ico{justify-self:center;width:54px;height:54px;margin-bottom:2px}
+.buy-ico{justify-self:center;width:46px;height:46px;margin-bottom:2px}
 .buy-row{display:flex;justify-content:space-between;align-items:center;font-size:.95rem;color:var(--muted)}
 .buy-row b{color:var(--text);font-variant-numeric:tabular-nums}
 .buy-row.after{border-top:1px solid var(--line);padding-top:6px}.buy-row.after b{color:var(--gold)}
@@ -554,7 +555,7 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
   box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 30%,transparent),0 18px 50px rgba(0,0,0,.55),0 0 46px color-mix(in srgb,var(--gold) 22%,transparent);animation:popin .4s cubic-bezier(.2,.9,.3,1.15)}
 .clue-bulb{width:78px;height:78px;margin:0 auto 6px;display:grid;place-items:center;border-radius:50%;
   background:radial-gradient(circle,var(--glow-lo),transparent 68%);animation:bulbpulse 2.6s ease-in-out infinite}
-.clue-bulb svg{width:54px;height:54px;filter:drop-shadow(0 0 10px var(--glow-hi))}
+.clue-bulb svg{width:46px;height:46px;filter:drop-shadow(0 0 10px var(--glow-hi))}
 @keyframes bulbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .card.clue h2{font-size:1.35rem;margin:0}
 .clue-count{margin:2px 0 12px!important;font-size:.82rem;color:var(--muted)}
@@ -711,7 +712,7 @@ html[data-motion=reduced] .installcard,html[data-motion=reduced] #update-bar,htm
 .pf-info{flex:1;min-width:0;display:grid;gap:5px}
 .pf-namerow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pf-namerow b{font-size:1.3rem;overflow-wrap:anywhere}
-.pf-edit{width:32px;height:32px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--gold);cursor:pointer}
+.pf-edit{width:32px;height:32px;display:grid;place-items:center;padding:0;border-radius:50%;border:0;background:none;box-shadow:none;color:var(--gold);cursor:pointer}   /* no circle around the pencil */
 .pf-edit .pf-ico{width:17px;height:17px}
 .pf-level{font-size:.95rem;color:var(--text)}
 .pf-info small{color:var(--muted);font-size:.8rem}
@@ -941,29 +942,3 @@ html[data-motion=reduced] #update-bar,html[data-motion=reduced] #update-bar .ic-
 .r-dailyhead h3{margin:0;font-size:1.05rem;font-weight:800;letter-spacing:.3px;color:var(--gold)}
 .card.result .r-dailyhead p{margin:2px 0 4px;color:var(--muted);font-size:.9rem;font-weight:600}
 #daily-done h2{font-size:1.5rem}
-
-
-/* ===== Profile: premium 3D-style icons (filled art in index.html: extrusion + gradient face + gloss) ===== */
-.i3{flex:none;width:34px;height:34px;display:block;overflow:visible;filter:drop-shadow(0 3px 2.5px rgba(0,0,0,.42)) drop-shadow(0 0 7px rgba(var(--c,255,255,255),.28));transition:transform .25s cubic-bezier(.3,1.4,.5,1),filter .25s}
-.c-purple{--c:140,100,255}.c-gold{--c:255,196,30}.c-green{--c:54,224,122}.c-orange{--c:255,143,31}.c-red{--c:234,74,53}.c-blue{--c:74,134,240}
-.pf-stat{position:relative;overflow:hidden;background:radial-gradient(120% 85% at 50% -5%,rgba(var(--c,255,196,30),.2),transparent 62%),var(--panel);border-color:color-mix(in srgb,rgb(var(--c,255,196,30)) 28%,var(--line));box-shadow:0 6px 16px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07);transition:transform .2s,border-color .2s,box-shadow .2s}
-.pf-stat .i3{width:46px;height:46px;margin-bottom:2px}
-.pf-stat:hover{transform:translateY(-2px);border-color:color-mix(in srgb,rgb(var(--c)) 55%,var(--line));box-shadow:0 10px 22px rgba(0,0,0,.3),0 0 18px rgba(var(--c),.18),inset 0 1px 0 rgba(255,255,255,.1)}
-.pf-stat:hover .i3{transform:translateY(-3px) scale(1.1) rotate(-3deg)}
-.pf-tile:has(.i3){position:relative;width:46px;height:46px;border-radius:14px;background:radial-gradient(circle at 30% 18%,rgba(var(--c),.34),transparent 68%),linear-gradient(160deg,var(--panel-2),var(--panel));border-color:color-mix(in srgb,rgb(var(--c)) 38%,var(--line));box-shadow:0 4px 10px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12)}
-.pf-tile .i3{width:34px;height:34px}
-.pf-daily:hover .pf-tile .i3,.pf-sechead:hover .pf-tile .i3{transform:scale(1.1) rotate(-4deg)}
-.pf-top .icon .i3{width:30px;height:30px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}
-.pf-top .icon:hover .i3{transform:rotate(60deg) scale(1.05)}
-.pf-edit{background:radial-gradient(circle at 30% 20%,rgba(255,196,30,.3),var(--panel-2))}
-.pf-edit .i3{width:24px;height:24px;filter:drop-shadow(0 2px 1.5px rgba(0,0,0,.45))}
-.pf-edit:hover .i3{transform:rotate(-12deg) scale(1.12)}
-#profile.screen:not(.hidden) .pf-stat .i3{animation:i3pop .55s cubic-bezier(.2,.9,.3,1.3) both}
-#profile.screen:not(.hidden) .pf-stat:nth-child(2) .i3{animation-delay:.07s}#profile.screen:not(.hidden) .pf-stat:nth-child(3) .i3{animation-delay:.14s}#profile.screen:not(.hidden) .pf-stat:nth-child(4) .i3{animation-delay:.21s}
-@keyframes i3pop{from{opacity:0;transform:translateY(8px) scale(.6) rotate(-10deg)}to{opacity:1;transform:none}}
-[data-theme=light] .i3{filter:drop-shadow(0 3px 2.5px rgba(40,30,80,.28)) drop-shadow(0 0 6px rgba(var(--c,255,255,255),.2))}
-[data-theme=light] .pf-stat{background:radial-gradient(120% 85% at 50% -5%,rgba(var(--c,255,196,30),.16),transparent 62%),var(--panel);box-shadow:0 5px 14px rgba(60,50,120,.12),inset 0 1px 0 #fff}
-[data-theme=light] .pf-tile:has(.i3){box-shadow:0 4px 10px rgba(60,50,120,.16),inset 0 1px 0 #fff}
-@media (max-width:340px){.pf-stat .i3{width:34px;height:34px}}
-html[data-motion=reduced] #profile .pf-stat .i3{animation:none}
-@media (prefers-reduced-motion:reduce){#profile .pf-stat .i3{animation:none!important}.i3{transition:none}}

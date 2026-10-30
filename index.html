@@ -21,6 +21,7 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
     <linearGradient id="gGlyph" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EDE8DE"/></linearGradient>
+    <linearGradient id="gInfo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9FF9E"/><stop offset=".4" stop-color="#45D86F"/><stop offset="1" stop-color="#11823A"/></linearGradient>
     <radialGradient id="gBulb" cx=".5" cy=".4" r=".65"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#FFF6CF"/><stop offset="1" stop-color="#FFE48A"/></radialGradient>
     <linearGradient id="gBase" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F4F6"/><stop offset="1" stop-color="#9A9AA3"/></linearGradient>
     <symbol id="i-reveal" viewBox="0 0 32 32">
@@ -37,6 +38,18 @@
     <symbol id="i-skip" viewBox="0 0 32 32">
       <path d="M5.5 6.6v18.8a1 1 0 0 0 1.55.84l12.6-9.4a1 1 0 0 0 0-1.68L7.05 5.76a1 1 0 0 0-1.55.84z" fill="url(#gGlyph)"/>
       <rect x="22" y="5.4" width="4.6" height="21.2" rx="2.3" fill="url(#gGlyph)"/>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 32 32">
+      <g transform="translate(0.42 0.42)" fill="#0A4A1F"><path d="M12.6 14.2C14.8 14.4 16.6 13.8 19.2 12.6L15.8 25.4C15.4 26.9 15.9 27.4 16.6 27.4C17.8 27.4 19.4 26 20.8 23.6L22.4 24.6C20.6 28.2 18 30.6 14.8 30.6C11.8 30.6 10.8 28.4 11.5 25.8L15 15.2Z"/><ellipse cx="18.6" cy="6.6" rx="3.3" ry="3.1" transform="rotate(-14 18.6 6.6)"/></g>
+      <g transform="translate(0.84 0.84)" fill="#0A4A1F"><path d="M12.6 14.2C14.8 14.4 16.6 13.8 19.2 12.6L15.8 25.4C15.4 26.9 15.9 27.4 16.6 27.4C17.8 27.4 19.4 26 20.8 23.6L22.4 24.6C20.6 28.2 18 30.6 14.8 30.6C11.8 30.6 10.8 28.4 11.5 25.8L15 15.2Z"/><ellipse cx="18.6" cy="6.6" rx="3.3" ry="3.1" transform="rotate(-14 18.6 6.6)"/></g>
+      <g transform="translate(1.26 1.26)" fill="#0A4A1F"><path d="M12.6 14.2C14.8 14.4 16.6 13.8 19.2 12.6L15.8 25.4C15.4 26.9 15.9 27.4 16.6 27.4C17.8 27.4 19.4 26 20.8 23.6L22.4 24.6C20.6 28.2 18 30.6 14.8 30.6C11.8 30.6 10.8 28.4 11.5 25.8L15 15.2Z"/><ellipse cx="18.6" cy="6.6" rx="3.3" ry="3.1" transform="rotate(-14 18.6 6.6)"/></g>
+      <g transform="translate(1.68 1.68)" fill="#0A4A1F"><path d="M12.6 14.2C14.8 14.4 16.6 13.8 19.2 12.6L15.8 25.4C15.4 26.9 15.9 27.4 16.6 27.4C17.8 27.4 19.4 26 20.8 23.6L22.4 24.6C20.6 28.2 18 30.6 14.8 30.6C11.8 30.6 10.8 28.4 11.5 25.8L15 15.2Z"/><ellipse cx="18.6" cy="6.6" rx="3.3" ry="3.1" transform="rotate(-14 18.6 6.6)"/></g>
+      <g transform="translate(2.10 2.10)" fill="#0A4A1F"><path d="M12.6 14.2C14.8 14.4 16.6 13.8 19.2 12.6L15.8 25.4C15.4 26.9 15.9 27.4 16.6 27.4C17.8 27.4 19.4 26 20.8 23.6L22.4 24.6C20.6 28.2 18 30.6 14.8 30.6C11.8 30.6 10.8 28.4 11.5 25.8L15 15.2Z"/><ellipse cx="18.6" cy="6.6" rx="3.3" ry="3.1" transform="rotate(-14 18.6 6.6)"/></g>
+      <g transform="translate(2.52 2.52)" fill="#0A4A1F"><path d="M12.6 14.2C14.8 14.4 16.6 13.8 19.2 12.6L15.8 25.4C15.4 26.9 15.9 27.4 16.6 27.4C17.8 27.4 19.4 26 20.8 23.6L22.4 24.6C20.6 28.2 18 30.6 14.8 30.6C11.8 30.6 10.8 28.4 11.5 25.8L15 15.2Z"/><ellipse cx="18.6" cy="6.6" rx="3.3" ry="3.1" transform="rotate(-14 18.6 6.6)"/></g>
+      <path d="M12.6 14.2C14.8 14.4 16.6 13.8 19.2 12.6L15.8 25.4C15.4 26.9 15.9 27.4 16.6 27.4C17.8 27.4 19.4 26 20.8 23.6L22.4 24.6C20.6 28.2 18 30.6 14.8 30.6C11.8 30.6 10.8 28.4 11.5 25.8L15 15.2Z" fill="url(#gInfo)" stroke="#0E6A2B" stroke-width=".7" stroke-linejoin="round"/>
+      <ellipse cx="18.6" cy="6.6" rx="3.3" ry="3.1" transform="rotate(-14 18.6 6.6)" fill="url(#gInfo)" stroke="#0E6A2B" stroke-width=".7"/>
+      <path d="M14.6 15.6L17.2 14.4L14.3 24.6C14 25.4 13.4 26 12.9 26.4C12.7 25.2 12.9 24 13.3 22.6z" fill="#fff" fill-opacity=".5"/>
+      <ellipse cx="17.6" cy="5.4" rx="1.5" ry="1" fill="#fff" fill-opacity=".6" transform="rotate(-20 17.6 5.4)"/>
     </symbol>
     <symbol id="i-bulb" viewBox="0 0 32 32">
       <path d="M16 2.8c-5.5 0-9.4 3.8-9.4 8.8 0 3.1 1.6 5 3.1 6.6.9 1 1.5 1.9 1.5 3v.6h9.6v-.6c0-1.1.6-2 1.5-3 1.5-1.6 3.1-3.5 3.1-6.6 0-5-3.9-8.8-9.4-8.8z" fill="url(#gBulb)" stroke="#B87400" stroke-width="1.3"/>
@@ -202,7 +215,6 @@
     <article class="gcard"><div class="ico">🧩</div><div><h3>Play Solo</h3><p>Unlimited practice puzzles.</p></div><button class="primary" data-go="practice">Play</button></article>
     <article class="gcard"><div class="ico">⚔️</div><div><h3>Battle Online</h3><p>Random match or private room.</p></div><button class="primary alt" data-go="battle">Play</button></article>
   </div>
-  <button class="ghost big" data-howto type="button">📖 How to Play</button>
 </section>
 
 <!-- GAME -->
@@ -210,7 +222,7 @@
   <header class="gtop">
     <div class="gleft">
       <button id="g-back" class="ibtn" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <button id="g-info" class="ibtn" aria-label="How to play"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg></button>
+      <button id="g-info" class="ibtn" aria-label="How to play" style="width:36px;height:44px;padding:0;background:none;border:0;box-shadow:none;overflow:visible"><svg class="ico3d" viewBox="0 0 32 32" aria-hidden="true" focusable="false" style="width:34px;height:34px;fill:none;stroke:none;overflow:visible;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))"><use href="#i-info"/></svg></button>
     </div>
     <div class="winscore" role="status" aria-label="Wins" title="Total wins"><span class="sc-l">Score</span><b class="win-val">0</b><b class="g-date" id="g-date"></b></div>
     <div class="gright">
@@ -236,13 +248,13 @@
 
 <!-- SHOP -->
 <section id="shop" class="screen hidden">
-  <header class="top"><button class="icon" data-back>← Back</button><b>Shop</b><div class="head-right"><button class="streak" data-go="profile" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><div class="coins">🪙 <b class="coin-val"></b></div></div></header>
+  <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b>Shop</b><div class="head-right"><button class="streak" data-go="profile" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button><div class="coins">🪙 <b class="coin-val"></b></div></div></header>
   <div class="cards shop-grid" id="shop-cards"></div>
 </section>
 
 <!-- BATTLE -->
 <section id="battle" class="screen hidden">
-  <header class="top"><button class="icon" data-back>← Back</button><b>Battle Online</b><span></span></header>
+  <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b>Battle Online</b><span style="width:44px" aria-hidden="true"></span></header>
   <div class="panel center">
     <div class="ico big-ico">⚔️</div>
     <h3 id="battle-title">Online battles need a server</h3>
@@ -254,7 +266,7 @@
 
 <!-- LEADERBOARD -->
 <section id="leaderboard" class="screen hidden">
-  <header class="top"><button class="icon" data-back>← Back</button><b>Leaderboard</b><span></span></header>
+  <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b>Leaderboard</b><span style="width:44px" aria-hidden="true"></span></header>
   <div class="panel"><ol id="lb-list" class="lb"></ol>
     <small>Global rankings need online accounts (Supabase, stage 5). In demo mode only your own progress is shown.</small></div>
 </section>
@@ -354,12 +366,12 @@
 
 <!-- SETTINGS -->
 <section id="profile" class="screen hidden">
-  <header class="top pf-top"><button class="icon" data-back aria-label="Back">←</button><b>Profile</b><button class="icon" id="pf-settings" type="button" aria-label="Settings"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-gear"/></svg></button></header>
+  <header class="top pf-top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b>Profile</b><button class="icon" id="pf-settings" type="button" aria-label="Settings"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-gear"/></svg></button></header>
 
   <div class="pf-card pf-head">
     <div class="avatar-wrap"><div class="avatar pf-avatar" id="pf-avatar"></div><span class="lvbadge" id="pf-badge"></span></div>
     <div class="pf-info">
-      <div class="pf-namerow"><b id="pf-name"></b><button class="pf-edit" id="pf-edit" type="button" aria-label="Edit profile"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-pencil"/></svg></button><span class="acctbadge" id="p-acct"></span></div>
+      <div class="pf-namerow"><b id="pf-name"></b><button class="pf-edit" id="pf-edit" type="button" aria-label="Edit profile" style="border:0;background:none;box-shadow:none"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-pencil"/></svg></button><span class="acctbadge" id="p-acct"></span></div>
       <span class="pf-level" id="pf-level"></span>
       <div class="xp" role="progressbar" aria-label="XP progress"><i id="pf-xp"></i></div>
       <small id="pf-xptext"></small>
