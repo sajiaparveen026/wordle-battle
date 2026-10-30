@@ -171,10 +171,7 @@ function animateXp(sel, pct) { // bar fills from 0 each time it is shown
   const e = $(sel); e.style.width = "0%";
   requestAnimationFrame(() => requestAnimationFrame(() => (e.style.width = pct + "%")));
 }
-function renderLeaderboard() {
-  const p = Player.data, lv = Player.levelInfo();
-  $("#lb-list").innerHTML = `<li class="me"><span class="rank">1</span><span class="av">${p.avatar}</span><b>${p.username}</b><em>Lv ${lv.level} · ${p.xp} XP</em></li>`;
-}
+function renderLeaderboard() { if (window.Leaderboard) Leaderboard.render(); }   // js/leaderboard.js: real players from Supabase (guests and accounts)
 
 // ---------- Profile (separate from Settings) ----------
 const fmtDate = (iso, long) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString([], long ? { month: "short", day: "numeric", year: "numeric" } : { month: "short", year: "numeric" }); };

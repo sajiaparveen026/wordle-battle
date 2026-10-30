@@ -288,6 +288,7 @@
     if (hasProgress(g) && !localStorage.getItem("wb_guest_migrated")) {
       if (await confirmBox("Move your guest progress?", "Copy the coins, XP and stats from this device into your new account? You can only do this once.", "Move progress")) {
         snap = g; applySnapshot(g); localStorage.setItem("wb_guest_migrated", "1");
+        if (window.Leaderboard) Leaderboard.mergeGuest();   // the guest's leaderboard entry moves into this account (no duplicate)
       }
     }
     const ins = await sb.from("solo_saves").insert({ user_id: user.id, data: snap }).select("rev").maybeSingle();
@@ -318,6 +319,7 @@
     if (readyFor === user.id) return; readyFor = user.id;
     await loadProfile(); await syncTutorial(); window.WBApp.refresh(); renderAccount(); // show the account name right away,
     await syncDown(); window.WBApp.refresh(); renderAccount();      // then sync (may ask about moving guest progress)
+    if (window.Leaderboard) Leaderboard.sync();                    // make sure this account is on the leaderboard with its latest XP
   }
 
   // ---------- tutorial status (saved per account so it stays dismissed on every device) ----------
@@ -433,5 +435,5 @@
     const reset = $("#s-reset"); if (reset) reset.classList.toggle("hidden", acct); // never offer to wipe a cloud-synced account
   }
 
-  window.Auth = { enabled, route, restoreSignupDraft, profileMeta, renderAccount, isAccount, setUsername, setAvatar, logout, leaveGuest, accountInfo, changePassword, signOutOthers, deleteAccount, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
+  window.Auth = { enabled, client: () => sb, isGuest, route, restoreSignupDraft, profileMeta, renderAccount, isAccount, setUsername, setAvatar, logout, leaveGuest, accountInfo, changePassword, signOutOthers, deleteAccount, whenReady, setTutorialDone, freeCoins: { status: freeCoinsStatus, claim: freeCoinsClaim } };
 })();

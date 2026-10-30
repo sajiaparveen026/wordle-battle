@@ -15,6 +15,12 @@ Run `supabase/migrations/004_delete_account.sql` the same way. It adds one small
 delete only their own account (their profile, cloud save and free-coin record are removed with it). Without it, Delete
 Account shows "Account deletion isn't set up yet" and nothing is deleted. (Free coins, migration 003, is separate.)
 
+### 1d. Turn on the Leaderboard
+Run `supabase/migrations/005_leaderboard.sql` the same way. It creates the public ranking table (username, avatar, level, XP and wins only)
+for registered players and guests. Nobody can read or write the table directly: only the app's functions can, and they never return emails
+or secrets. Without it the Leaderboard shows a friendly "couldn't load" message and the rest of the app works as before.
+Note: solo scores are reported by the player's device, so this board is not cheat-proof until online battles are verified on the server.
+
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`
