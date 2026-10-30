@@ -12,12 +12,10 @@
   const CSS = `
 .lbx{display:grid;gap:14px;width:100%;padding-bottom:84px}
 .lbx-sub{margin:0;text-align:center;color:var(--muted);font-size:.8rem}
-.lbx-me{--c1:var(--gold);display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px;background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 16%,var(--panel)),var(--panel) 70%);border:1px solid var(--gold-dim);box-shadow:0 0 22px color-mix(in srgb,var(--gold) 16%,transparent)}
-.lbx-me .big-rank{flex:none;min-width:58px;text-align:center;font-size:1.7rem;font-weight:900;line-height:1;color:var(--gold)}
-.lbx-me .big-rank small{display:block;margin-top:4px;font-size:.62rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
-.lbx-me .who{min-width:0;flex:1}
-.lbx-me .who b{display:block;font-size:1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lbx-me .who span{display:block;margin-top:3px;font-size:.8rem;color:var(--muted)}
+.lbx-tagline{margin:6px 0 0;text-align:center;color:var(--muted);font-size:.82rem;font-weight:500;letter-spacing:.4px;opacity:.9}
+.lbx-rank{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:6px 0 4px;padding:4px 0;text-align:center;font-family:"SF Pro Display",Inter,"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif}
+.lbx-rank .k{font-size:.78rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+.lbx-rank .n{font-size:2.6rem;font-weight:900;line-height:1;letter-spacing:-1px;font-variant-numeric:tabular-nums;color:var(--red1);background:linear-gradient(180deg,color-mix(in srgb,var(--red1) 70%,#fff),var(--red1) 55%,var(--red2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 12px var(--red-glow))}
 .lbx-av{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;font-size:1.5rem;background:var(--panel-2);border:1px solid var(--line)}
 .lbx-podium{list-style:none;margin:2px 0 0;padding:0;display:flex;align-items:flex-end;justify-content:center;gap:8px}
 .lbx-pod{--c1:#ffd24a;--c2:#c8960c;--glow:rgba(250,204,21,.45);position:relative;flex:1 1 0;min-width:0;max-width:158px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 6px 12px;border-radius:18px;text-align:center;
@@ -25,7 +23,7 @@
 .lbx-pod.p1{order:2;padding-top:22px;min-height:206px}
 .lbx-pod.p2{order:1;--c1:#d4dbe6;--c2:#8d99a8;--glow:rgba(190,202,220,.35);min-height:178px;animation-delay:.08s}
 .lbx-pod.p3{order:3;--c1:#f0b078;--c2:#a8652b;--glow:rgba(217,140,74,.4);min-height:164px;animation-delay:.16s}
-.lbx-pod.me{outline:2px solid var(--gold);outline-offset:2px}
+.lbx-pod.me{border-color:var(--red1);outline:2px solid var(--red1);outline-offset:2px;background:linear-gradient(170deg,color-mix(in srgb,var(--red1) 22%,var(--panel)),var(--panel) 70%);box-shadow:0 8px 20px rgba(0,0,0,.28),0 0 22px var(--red-glow)}
 .lbx-crown{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:1.7rem;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 .lbx-medal{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;font-size:.9rem;font-weight:900;color:#2b1a05;background:linear-gradient(135deg,#fff,var(--c1) 40%,var(--c2));box-shadow:0 2px 6px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.6)}
 .lbx-pod .lbx-av{width:54px;height:54px;font-size:1.9rem;border:2px solid var(--c1);box-shadow:0 0 14px var(--glow)}
@@ -41,8 +39,11 @@
 .lbx-row .nm{min-width:0}.lbx-row .nm b{font-size:.92rem}
 .lbx-row .nm>span{display:block;font-size:.76rem;color:var(--muted)}
 .lbx-row .lbx-xp{font-size:.95rem;font-weight:900;color:var(--gold);text-align:right;font-variant-numeric:tabular-nums}.lbx-row .lbx-xp small{display:block;font-size:.64rem;font-weight:800;color:var(--muted);letter-spacing:.6px}
-.lbx-row.me{border-color:var(--gold);background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 14%,var(--panel)),var(--panel));box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 40%,transparent)}
-.lbx-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:.62rem;font-weight:900;letter-spacing:.8px;vertical-align:1px;background:var(--gold);color:var(--on-color)}
+.lbx-row.me{border-color:var(--red1);background:linear-gradient(160deg,color-mix(in srgb,var(--red1) 20%,var(--panel)),color-mix(in srgb,var(--red2) 8%,var(--panel)) 75%);box-shadow:0 0 0 1px color-mix(in srgb,var(--red1) 45%,transparent),0 0 20px color-mix(in srgb,var(--red1) 38%,transparent)}
+.lbx-row.me .no{background:color-mix(in srgb,var(--red1) 22%,var(--panel-2));border-color:color-mix(in srgb,var(--red1) 60%,var(--line))}
+.lbx-row.me .lbx-xp{color:color-mix(in srgb,var(--red1) 55%,var(--text))}
+.lbx-row.below{border-color:color-mix(in srgb,var(--gold) 38%,var(--line));background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 7%,var(--panel)),var(--panel));box-shadow:0 0 14px color-mix(in srgb,var(--gold) 12%,transparent)}
+.lbx-tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:.62rem;font-weight:900;letter-spacing:.8px;vertical-align:1px;background:linear-gradient(135deg,var(--red1),var(--red2));color:#fff;box-shadow:0 0 8px color-mix(in srgb,var(--red1) 50%,transparent);font-style:normal}
 .lbx-gap{text-align:center;color:var(--muted);letter-spacing:4px;line-height:1}
 .lbx-msg{display:grid;gap:6px;justify-items:center;padding:22px 16px;text-align:center;border-radius:16px;background:var(--panel);border:1px dashed var(--line)}
 .lbx-msg .ic{font-size:2rem}.lbx-msg b{font-size:1rem}.lbx-msg span{color:var(--muted);font-size:.86rem;line-height:1.4;max-width:34ch}
@@ -147,17 +148,13 @@ html[data-motion=reduced] .lbx *{animation:none!important}
 
   // ---------- drawing ----------
   const stat = (p) => `Level ${num(p.level)} · ${num(p.wins)} win${Number(p.wins) === 1 ? "" : "s"}`;
-  function meCard(me, total, loc, wait) {
-    const m = me || loc;
-    if (me) {
-      const sub = me.place === 1 ? "👑 You're number one!" : me.place <= 3 ? "🏅 You're on the podium!" : `${stat(me)} · ${num(me.xp)} XP`;
-      return `<div class="lbx-me" aria-label="Your ranking"><div class="big-rank">#${num(me.place)}<small>of ${num(total)}</small></div><span class="lbx-av" aria-hidden="true">${esc(me.avatar)}</span><div class="who"><b>${esc(me.username)}</b><span>${me.place <= 3 ? stat(me) + " · " + num(me.xp) + " XP" : sub}</span></div></div>`;
-    }
-    if (played(loc)) return `<div class="lbx-me" aria-label="Your ranking"><div class="big-rank">…<small>${wait || "syncing"}</small></div><span class="lbx-av" aria-hidden="true">${esc(loc.avatar)}</span><div class="who"><b>${esc(loc.username)}</b><span>${stat(loc)} · ${num(loc.xp)} XP</span></div></div>`;
-    return `<div class="lbx-me" aria-label="Your ranking"><div class="big-rank">–<small>unranked</small></div><span class="lbx-av" aria-hidden="true">${esc(loc.avatar)}</span><div class="who"><b>${esc(loc.username)}</b><span>Play a game to join the leaderboard.</span></div></div>`;
+  // Centered "CURRENT RANK: N" line. N is the player's real place from the server (or 1 in local demo mode).
+  function rankIndicator(place, label) {
+    const n = place ? num(place) : (label || "–");
+    return `<div class="lbx-rank" role="status" aria-live="polite" aria-label="Current rank ${place ? esc(num(place)) : esc(label || "unranked")}"><span class="k">Current Rank</span><span class="n" aria-hidden="true">${esc(n)}</span></div>`;
   }
   const pod = (p, i, mePid) => `<li class="lbx-pod p${i + 1}${p.pid === mePid ? " me" : ""}">${i === 0 ? '<span class="lbx-crown" aria-hidden="true">👑</span>' : ""}<span class="lbx-medal" aria-label="Rank ${i + 1}">${i + 1}</span><span class="lbx-av" aria-hidden="true">${esc(p.avatar)}</span><b><span class="lbx-nm">${esc(p.username)}</span>${p.pid === mePid ? '<i class="lbx-tag">YOU</i>' : ""}</b><span class="lbx-xp">${num(p.xp)} XP</span><small>Level ${num(p.level)}<br>${num(p.wins)} win${Number(p.wins) === 1 ? "" : "s"}</small></li>`;
-  const row = (p, i, mePid) => `<li class="lbx-row${p.pid === mePid ? " me" : ""}" style="--i:${i}"><span class="no">${num(p.place)}</span><span class="lbx-av" aria-hidden="true">${esc(p.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(p.username)}</span>${p.pid === mePid ? '<i class="lbx-tag">YOU</i>' : ""}</b><span>${stat(p)}</span></div><div class="lbx-xp">${num(p.xp)}<small>XP</small></div></li>`;
+  const row = (p, i, mePid, mePlace) => `<li class="lbx-row${p.pid === mePid ? " me" : (mePlace && Number(p.place) > mePlace ? " below" : "")}" style="--i:${i}"><span class="no">${num(p.place)}</span><span class="lbx-av" aria-hidden="true">${esc(p.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(p.username)}</span>${p.pid === mePid ? '<i class="lbx-tag">YOU</i>' : ""}</b><span>${stat(p)}</span></div><div class="lbx-xp">${num(p.xp)}<small>XP</small></div></li>`;
   const msg = (ic, title, text, btn) => `<div class="lbx-msg" role="status"><span class="ic" aria-hidden="true">${ic}</span><b>${title}</b><span>${text}</span>${btn ? '<button type="button" class="primary" data-lb-retry>Try again</button>' : ""}</div>`;
 
   function paint() {
@@ -166,23 +163,24 @@ html[data-motion=reduced] .lbx *{animation:none!important}
     let html = "";
     if (st.status === "loading" && !st.data) html = `<div class="lbx-sk" aria-busy="true" aria-label="Loading leaderboard"><i></i><i></i><i></i><i></i><i></i></div>`;
     else if (st.status === "local") {
-      html = meCard(played(loc) ? { ...loc, place: 1, pid: "local" } : null, 1, loc) + (played(loc)
+      html = rankIndicator(played(loc) ? 1 : 0, "–") + (played(loc)
         ? `<ol class="lbx-list"><li class="lbx-row me" style="--i:0"><span class="no">1</span><span class="lbx-av" aria-hidden="true">${esc(loc.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(loc.username)}</span><i class="lbx-tag">YOU</i></b><span>${stat(loc)}</span></div><div class="lbx-xp">${num(loc.xp)}<small>XP</small></div></li></ol>`
         : "") + msg("🌍", "Only you, for now", "Online rankings aren't switched on in this copy of the app, so only your own progress is shown. Other players will appear here once online play is set up.");
-    } else if (st.status === "error" && !st.data) html = meCard(null, 0, loc, "offline") + msg("📡", "Couldn't load the leaderboard", "Check your connection and try again. Your progress is safe.", true);
+    } else if (st.status === "error" && !st.data) html = rankIndicator(0, "–") + msg("📡", "Couldn't load the leaderboard", "Check your connection and try again. Your progress is safe.", true);
     else {
       const d = st.data, top = d.top || [], me = d.me || null, total = Number(d.total) || top.length, mePid = me ? me.pid : "";
-      html = meCard(me, total, loc);
+      const myPlace = me ? Number(me.place) : 0;
+      html = rankIndicator(myPlace, played(loc) ? "…" : "–");
       if (st.status === "error") html += `<p class="lbx-sub" role="status">Couldn't refresh just now. Showing the last rankings.</p>`;
       if (!top.length) {
         html += (played(loc) ? `<ol class="lbx-list"><li class="lbx-row me" style="--i:0"><span class="no">1</span><span class="lbx-av" aria-hidden="true">${esc(loc.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(loc.username)}</span><i class="lbx-tag">YOU</i></b><span>${stat(loc)}</span></div><div class="lbx-xp">${num(loc.xp)}<small>XP</small></div></li></ol>` : "")
           + msg("🏆", played(loc) ? "You're the first one here!" : "No players yet", played(loc) ? "More players will appear as they join and play." : "Finish a game to take the first spot on the leaderboard.");
       } else {
         html += `<ol class="lbx-podium" aria-label="Top three players">${top.slice(0, 3).map((p, i) => pod(p, i, mePid)).join("")}</ol>`;
-        if (top.length > 3) html += `<ol class="lbx-list" start="4" aria-label="Rankings">${top.slice(3).map((p, i) => row(p, i, mePid)).join("")}</ol>`;
+        if (top.length > 3) html += `<ol class="lbx-list" start="4" aria-label="Rankings">${top.slice(3).map((p, i) => row(p, i, mePid, myPlace)).join("")}</ol>`;
         if (me && me.place > top.length) html += `<div class="lbx-gap" aria-hidden="true">· · ·</div><ol class="lbx-list" start="${me.place}">${row(me, 0, mePid)}</ol>`;
         if (total === 1 && me) html += msg("🌱", "You're the only player so far", "More players will appear here as they join and play.");
-        html += `<p class="lbx-sub">Ranked by total XP, then wins. Updates as you play.</p>`;
+        html += `<p class="lbx-tagline">Keep playing. Keep winning. Climb the leaderboard.</p>`;
       }
     }
     root.innerHTML = html;
