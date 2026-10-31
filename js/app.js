@@ -132,6 +132,7 @@ function show(name, fromHistory) {
   const navMap = { game: "play", battle: "play" };
   $$("#bottomnav [data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === (navMap[name] || name)));
   if (name === "leaderboard") renderLeaderboard();
+  if (window.FriendBattle) FriendBattle.screenChanged(name);   // js/friend-battle.js + js/battle-game.js: Friend Zone rooms and battles
   if (name === "dashboard") renderDashboard();
   if (name === "dashboard" && window.Tutorial) Tutorial.maybeAutoShow();
   if (window.Auth) Auth.renderAccount();

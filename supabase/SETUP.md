@@ -21,6 +21,17 @@ for registered players and guests. Nobody can read or write the table directly: 
 or secrets. Without it the Leaderboard shows a friendly "couldn't load" message and the rest of the app works as before.
 Note: solo scores are reported by the player's device, so this board is not cheat-proof until online battles are verified on the server.
 
+### 1e. Turn on Friend Battle (online 1v1 rooms)
+Run these three scripts in order, the same way (each is safe to run again):
+1. `supabase/migrations/006_friend_battle.sql` - the battle tables and the server functions that run every battle.
+2. `supabase/migrations/006b_battle_words.sql` - the word list the server uses to pick secret words and check guesses.
+3. `supabase/migrations/006c_battle_clues.sql` - the clues for the Word Hint.
+
+Then check **Realtime** is on: Dashboard > **Project Settings > API** (or **Realtime > Settings**) > make sure **Allow public access** to
+Realtime channels is enabled (it is by default). The app uses Realtime *broadcast* only; no table needs to be added to a Realtime publication.
+Nobody can read the battle tables directly: the secret word and the opponent's guesses stay inside the database until the battle ends.
+The server applies timeouts and 60-second reconnect forfeits the next time either player's browser checks in, so no scheduled job is needed.
+
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`

@@ -213,7 +213,7 @@
   </article>
   <div class="cards two">
     <article class="gcard"><div class="ico">🧩</div><div><h3>Play Solo</h3><p>Unlimited practice puzzles.</p></div><button class="primary" data-go="practice">Play</button></article>
-    <article class="gcard"><div class="ico">⚔️</div><div><h3>Battle Online</h3><p>Random match or private room.</p></div><button class="primary alt" data-go="battle">Play</button></article>
+    <article class="gcard"><div class="ico">⚔️</div><div><h3>Battle Online</h3><p>Challenge a friend in a private room.</p></div><button class="primary alt" data-go="battle">Play</button></article>
   </div>
 </section>
 
@@ -254,14 +254,8 @@
 
 <!-- BATTLE -->
 <section id="battle" class="screen hidden">
-  <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b>Battle Online</b><span style="width:44px" aria-hidden="true"></span></header>
-  <div class="panel center">
-    <div class="ico big-ico">⚔️</div>
-    <h3 id="battle-title">Online battles need a server</h3>
-    <p id="battle-note">Matchmaking, secret words and rewards must be controlled by Supabase so nobody can cheat. Wordle Battle will not fake opponents, so this mode unlocks once Supabase is configured (stages 3–4).</p>
-    <p><small>Steps: see README.md → Supabase setup.</small></p>
-    <div class="actions"><button class="primary" data-go="practice">Play solo instead</button><button class="primary alt" data-go="dashboard">Dashboard</button></div>
-  </div>
+  <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b id="fb-title">Battle Online</b><span style="width:44px" aria-hidden="true"></span></header>
+  <div id="fb-root" class="fb" aria-live="off"></div>
 </section>
 
 <!-- LEADERBOARD -->
@@ -776,6 +770,8 @@
 <script src="js/tutorial.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/leaderboard.js"></script>
+<script src="js/friend-battle.js"></script>
+<script src="js/battle-game.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/freecoins.js"></script>
 <script src="js/pwa.js"></script>
