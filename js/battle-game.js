@@ -1,4 +1,4 @@
-// Battle gameplay screen. It borrows the solo game screen (#game): same board, keyboard, colours and hint buttons.
+// Battle gameplay screen. It borrows the solo game screen (#game): same board, keyboard, colours and clue buttons.
 // Nothing here decides anything. Every guess and hint is sent to the server (bt_guess / bt_hint), which checks the word, colours it,
 // keeps the clock and picks the winner; this file only draws what comes back. The secret word is never in the page until the battle ends.
 // While a battle is on, the solo game's own key / click handlers are switched off (capture-phase listeners below), so nothing leaks between modes.
@@ -8,7 +8,7 @@
   const $$ = (s) => [...document.querySelectorAll(s)];
   const ROWS = 6, COLS = 5;
   const KIND = { g: "correct", y: "present", x: "absent" };
-  const HINT = { reveal: "Reveal a Letter", remove: "Remove Letters", word: "Use Hint" };
+  const HINT = { reveal: "Reveal a Letter", remove: "Remove Letters", word: "Use Clue" };
   const CSS = `
 #game.battle #btn-skip{display:none}
 #game.battle .hint .cnt{display:none}
@@ -142,7 +142,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
       b.setAttribute("aria-label", `${HINT[t]}${u ? ", used" : ", one use per battle"}`); b.title = `${HINT[t]}${u ? " (used)" : ""}`;
     });
     const w = S.me.hint_data && S.me.hint_data.word, c = $("#bt-clue");
-    if (w) { c.innerHTML = `<b>💡 Hint:</b> `; c.append(document.createTextNode(w.text)); c.classList.remove("hidden"); } else c.classList.add("hidden");
+    if (w) { c.innerHTML = `<b>💡 Clue:</b> `; c.append(document.createTextNode(w.text)); c.classList.remove("hidden"); } else c.classList.add("hidden");
   }
   function statusLine(p) {
     if (!p) return ["", ""];
@@ -231,16 +231,16 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
       else showClue(r.data);
     } else if (r.reason === "nothing_to_reveal") toast("You already know every letter's place!", "");
     else if (r.reason === "nothing_to_remove") toast("There are no more letters to remove.", "");
-    else if (r.reason === "already_used") toast("You already used that hint.", "");
-    else if (r.reason === "network" || r.reason === "error") toast("Couldn't use the hint. Try again.", "error");
+    else if (r.reason === "already_used") toast("You already used that clue.", "");
+    else if (r.reason === "network" || r.reason === "error") toast("Couldn't use the clue. Try again.", "error");
     if (S) { drawHints(); drawHintTiles(); drawKeys(); }
   }
   function showClue(d) {
     const main = $("#clue-main"); if (!main) return;
     main.innerHTML = typeof clueRow === "function" ? clueRow([d.type, d.text]) : `<p class="clue-text"></p>`;
     main.querySelector(".clue-text").textContent = d.text;
-    $("#clue-count").textContent = "Your one hint for this battle"; $("#clue-prev").classList.add("hidden");
-    $("#clue").classList.remove("hidden"); lockModal(true); $("#clue-close").focus();
+    $("#clue-count").textContent = "Your one clue for this battle"; $("#clue-prev").classList.add("hidden"); ["#clue-empty", "#clue-buy", "#clue-full"].forEach((q) => { const e = $(q); if (e) e.classList.add("hidden"); }); $("#clue-main").classList.remove("hidden"); $("#clue-count").classList.remove("hidden"); /* battle clues are server-given and not for sale */
+    $("#clue").classList.remove("hidden"); lockModal(true); $("#clue-x").focus();
   }
 
   // ---------- result card (the winner/loser screen; rewards and rematch are further down) ----------

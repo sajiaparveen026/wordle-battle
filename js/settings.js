@@ -12,6 +12,10 @@
 
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
+    { v: "1.14.1", date: "2026-10-31", title: "Clue update", items: [
+      "Hints are now called Clues everywhere.",
+      "Clues you bought stay available: tap the lightbulb to read them again, even after a refresh.",
+      "Buy up to 3 clues per word, one at a time, from inside the clue popup."] },
     { v: "1.12.0", date: "2026-10-30", title: "Achievements", items: [
       "25 achievements in Bronze, Silver and Gold plates on your Profile.",
       "Swipe through the carousel, tap a badge for details and see your progress.",
@@ -34,14 +38,14 @@
     { v: "1.8.0", date: "2026-10-28", title: "Free daily coins", items: [
       "Claim free coins once a day from the game screen and once a day from the Shop."] },
     { v: "1.7.0", date: "2026-10-27", title: "New game controls", items: [
-      "Redesigned hint, skip and clue icons.",
-      "Word Hint: a clue about the secret word."] }
+      "Redesigned clue and skip icons.",
+      "Clue button: a clue about the secret word."] }
   ];
 
   // ---------- FAQs: the numbers come from store.js, so they always match the game ----------
   const FAQS = () => [
     ["How do I earn coins?", `Win a Solo game for ${REWARDS.practice.coins} coins and ${REWARDS.practice.xp} XP, or the Daily Challenge for ${REWARDS.daily.coins} coins and ${REWARDS.daily.xp} XP. Each game pays once. You can also claim ${FREE_COINS.amount} free coins once a day from the game screen and once a day from the Shop.`],
-    ["How do hints work?", `Reveal Letter (${HINTS.reveal.cost} coins) shows one correct letter in its place. Remove Wrong Letters (${HINTS.remove.cost} coins) greys out letters that aren\u2019t in the word. Hint (${HINTS.word.cost} coins) gives a clue about the word. You start with some free uses of each, then they cost coins.`],
+    ["How do clues work?", `Reveal Letter (${HINTS.reveal.cost} coins) shows one correct letter in its place. Remove Wrong Letters (${HINTS.remove.cost} coins) greys out letters that aren\u2019t in the word. Clue (${HINTS.word.cost} coins) gives a clue about the word, up to 3 per word. Clues you buy stay available for that word, so you never pay twice for the same one. You start with some free uses of each, then they cost coins.`],
     ["What is the Daily Challenge?", "One word per day, the same for everyone on the same date. It resets at your own midnight, pays a bigger reward and builds a daily streak. Skipping isn\u2019t allowed in the Daily Challenge."],
     ["Can I skip a word?", `In Solo play you get ${SKIP.free} free skips, then each skip costs ${SKIP.cost} coins. A skipped word gives no reward and no penalty.`],
     ["Guest or account: what\u2019s the difference?", "A guest\u2019s progress is saved on that device only. An account saves to the cloud, so you can continue on another phone or computer. Guest progress can be moved into a new account once."],
@@ -69,7 +73,7 @@
     const dark = settings.theme === "dark", sound = !settings.mute, vib = !!settings.vibrate && canVibrate();
     setSwitch("sw-dark", dark); setSwitch("sw-motion", !!settings.reduceMotion); setSwitch("sw-sound", sound); setSwitch("sw-vibe", vib, !canVibrate());
     $("#sw-dark-d").textContent = dark ? "On: easy on the eyes. Turn off for the light theme." : "Off: light theme. Turn on for the dark theme.";
-    $("#sw-vibe-d").textContent = canVibrate() ? "A short buzz for wrong words, wins and hints." : "Your device or browser doesn\u2019t support vibration.";
+    $("#sw-vibe-d").textContent = canVibrate() ? "A short buzz for wrong words, wins and clues." : "Your device or browser doesn\u2019t support vibration.";
     $("#sp-d-appearance").textContent = dark ? "Dark mode \u00b7 On" : "Dark mode \u00b7 Off";
     $("#sp-d-game").textContent = `Sound ${sound ? "on" : "off"} \u00b7 Vibration ${vib ? "on" : "off"}`;
     if (window.PWA) PWA.renderAbout();   // shows / hides the red update cards
@@ -193,7 +197,7 @@
   };
   $("#del-x").onclick = $("#del-cancel").onclick = () => hideModal("del-modal");
   async function deleteGuestData() {
-    if (await confirmBox("Delete guest data?", "You\u2019re playing as a guest, so there\u2019s no account to delete. This clears your coins, hints, stats and streaks from this device. It can\u2019t be undone.", "Delete data")) WBApp.resetAll(true);
+    if (await confirmBox("Delete guest data?", "You\u2019re playing as a guest, so there\u2019s no account to delete. This clears your coins, clues, stats and streaks from this device. It can\u2019t be undone.", "Delete data")) WBApp.resetAll(true);
   }
   ["pw-modal", "del-modal"].forEach((id) => $("#" + id).addEventListener("click", (e) => { if (e.target.id === id) hideModal(id); }));
 

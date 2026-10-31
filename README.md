@@ -60,7 +60,7 @@ new hash, so `sw.js` changes, and installed apps detect it and show **Update App
    Open the installed app (or switch back to it). Within a few seconds the **new version available / Update App**
    bar appears. Tap it: it shows "Updating..." then reloads into the new version.
    Profile > About > "Check for updates" does the same check on demand.
-4. Check progress: coins, hints, stats and username before and after the update should be identical
+4. Check progress: coins, clues, stats and username before and after the update should be identical
    (they live in localStorage, which updates do not touch).
 5. Desktop checks: Chrome DevTools > Application > Manifest / Service Workers, and Lighthouse > PWA.
 

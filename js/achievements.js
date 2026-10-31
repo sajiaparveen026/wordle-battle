@@ -94,7 +94,7 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
     ["coin-collector", "Coin Collector", "Earn 100 coins in total.", "bronze", "Earn 100 coins cumulatively.", (p) => p.earned, 100],
     ["on-fire", "On Fire", "Win 3 games in a row.", "bronze", "Achieve a 3-game consecutive win streak.", (p) => p.bestStreak, 3],
     ["daily-starter", "Daily Starter", "Complete your first Daily Challenge.", "bronze", "Complete 1 Daily Challenge.", dailyDone, 1],
-    ["no-help-needed", "No Help Needed", "Win a game without using any hints.", "bronze", "Win 1 game without using a hint.", (p) => p.noHintWins, 1],
+    ["no-help-needed", "No Help Needed", "Win a game without using any clues.", "bronze", "Win 1 game without using a clue.", (p) => p.noHintWins, 1],
     ["rising-star", "Rising Star", "Reach Level 5.", "bronze", "Reach Level 5.", lvl, 5],
 
     ["unstoppable", "Unstoppable", "Win 5 games in a row.", "silver", "Achieve a 5-game consecutive win streak.", (p) => p.bestStreak, 5],
@@ -105,7 +105,7 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
     ["sharp-mind", "Sharp Mind", "Win a game in 3 guesses or fewer.", "silver", "Win 1 game in a maximum of 3 guesses.", (p) => (p.bestGuesses && p.bestGuesses <= 3 ? 1 : 0), 1],
     ["word-expert", "Word Expert", "Win 50 games.", "silver", "Win 50 games cumulatively.", (p) => p.wins, 50],
     ["elite-player", "Elite Player", "Reach Level 25.", "silver", "Reach Level 25.", lvl, 25],
-    ["smart-solver", "Smart Solver", "Win 10 games without using hints.", "silver", "Win 10 separate games without using hints.", (p) => p.noHintWins, 10],
+    ["smart-solver", "Smart Solver", "Win 10 games without using clues.", "silver", "Win 10 separate games without using clues.", (p) => p.noHintWins, 10],
 
     ["winning-machine", "Winning Machine", "Win 10 games in a row.", "gold", "Achieve a 10-game consecutive win streak.", (p) => p.bestStreak, 10],
     ["arena-champion", "Arena Champion", "Win 50 online battles.", "gold", "Win 50 online battles cumulatively.", (p) => p.battles.won, 50],

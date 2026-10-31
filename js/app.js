@@ -1,4 +1,4 @@
-// Wordle Battle — solo game + dashboard, coins and hints. Data lives in localStorage (demo mode).
+// Wordle Battle — solo game + dashboard, coins and clues. Data lives in localStorage (demo mode).
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const ROWS = 6, COLS = 5;
@@ -221,7 +221,7 @@ function applySettings() {
 }
 // "Reset all progress" (guest devices only). Settings > Privacy & Security > Delete Account uses it for guests, after its own confirmation.
 async function resetAllProgress(alreadyConfirmed) {
-  if (alreadyConfirmed || await confirmBox("Reset everything?", "This deletes your coins, hints, stats and streaks. It can't be undone.", "Reset")) {
+  if (alreadyConfirmed || await confirmBox("Reset everything?", "This deletes your coins, clues, stats and streaks. It can't be undone.", "Reset")) {
     Object.keys(localStorage).filter((k) => k.startsWith("wb_") && k !== "wb_settings").forEach((k) => localStorage.removeItem(k)); location.reload();   // keeps your theme / sound choices
   }
 }
@@ -374,7 +374,7 @@ function updateAttempts() {
   markActive();
 }
 
-// ---------- Hints in a game ----------
+// ---------- Clues in a game ----------
 const ICONS = { reveal: "reveal", remove: "remove", word: "bulb", skip: "skip" }; // artwork symbols in the index.html sprite
 // Top-right badge = uses left without paying coins; the small caption under the icon says what the next use costs.
 function setCount(b, n) {
@@ -444,16 +444,17 @@ $("#btn-submit").onclick = () => { if (screen === "game" && status === "playing"
 $("#g-info").onclick = () => Tutorial.openInfo();
 
 async function useHint(type) {
-  if (status !== "playing" || busy || spendLock) return;
-  if (type === "word") return useWordHint();
+  if (status !== "playing" || busy) return;
+  if (type === "word") return openClues();   // the lightbulb never pays by itself: it opens the popup (buying happens inside it)
+  if (spendLock) return;
   spendLock = true;
   try {
     const plan = type === "reveal" ? planReveal() : planRemove();
-    if (!plan) return toast("No useful hint available. No coins spent.", "error");
+    if (!plan) return toast("No useful clue available. No coins spent.", "error");
     const h = Player.data.hints[type], cost = HINTS[type].cost, gid = gameId;
     if (h.free <= 0 && h.credits <= 0) {
       if (Player.data.coins < cost) return needCoins(cost);
-      if (!(await confirmSpend("Use a hint", `Use ${cost} coins to ${HINTS[type].verb}?`, cost, ICONS[type]))) return;
+      if (!(await confirmSpend("Use a clue", `Use ${cost} coins to ${HINTS[type].verb}?`, cost, ICONS[type]))) return;
       if (status !== "playing" || gameId !== gid) return; // game may have changed while the dialog was open
       if (!Player.spend(cost)) return toast("Not enough coins", "error");
     } else Player.consumeHint(type);
@@ -463,49 +464,79 @@ async function useHint(type) {
   } finally { spendLock = false; }
 }
 
-// ---------- Word Hint (lightbulb): one clue about the secret word, never the word itself ----------
+// ---------- Clues (lightbulb): up to 3 clues per word, never the word itself ----------
+// Four things, kept apart on purpose:
+//   available = clueDeck()      every clue that exists for this word (js/clues.js)
+//   owned     = ownedClues()    the clues this player already bought for this word (saved in hintState.clues, in the order bought)
+//   displayed = drawClue()      the popup always shows ALL owned clues, newest on top
+//   capacity  = cluesLeft()     how many more may still be bought (max 3 per word)
+// Clicking the lightbulb only OPENS the popup. Paying happens only from the Buy buttons inside it, so an owned clue is never asked for twice.
+// hintState lives inside the saved game (game_practice / game_daily, stored per player by wbKey), so it survives a refresh, belongs to this word
+// only (startGame resets it for a new word) and is never shared with another player or guest.
 const CLUE_LABELS = { meaning: ["📖", "Meaning"], related: ["🔗", "Related words"], category: ["🏷️", "Category"], usage: ["💬", "In context"], fact: ["✨", "Fun fact"] };
+const MAX_CLUES = 3;
 function clueDeck() { // three clues per word (js/clues.js); a safe fallback keeps the game working if a word has no entry
   const d = window.CLUES && window.CLUES[answer];
   if (Array.isArray(d) && d.length) return d;
   const v = [...answer].filter((c) => "aeiou".includes(c)).length;
   return [["fact", `It has ${v} vowel${v === 1 ? "" : "s"} and ${new Set(answer).size} different letters.`]];
 }
-function planClue() { // a random clue that has not been shown yet in this game, or null when all were used
-  const left = clueDeck().map((_, i) => i).filter((i) => !hintState.clues.includes(i));
+const clueCap = () => Math.min(MAX_CLUES, clueDeck().length);
+function ownedClues() { // purchased clue indexes: valid, no duplicates, in the order they were bought
+  const deck = clueDeck();
+  return hintState.clues.filter((i, p, arr) => Number.isInteger(i) && deck[i] && arr.indexOf(i) === p).slice(0, MAX_CLUES);
+}
+const cluesLeft = () => Math.max(0, clueCap() - ownedClues().length);
+function planClue() { // a random clue that is not owned yet, or null when all of them are
+  if (cluesLeft() <= 0) return null;
+  const own = ownedClues(), left = clueDeck().map((_, i) => i).filter((i) => !own.includes(i));
   return left.length ? left[Math.floor(Math.random() * left.length)] : null;
 }
-async function useWordHint() {
-  spendLock = true;
-  try {
-    const gid = gameId, h = Player.data.hints.word, cost = HINTS.word.cost;
-    if (planClue() === null) { showClue(false); return; }                 // every clue already seen: reopen them, no charge
-    if (h.free <= 0 && h.credits <= 0) {
-      if (Player.data.coins < cost) return needCoins(cost);
-      if (!(await confirmSpend("Use a word hint", `Use ${cost} coins to get a clue about the word?`, cost, ICONS.word))) return;
-      if (status !== "playing" || gameId !== gid) return;
-    }
-    const idx = planClue(); if (idx === null) { showClue(false); return; } // re-picked after the dialog; nothing left means nothing charged
-    if (h.free > 0 || h.credits > 0) Player.consumeHint("word"); else if (!Player.spend(cost)) return toast("Not enough coins", "error");
-    hintState.clues.push(idx); saveProgress();                              // the clue is saved together with the payment
-    sfx.coin(); flash($("[data-hint=word]")); updateHintButtons(); showClue(true);
-  } finally { spendLock = false; }
-}
-function clueRow(c) { const [e, l] = CLUE_LABELS[c[0]] || CLUE_LABELS.fact; return `<div class="clue-kind"><span aria-hidden="true">${e}</span>${l}</div><p class="clue-text"></p>`; }
-function showClue(isNew) {
-  const deck = clueDeck(), seen = hintState.clues.filter((i) => deck[i]);
-  if (!seen.length) return;
-  const last = seen[seen.length - 1], total = deck.length;
-  $("#clue-count").textContent = isNew ? `Clue ${seen.length} of ${total}` : `All ${total} clues revealed. No more to give for this word.`;
-  const main = $("#clue-main"); main.innerHTML = clueRow(deck[last]); main.querySelector(".clue-text").textContent = deck[last][1];
-  main.classList.remove("in"); void main.offsetWidth; main.classList.add("in");
+const clueIsFree = () => { const h = Player.data.hints.word; return h.free > 0 || h.credits > 0; };   // free uses are used before coins
+const cluePrice = () => (clueIsFree() ? "Free" : `${HINTS.word.cost} 🪙`);
+function clueRow(c, n) { const [e, l] = CLUE_LABELS[c[0]] || CLUE_LABELS.fact; return `<div class="clue-kind"><span aria-hidden="true">${e}</span>${n ? `Clue ${n} · ` : ""}${l}</div><p class="clue-text"></p>`; }
+function drawClue(isNew) { // fills the popup from what the player owns. Owned clues are always shown first.
+  const deck = clueDeck(), own = ownedClues(), total = clueCap(), left = cluesLeft(), has = own.length > 0;
+  const on = (sel, v) => $(sel).classList.toggle("hidden", !v);
+  on("#clue-empty", !has); on("#clue-count", has); on("#clue-main", has); on("#clue-prev", own.length > 1);
+  on("#clue-buy", has && left > 0); on("#clue-full", has && left === 0);
+  if (!has) { $("#clue-price").textContent = cluePrice(); return; }
+  $("#clue-count").textContent = `${own.length} of ${total} clues unlocked`;
+  const last = own[own.length - 1], main = $("#clue-main");
+  main.innerHTML = clueRow(deck[last], own.length); main.querySelector(".clue-text").textContent = deck[last][1];
+  if (isNew) { main.classList.remove("in"); void main.offsetWidth; main.classList.add("in"); }
   const prev = $("#clue-prev"); prev.innerHTML = "";
-  seen.slice(0, -1).reverse().forEach((i) => { const d = document.createElement("div"); d.className = "clue-old"; d.innerHTML = clueRow(deck[i]); d.querySelector(".clue-text").textContent = deck[i][1]; prev.append(d); });
-  prev.classList.toggle("hidden", seen.length < 2);
-  $("#clue").classList.remove("hidden"); lockModal(true); $("#clue-close").focus();
+  own.slice(0, -1).reverse().forEach((i, k) => { const d = document.createElement("div"); d.className = "clue-old"; d.innerHTML = clueRow(deck[i], own.length - 1 - k); d.querySelector(".clue-text").textContent = deck[i][1]; prev.append(d); });
+  $("#clue-buy").textContent = `Buy Another Clue · ${cluePrice()}`;
 }
+function openClues() {
+  if (status !== "playing") return;
+  const auto = ownedClues().length === 0 && cluesLeft() > 0 && clueIsFree();   // free uses left and no clue yet: reveal the first clue straight away, no buy screen
+  if (auto) buyClue();                                                           // the free path has no dialog, so this finishes at once
+  drawClue(auto);
+  $("#clue").classList.remove("hidden"); lockModal(true); $("#clue-x").focus();
+}
+const clueBusy = (on) => { $("#clue-first").disabled = on; $("#clue-buy").disabled = on; };
+async function buyClue() { // the ONLY place a clue is paid for: Buy Clue (none owned yet) and Buy Another Clue (some owned) both come here
+  if (spendLock || status !== "playing" || busy) return;   // one purchase at a time: repeated taps can't buy or charge twice
+  if (cluesLeft() <= 0) return drawClue(false);             // all 3 owned: nothing to buy, just show them
+  spendLock = true; clueBusy(true);
+  try {
+    const gid = gameId, cost = HINTS.word.cost;
+    if (!clueIsFree()) {
+      if (Player.data.coins < cost) { closeClue(); await needCoins(cost); return; }
+      if (!(await confirmSpend("Buy a clue", `Use ${cost} coins to buy the next clue for this word?`, cost, ICONS.word))) return;
+      if (status !== "playing" || gameId !== gid) return;   // the game changed while the dialog was open
+    }
+    const idx = planClue(); if (idx === null) return drawClue(false);   // re-picked after the dialog; nothing left means nothing charged
+    if (clueIsFree()) Player.consumeHint("word"); else if (!Player.spend(cost)) return toast("Not enough coins", "error");   // coins leave only now, once the clue is certain
+    hintState.clues.push(idx); saveProgress();               // the clue is saved together with the payment
+    sfx.coin(); flash($("[data-hint=word]")); updateHintButtons(); drawClue(true);   // updateHintButtons also refreshes every coin counter
+  } finally { spendLock = false; clueBusy(false); }
+}
+$("#clue-first").onclick = buyClue; $("#clue-buy").onclick = buyClue;
 function closeClue() { $("#clue").classList.add("hidden"); lockModal(false); const b = $("[data-hint=word]"); if (b && !b.disabled) b.focus({ preventScroll: true }); }
-$("#clue-close").onclick = closeClue; $("#clue-x").onclick = closeClue;
+$("#clue-x").onclick = closeClue;
 $("#clue").addEventListener("click", (e) => { if (e.target.id === "clue") closeClue(); });
 
 // ---------- Game flow ----------
@@ -701,7 +732,7 @@ $("#s-name").onchange = (e) => {
   if (window.Auth && Auth.isAccount()) return Auth.setUsername(e.target.value.trim());
   Player.data.username = e.target.value.trim().slice(0, 16) || Player.data.username; Player.save(); toast("Username saved", "success"); renderProfile();
 };
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#clue").classList.contains("hidden")) closeClue(); if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); if (e.key === "Escape" && !$("#daily-done").classList.contains("hidden")) closeDailyDone(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#clue").classList.contains("hidden") && $("#dialog").classList.contains("hidden")) closeClue(); if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); if (e.key === "Escape" && !$("#daily-done").classList.contains("hidden")) closeDailyDone(); });
 $("#dd-ok").onclick = closeDailyDone;
 $("#btn-home").onclick = () => { closeModal(); show("dashboard"); };
 $("#btn-shop").onclick = () => { closeModal(); go("shop"); };

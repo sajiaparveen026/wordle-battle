@@ -6,7 +6,7 @@
 <title>Wordle Battle</title>
 <meta name="theme-color" content="#1A1A1B">
 <script>(function(){try{var s=JSON.parse(localStorage.getItem("wb_settings")||"null");if(s&&s.theme==="light"){document.documentElement.setAttribute("data-theme","light");var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content","#F5F4EE");}}catch(e){}})();</script>
-<meta name="description" content="Wordle Battle: daily word puzzles, hints and coins.">
+<meta name="description" content="Wordle Battle: daily word puzzles, clues and coins.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -240,7 +240,7 @@
     </div>
     <button id="btn-submit" class="primary submit-btn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 13l4 4L19 7"/></svg><span>Submit</span></button>
     <div class="ctl-group right">
-      <button class="ctl hint" data-hint="word" aria-label="Word hint"><span class="cico" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></span><span class="cnt" aria-hidden="true"></span><small class="badge"></small></button>
+      <button class="ctl hint" data-hint="word" aria-label="Clue"><span class="cico" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></span><span class="cnt" aria-hidden="true"></span><small class="badge"></small></button>
       <button id="btn-skip" class="ctl skip" type="button" aria-label="Skip word"><span class="cico" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-skip"/></svg></span><span class="cnt" aria-hidden="true"></span><small class="badge"></small></button>
     </div>
   </div>
@@ -438,8 +438,8 @@
       <section class="sp-view hidden" data-view="game" aria-labelledby="sp-t-game">
         <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-game" tabindex="-1">Game Preferences</h3></div>
         <div class="sp-list">
-          <div class="sp-card sp-row" data-sw-row="sw-sound"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-volume"/></svg></span><span class="sp-txt"><b id="sw-sound-l">Sound Effects</b><small id="sw-sound-d">Key taps, hints, coins and win jingles.</small></span><button class="sw " id="sw-sound" type="button" role="switch" aria-checked="false" aria-labelledby="sw-sound-l sw-sound-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
-          <div class="sp-card sp-row" data-sw-row="sw-vibe"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-vibrate"/></svg></span><span class="sp-txt"><b id="sw-vibe-l">Vibration</b><small id="sw-vibe-d">A short buzz for wrong words, wins and hints.</small></span><button class="sw " id="sw-vibe" type="button" role="switch" aria-checked="false" aria-labelledby="sw-vibe-l sw-vibe-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
+          <div class="sp-card sp-row" data-sw-row="sw-sound"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-volume"/></svg></span><span class="sp-txt"><b id="sw-sound-l">Sound Effects</b><small id="sw-sound-d">Key taps, clues, coins and win jingles.</small></span><button class="sw " id="sw-sound" type="button" role="switch" aria-checked="false" aria-labelledby="sw-sound-l sw-sound-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
+          <div class="sp-card sp-row" data-sw-row="sw-vibe"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-vibrate"/></svg></span><span class="sp-txt"><b id="sw-vibe-l">Vibration</b><small id="sw-vibe-d">A short buzz for wrong words, wins and clues.</small></span><button class="sw " id="sw-vibe" type="button" role="switch" aria-checked="false" aria-labelledby="sw-vibe-l sw-vibe-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
         </div>
         <p class="sp-fine">Both apply straight away, in every game mode.</p>
       </section>
@@ -575,7 +575,7 @@
 <div id="del-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="del-title">
   <div class="card"><button id="del-x" class="x" type="button" aria-label="Close">✕</button>
     <h2 id="del-title">Delete your account?</h2>
-    <p>This permanently deletes your account, coins, hints, stats and cloud save. It can’t be undone.</p>
+    <p>This permanently deletes your account, coins, clues, stats and cloud save. It can’t be undone.</p>
     <label class="field"><input id="del-type" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Type DELETE to confirm" aria-label="Type DELETE to confirm"></label>
     <p class="authmsg error" id="del-msg" role="alert"></p>
     <div class="actions"><button class="primary alt" id="del-cancel" type="button">Cancel</button><button class="primary danger" id="del-go" type="button" disabled><span class="spin"></span><b>Delete account</b></button></div>
@@ -703,18 +703,18 @@
       </section>
       <section class="slide" aria-hidden="true">
         <div class="tut-emoji" aria-hidden="true">💡</div>
-        <h2>Stuck? Use a hint</h2>
+        <h2>Stuck? Use a clue</h2>
         <div class="hcard"><span class="mini-tile t-reveal" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-reveal"/></svg></span><div><b>Reveal a Letter</b><small>Shows one correct letter in its right spot</small></div><span id="tut-h1" class="badge"></span></div>
         <div class="hcard"><span class="mini-tile t-remove" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-remove"/></svg></span><div><b>Remove Wrong Letters</b><small>Greys out letters that are not in the word</small></div><span id="tut-h2" class="badge"></span></div>
-        <div class="hcard"><span class="mini-tile t-word" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></span><div><b>Word Hint</b><small>A clue about the word: meaning, category or fun fact</small></div><span id="tut-h3" class="badge"></span></div>
-        <p class="fine">Each hint button shows how many free uses are left. Earn coins by winning games to buy more in the Shop.</p>
+        <div class="hcard"><span class="mini-tile t-word" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></span><div><b>Clue</b><small>Up to 3 clues per word: meaning, category or fun fact</small></div><span id="tut-h3" class="badge"></span></div>
+        <p class="fine">Each clue button shows how many free uses are left. Earn coins by winning games to buy more in the Shop.</p>
       </section>
       <section class="slide" aria-hidden="true">
         <div class="tut-emoji" aria-hidden="true">🏆</div>
         <h2>Play every day</h2>
         <div class="hcard"><i aria-hidden="true">📅</i><div><b>Daily Challenge</b><small>One puzzle a day with bonus rewards</small></div></div>
         <div class="hcard"><i aria-hidden="true">🔥</i><div><b>Build your streak</b><small>Solve the daily puzzle on consecutive days</small></div></div>
-        <div class="hcard"><i aria-hidden="true">🪙</i><div><b>Earn coins and XP</b><small>Win games to level up and unlock hints</small></div></div>
+        <div class="hcard"><i aria-hidden="true">🪙</i><div><b>Earn coins and XP</b><small>Win games to level up and unlock clues</small></div></div>
         <p class="fine">You can reopen this guide any time from the dashboard or your Profile.</p>
       </section>
     </div>
@@ -727,7 +727,7 @@
   </div>
 </div>
 
-<div id="dialog" class="modal hidden">
+<div id="dialog" class="modal hidden" style="z-index:12">
   <div class="card"><h2 id="dlg-title"></h2><div id="dlg-extra" class="buybox hidden"></div><p id="dlg-msg"></p><div class="actions" id="dlg-actions"></div></div>
 </div>
 
@@ -744,16 +744,22 @@
   </div>
 </div>
 
-<!-- WORD HINT: clue popup (opened from the lightbulb) -->
+<!-- CLUE popup (opened from the lightbulb). Shows every clue the player owns for this word; buying is optional and happens inside it. -->
 <div id="clue" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="clue-title">
   <div class="card clue">
-    <button id="clue-x" class="x" aria-label="Close hint">✕</button>
+    <button id="clue-x" class="x" aria-label="Close clue">✕</button>
     <div class="clue-bulb mini-tile t-word" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false"><use href="#i-bulb"/></svg></div>
-    <h2 id="clue-title">Word Hint</h2>
+    <h2 id="clue-title">Clue</h2>
+    <div id="clue-empty" class="clue-empty hidden" style="padding:16px 14px 14px;border-radius:14px;background:var(--panel-2);border:1px dashed var(--gold-dim)">
+      <p>You don't have a purchased clue for this word yet.</p>
+      <div class="clue-price">Price: <b id="clue-price"></b></div>
+      <button id="clue-first" class="primary big" type="button">Buy Clue</button>
+    </div>
     <p id="clue-count" class="clue-count"></p>
     <div id="clue-main" class="clue-main" aria-live="polite"></div>
     <div id="clue-prev" class="clue-prev"></div>
-    <button id="clue-close" class="primary big" type="button">Back to the game</button>
+    <button id="clue-buy" class="clue-buy hidden" type="button" style="display:block;margin:12px auto 0;padding:9px 20px;min-height:40px;border-radius:999px;border:1px solid var(--gold,#FACC15);background:rgba(250,204,21,.12);color:var(--gold,#FACC15);font:inherit;font-size:.9rem;font-weight:700;cursor:pointer">Buy Another Clue</button>
+    <p id="clue-full" class="clue-full hidden" style="margin:12px 0 0;font-size:.9rem;font-weight:700;color:var(--gold,#FACC15)">You've unlocked all 3 clues!</p>
   </div>
 </div>
 

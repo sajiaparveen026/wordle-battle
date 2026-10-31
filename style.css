@@ -449,7 +449,6 @@ input{background:var(--panel-2);border-color:var(--field-line)}
 .ibtn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:var(--text);transition:transform .12s,border-color .15s,color .15s}
 .ibtn svg,.winscore svg,.ctl svg,.submit-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ibtn:hover{border-color:var(--gold-dim);color:var(--gold)}.ibtn:active{transform:scale(.94)}
-#game #g-info{width:36px;height:44px;padding:0;background:none!important;border:0!important;box-shadow:none}#game #g-info svg.ico3d{width:34px;height:34px;fill:none;stroke:none;overflow:visible;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}   /* 3D green cursive "i" (sprite symbol #i-info), no box */
 .winscore{display:flex;align-items:center;gap:6px;height:44px;padding:0 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);font-weight:800;font-variant-numeric:tabular-nums}
 .winscore svg{width:20px;height:20px;color:var(--gold)}
 #game .coins{height:44px}
@@ -544,18 +543,19 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 /* purchase popup (cost + balance), reuses the shared dialog */
 .buybox{display:grid;gap:6px;margin:4px 0 10px;padding:12px;border-radius:12px;background:var(--panel-2);border:1px solid color-mix(in srgb,var(--gold-dim) 70%,var(--line))}
 .buybox.hidden{display:none}
-.buy-ico{justify-self:center;width:46px;height:46px;margin-bottom:2px}
+.buy-ico{justify-self:center;width:54px;height:54px;margin-bottom:2px}
 .buy-row{display:flex;justify-content:space-between;align-items:center;font-size:.95rem;color:var(--muted)}
 .buy-row b{color:var(--text);font-variant-numeric:tabular-nums}
 .buy-row.after{border-top:1px solid var(--line);padding-top:6px}.buy-row.after b{color:var(--gold)}
 
-/* Word Hint popup */
+/* Clue popup */
 #clue{z-index:11}
+#dialog{z-index:12}   /* the buy-a-clue confirmation must open ABOVE the clue popup */
 .card.clue{max-width:400px;text-align:center;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;padding:22px 20px 18px;border-color:var(--gold);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 30%,transparent),0 18px 50px rgba(0,0,0,.55),0 0 46px color-mix(in srgb,var(--gold) 22%,transparent);animation:popin .4s cubic-bezier(.2,.9,.3,1.15)}
 .clue-bulb{width:78px;height:78px;margin:0 auto 6px;display:grid;place-items:center;border-radius:50%;
   background:radial-gradient(circle,var(--glow-lo),transparent 68%);animation:bulbpulse 2.6s ease-in-out infinite}
-.clue-bulb svg{width:46px;height:46px;filter:drop-shadow(0 0 10px var(--glow-hi))}
+.clue-bulb svg{width:54px;height:54px;filter:drop-shadow(0 0 10px var(--glow-hi))}
 @keyframes bulbpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .card.clue h2{font-size:1.35rem;margin:0}
 .clue-count{margin:2px 0 12px!important;font-size:.82rem;color:var(--muted)}
@@ -570,6 +570,13 @@ html[data-motion=reduced] .ctl,html[data-motion=reduced] .ctl .cico svg,html[dat
 .clue-old .clue-kind{background:none;padding:0;font-size:.66rem;color:var(--muted)}
 .card .clue-old .clue-text{font-size:.92rem;margin:4px 0 0;font-weight:500;color:var(--text)}
 .card.clue .primary.big{margin-top:14px;min-height:48px}
+.clue-empty{padding:16px 14px 14px;border-radius:14px;background:var(--panel-2);border:1px dashed var(--gold-dim)}
+.card .clue-empty p{margin:0 0 8px;color:var(--text);line-height:1.4}
+.clue-price{font-size:.95rem;color:var(--muted)}.clue-price b{color:var(--gold);font-variant-numeric:tabular-nums}
+.card.clue .clue-empty .primary.big{margin-top:12px}
+.clue-buy{display:block;margin:12px auto 0;padding:8px 18px;min-height:38px;border-radius:999px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);font:inherit;font-size:.85rem;font-weight:700;cursor:pointer}
+.clue-buy:hover{background:color-mix(in srgb,var(--gold) 12%,transparent)}.clue-buy:disabled{opacity:.5;cursor:default}
+.card .clue-full{margin:12px 0 0;font-size:.9rem;font-weight:700;color:var(--gold)}
 
 /* ===== Change 5: coloured glossy hint tiles, count badge + price pill, SCORE label, raised keys/Submit, result screen ===== */
 /* tile colours belong to the icons, not to the theme */
@@ -712,7 +719,7 @@ html[data-motion=reduced] .installcard,html[data-motion=reduced] #update-bar,htm
 .pf-info{flex:1;min-width:0;display:grid;gap:5px}
 .pf-namerow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pf-namerow b{font-size:1.3rem;overflow-wrap:anywhere}
-.pf-edit{width:32px;height:32px;display:grid;place-items:center;padding:0;border-radius:50%;border:0;background:none;box-shadow:none;color:var(--gold);cursor:pointer}   /* no circle around the pencil */
+.pf-edit{width:32px;height:32px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--gold);cursor:pointer}
 .pf-edit .pf-ico{width:17px;height:17px}
 .pf-level{font-size:.95rem;color:var(--text)}
 .pf-info small{color:var(--muted);font-size:.8rem}

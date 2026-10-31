@@ -1,11 +1,11 @@
-// Player store: coins, XP, hint credits, reward history. Saved in localStorage (local demo).
+// Player store: coins, XP, clue credits, reward history. Saved in localStorage (local demo).
 // NOTE: online battle rewards are decided and paid (once) by the server; this file only records them (see rewardBattle).
 // ONE price table: the Shop price and the in-game price of every item come from here, so they always match.
 const PRICES = { reveal: 25, remove: 25, word: 10, skip: 30 };
 const HINTS = {
   reveal: { cost: PRICES.reveal, icon: "🔍", name: "Reveal Letter", verb: "reveal a letter", desc: "Shows one correct letter in its correct position." },
   remove: { cost: PRICES.remove, icon: "🚫", name: "Remove Wrong Letters", verb: "remove wrong letters", desc: "Disables keys for letters that are not in the word." },
-  word: { cost: PRICES.word, icon: "💡", name: "Hint", verb: "get a hint", desc: "A clue about the secret word: its meaning, a related word, a category or a fun fact.", free: 5 }
+  word: { cost: PRICES.word, icon: "💡", name: "Clue", verb: "buy a clue", desc: "Up to 3 clues per word: its meaning, a related word, a category or a fun fact.", free: 5 }
 };
 const SKIP = { free: 3, cost: PRICES.skip }; // skips: 3 free, then coins. A skip costs as much as a solo win pays (30), so skipping can never make coins.
 const FREE_COINS = { amount: 25, places: ["game", "shop"] }; // free coins: once a day from the game screen AND once a day from the shop (separate limits)
