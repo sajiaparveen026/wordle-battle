@@ -4,7 +4,8 @@
 //  - guest: uses the same device identity as the leaderboard (key "wbid_lb_guest": a random id + secret)
 //  - live updates: Supabase Realtime broadcast "tick" on channel battle:<room id>, plus a check-in every few seconds that also
 //    tells the server this player is still connected (so a closed tab is noticed)
-// Step 2 of the build: landing, Friend Zone, create / join, waiting room, lobby + ready. The battle screen itself comes next.
+// Screens here: landing, Friend Zone, create / join, waiting room, lobby + ready. The battle itself, the result card, rewards and rematch are in js/battle-game.js.
+// After a refresh the app returns to a battle in progress (or an unpaid result) automatically (autoReturn below).
 (() => {
   "use strict";
   const $ = (s) => document.querySelector(s);
@@ -225,7 +226,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
       const left = r.started_at_ms - srvNow();
       return `${banner()}<div class="fb-players">${pcard(me)}<span class="fb-vs">VS</span>${pcard(opp)}</div>
       <div class="fb-box fb-count" role="status" aria-live="polite"><p class="lbl" id="fb-cl">${left > 0 ? "Battle starts in" : "Battle started"}</p><div class="n" id="fb-cn">${left > 0 ? Math.ceil(left / 1000) : "⚔️"}</div>
-        <p class="fb-note" id="fb-cnote">${left > 0 ? "Get ready!" : "The battle screen arrives in the next update. Leave to end this test room."}</p></div>
+        <p class="fb-note" id="fb-cnote">${left > 0 ? "Get ready!" : "Good luck!"}</p></div>
       <button class="primary alt" type="button" data-fb="leave">Leave Battle</button>`;
     }
     const msg = st === "cancelled" ? "The host cancelled this room." : st === "expired" ? "This room expired." : "This battle is over.";
@@ -257,7 +258,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     const exp = $("#fb-exp"); if (exp) { const left = S.room.expires_at_ms - srvNow(); exp.textContent = left > 0 ? "Room open " + mmss(left) : "Expiring…"; }
     if (status() === "playing") {
       const left = S.room.started_at_ms - srvNow(), n = $("#fb-cn"), l = $("#fb-cl"), note = $("#fb-cnote");
-      if (n) { if (left > 0) { const v = String(Math.ceil(left / 1000)); if (n.textContent !== v) { n.textContent = v; n.style.animation = "none"; void n.offsetWidth; n.style.animation = ""; } } else if (n.textContent !== "⚔️") { n.textContent = "⚔️"; if (l) l.textContent = "Battle started"; if (note) note.textContent = "The battle screen arrives in the next update. Leave to end this test room."; } }
+      if (n) { if (left > 0) { const v = String(Math.ceil(left / 1000)); if (n.textContent !== v) { n.textContent = v; n.style.animation = "none"; void n.offsetWidth; n.style.animation = ""; } } else if (n.textContent !== "⚔️") { n.textContent = "⚔️"; if (l) l.textContent = "Battle started"; if (note) note.textContent = "Good luck!"; } }
     }
   }
 
@@ -325,6 +326,15 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     const r = await call("bt_sync", { p_room: id });
     if (r.ok && ["waiting", "lobby", "playing"].includes(r.state.room.status)) { enter(r.state); return true; }
     err = ""; errRoom = ""; render(); return false;
+  }
+  // A guest who just created an account: move their battle identity (and any unpaid result) to the account. Safe to repeat.
+  let adoptDone = false;
+  async function adoptGuest() {
+    if (adoptDone || !isAcct() || !client()) return;
+    adoptDone = true;
+    let g = null; try { g = JSON.parse(localStorage.getItem(ID_KEY)); } catch {}
+    if (!g || typeof g.pid !== "string" || typeof g.secret !== "string" || g.secret.length < 24) return;
+    try { await client().rpc("bt_adopt_guest", { p_pid: g.pid, p_secret: g.secret }); } catch {}
   }
   async function resumeResult(id) {                                              // reopen a finished battle: its result card collects the reward
     const r = await call("bt_sync", { p_room: id });
@@ -401,6 +411,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     if (S && ["waiting", "lobby", "playing"].includes(status())) { view = "room"; render(true); startLoops(); sync(); return; }
     view = "landing"; render(true);
     if (!client()) return;
+    await adoptGuest();
     const g = await call("bt_get_active", {});                                  // refreshed or came back: go straight to my room
     if (!active || S) return;
     if (g.ok && g.active && g.active.room_id) { resume(g.active.room_id); return; }
@@ -423,6 +434,8 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     if (typeof screen !== "undefined" && screen !== "dashboard") { if (n < 4) setTimeout(() => autoReturn(n + 1), 1500); return; }   // still on the splash / sign-in
     try { if (window.Auth && Auth.whenReady) await Auth.whenReady(); } catch {}
     if (!client() || S || active) return;
+    await adoptGuest();
+    if (window.BattleGame && BattleGame.recover) await BattleGame.recover();       // settle any reward whose answer never reached this device
     const g = await call("bt_get_active", {});
     if (!g.ok || S || active || (!(g.active && g.active.room_id) && !g.unclaimed_room_id)) return;
     if (typeof screen !== "undefined" && screen !== "dashboard") return;

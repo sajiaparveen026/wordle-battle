@@ -47,7 +47,7 @@
     ["Guest or account: what\u2019s the difference?", "A guest\u2019s progress is saved on that device only. An account saves to the cloud, so you can continue on another phone or computer. Guest progress can be moved into a new account once."],
     ["Do I lose my progress if I log out?", "No. Your progress is saved to your account first, and it\u2019s still there when you log back in. A guest\u2019s progress also stays on the device."],
     ["Why doesn\u2019t vibration work?", "Vibration depends on your device and browser. Most Android phones support it; iPhones and iPads don\u2019t let websites vibrate. You can turn it on or off in Settings > Game Preferences."],
-    ["Can I play online battles yet?", "Not yet. Solo play and the Daily Challenge are available now."],
+    ["Can I play online battles yet?", "Yes! Open Play, then Battle Online, then Friend Zone. Create a room and share the code, or enter a friend\u2019s code. You need an internet connection, and winners earn coins and XP."],
     ["How do I install the app?", "Open Settings > About and tap Install App, or use your browser\u2019s menu and choose Install app / Add to Home Screen. If you don\u2019t see the button, the app is already installed or your browser doesn\u2019t offer it."]
   ];
 

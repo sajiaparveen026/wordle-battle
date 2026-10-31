@@ -271,13 +271,30 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
   const canPay = () => typeof Player !== "undefined" && Player && typeof Player.rewardBattle === "function";
   const paidOutcome = () => { const m = me(); return !!m && (m.outcome === "win" || m.outcome === "loss" || m.outcome === "draw"); };
 
+  // Rooms whose claim was sent but whose answer we never saw (connection dropped, app closed). The server may have paid already, so these are
+  // settled once on the next start (recover) and on a retry: Player.rewardBattle writes each room only once, so this can never pay twice here.
+  const UNSURE = "wb_bt_unsure";
+  const unsureList = () => { try { const a = JSON.parse(localStorage.getItem(UNSURE)); return Array.isArray(a) ? a : []; } catch { return []; } };
+  const markUnsure = (id, on) => { try { const a = unsureList().filter((x) => x !== id); if (on) a.push(id); localStorage.setItem(UNSURE, JSON.stringify(a.slice(-20))); } catch {} };
+  let recovered = false;
+  async function recover() {
+    if (recovered || !canPay() || !fb()) return; recovered = true;
+    for (const rid of unsureList()) {
+      const res = await fb().call("bt_claim_reward", { p_room: rid });
+      if (res.ok) { if (Player.rewardBattle(rid, res.outcome, res.coins, res.xp)) gfx("refreshCoins"); markUnsure(rid, false); }
+      else if (res.reason === "forbidden" || res.reason === "not_finished") markUnsure(rid, false);
+    }
+  }
+
   async function claimReward() {
     const rid = room() && room().id; if (!rid || !paidOutcome() || rwBusyFor === rid) return;
     rwBusyFor = rid; rwRoom = rid; rwState = "busy"; rwInfo = null; drawReward();
+    const wasUnsure = unsureList().includes(rid); markUnsure(rid, true);
     const res = await fb().call("bt_claim_reward", { p_room: rid });
     if (rwBusyFor === rid) rwBusyFor = "";
     let applied = null;
-    if (res.ok && res.granted && canPay()) applied = Player.rewardBattle(rid, res.outcome, res.coins, res.xp);   // saved right away, even if the card was closed meanwhile
+    if (res.ok && (res.granted || wasUnsure) && canPay()) applied = Player.rewardBattle(rid, res.outcome, res.coins, res.xp);
+    if (res.ok || res.reason === "forbidden" || res.reason === "not_finished") markUnsure(rid, false);   // saved right away, even if the card was closed meanwhile
     if (rwRoom !== rid || !resultShown) { if (applied) gfx("refreshCoins"); return; }
     if (!res.ok) { rwState = "fail"; drawReward(); return; }                                                  // nothing is lost: the server keeps it claimable
     rwInfo = applied || { coins: res.coins | 0, xp: res.xp | 0, levelUp: false };
@@ -421,5 +438,5 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
   }, true);
   window.addEventListener("beforeunload", (e) => { if (on && playing() && !resultShown) { e.preventDefault(); e.returnValue = ""; } });
 
-  window.BattleGame = { update, exit, isOn: () => on };
+  window.BattleGame = { update, exit, recover, isOn: () => on };
 })();

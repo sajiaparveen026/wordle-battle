@@ -1,5 +1,5 @@
 // Player store: coins, XP, hint credits, reward history. Saved in localStorage (local demo).
-// NOTE: for online battles, rewards must be granted by the server, never by this file.
+// NOTE: online battle rewards are decided and paid (once) by the server; this file only records them (see rewardBattle).
 // ONE price table: the Shop price and the in-game price of every item come from here, so they always match.
 const PRICES = { reveal: 25, remove: 25, word: 10, skip: 30 };
 const HINTS = {
@@ -96,7 +96,6 @@ const Player = (() => {
       p.rewarded = p.rewarded.slice(-300); save();
       return { ...r, levelUp: this.levelInfo().level > before };
     },
-    // For the future online mode: call once per finished online battle (never from the client for real rewards, see the note at the top).
     // Online battle reward. The server decides the amounts and pays each battle once (bt_claim_reward); this only writes them to the local save,
     // once per battle room id, so a refresh, a second tab or a retry can never add them twice. Leaving a battle (forfeit) earns nothing.
     rewardBattle(roomId, outcome, coins, xp) {
