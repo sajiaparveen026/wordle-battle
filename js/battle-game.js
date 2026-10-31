@@ -49,6 +49,13 @@
 .bt-vs2{align-self:center;font-weight:900;font-size:.75rem;letter-spacing:2px;color:var(--muted)}
 .bt-ans{font-size:.85rem;color:var(--muted)}.bt-ans b{color:var(--text);letter-spacing:3px;font-size:1rem}
 .bt-banner{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:70;padding:7px 14px;border-radius:999px;font-size:.78rem;font-weight:800;background:color-mix(in srgb,#FBBF24 20%,var(--panel));border:1px solid #FBBF24}
+.bt-res{display:flex}.bt-card{margin:auto}
+.bt-rw .rewardbox{display:grid;gap:4px;margin:0;padding:10px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line)}
+.bt-rw .rchips{display:flex;justify-content:center;gap:10px}
+.bt-rw .xp{margin-top:4px}.bt-rw small{color:var(--muted);font-size:.74rem}
+.bt-note2{margin:0;font-size:.82rem;font-weight:700;color:var(--muted)}.bt-note2.warn{color:#FBBF24}
+.bt-rm{display:grid;gap:8px}.bt-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bt-rm small{color:var(--muted);font-size:.74rem;font-variant-numeric:tabular-nums}
 @keyframes bt-shine{to{background-position:200% 0}}
 @keyframes bt-blink{50%{opacity:.45}}
 @keyframes bt-pop{from{opacity:0;transform:scale(.5)}60%{transform:scale(1.08)}}
@@ -236,7 +243,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     $("#clue").classList.remove("hidden"); lockModal(true); $("#clue-close").focus();
   }
 
-  // ---------- result (basic; rewards, animations and rematch come in the next step) ----------
+  // ---------- result card (the winner/loser screen; rewards and rematch are further down) ----------
   function showResult() {
     if (resultShown || !S) return; resultShown = true; cur = "";
     const r = room(), m = me(), o = opp(), res = m.outcome === "win" ? "win" : m.outcome === "draw" ? "draw" : "loss";
@@ -248,12 +255,113 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     else msg = r.end_reason === "failed" ? "Neither of you cracked the word this time." : r.end_reason === "timeout" ? "Time ran out with nothing to separate you." : "The battle ended without a winner.";
     const card = (p) => p ? `<div class="bt-fc${win && win.id === p.id ? " w" : ""}"><span class="bt-av" aria-hidden="true">${esc(p.avatar)}</span><b>${esc(p.username)}${p.is_me ? " (you)" : ""}</b>${win && win.id === p.id ? '<span class="tag">WINNER</span>' : res === "draw" ? '<span class="tag" style="color:var(--muted)">DRAW</span>' : ""}<small>${p.status === "solved" ? `${p.attempts_used} ${p.attempts_used === 1 ? "guess" : "guesses"} · ${fmtTime(p.completion_ms)}` : `${p.attempts_used}/${ROWS} guesses`}</small></div>` : "";
     const el = document.createElement("div"); el.id = "bt-res"; el.className = "bt-res"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "bt-rt");
-    el.innerHTML = `<div class="bt-card ${res}"><h2 id="bt-rt">${head}</h2><div class="bt-fight">${card(m)}<span class="bt-vs2">VS</span>${card(o)}</div><p>${msg}</p><p class="bt-ans">The word was <b>${esc((S.answer || "").toUpperCase())}</b></p><button class="primary big" type="button" id="bt-back">Back to Battle</button></div>`;
+    el.innerHTML = `<div class="bt-card ${res}"><h2 id="bt-rt">${head}</h2><div class="bt-fight">${card(m)}<span class="bt-vs2">VS</span>${card(o)}</div><p>${msg}</p><p class="bt-ans">The word was <b>${esc((S.answer || "").toUpperCase())}</b></p><div id="bt-rw" class="bt-rw"></div><div id="bt-rm" class="bt-rm"></div><button class="primary alt" type="button" id="bt-back">Back to Battle</button></div>`;
     document.body.append(el); lockModal(true); $("#bt-back").focus();
     $("#bt-back").onclick = () => exit(true);
     if (res === "win") snd("win"); else if (res === "loss") snd("lose");
     drawBar(); drawHints(); paintTyping();
+    rwState = "idle"; rwInfo = null; rmSig = ""; rmBusy = false;
+    drawReward(); watchRematch(); rwWait = claimReward();            // collect the reward automatically, then offer a rematch
   }
+
+  // ---------- rewards: the server decides and pays once; this only shows it and saves it ----------
+  let rwState = "idle", rwInfo = null, rwRoom = "", rwBusyFor = "", rwWait = null, rmSig = "", rmDeadline = 0, rmBusy = false, rmGo = false, rmPoke = 0;
+  const gfx = (n, ...a) => { try { if (typeof window[n] === "function") return window[n](...a); } catch {} };   // app.js helpers (confetti, countUp, ...)
+  const quick = () => typeof reduced === "function" && reduced();
+  const canPay = () => typeof Player !== "undefined" && Player && typeof Player.rewardBattle === "function";
+  const paidOutcome = () => { const m = me(); return !!m && (m.outcome === "win" || m.outcome === "loss" || m.outcome === "draw"); };
+
+  async function claimReward() {
+    const rid = room() && room().id; if (!rid || !paidOutcome() || rwBusyFor === rid) return;
+    rwBusyFor = rid; rwRoom = rid; rwState = "busy"; rwInfo = null; drawReward();
+    const res = await fb().call("bt_claim_reward", { p_room: rid });
+    if (rwBusyFor === rid) rwBusyFor = "";
+    let applied = null;
+    if (res.ok && res.granted && canPay()) applied = Player.rewardBattle(rid, res.outcome, res.coins, res.xp);   // saved right away, even if the card was closed meanwhile
+    if (rwRoom !== rid || !resultShown) { if (applied) gfx("refreshCoins"); return; }
+    if (!res.ok) { rwState = "fail"; drawReward(); return; }                                                  // nothing is lost: the server keeps it claimable
+    rwInfo = applied || { coins: res.coins | 0, xp: res.xp | 0, levelUp: false };
+    rwState = applied ? "done" : "already"; drawReward(true);
+  }
+
+  function drawReward(fx) {
+    const box = $("#bt-rw"); if (!box) return;
+    const m = me(), rw = S && S.me && S.me.reward;
+    if (m && m.outcome === "forfeit") { box.innerHTML = '<p class="bt-note2">Leaving a battle earns no coins or XP.</p>'; return; }
+    if (!paidOutcome() || !rw) { box.innerHTML = ""; return; }
+    const info = rwInfo || rw, coins = info.coins | 0, xp = info.xp | 0, done = rwState === "done", lv = done ? Player.levelInfo() : null;
+    const note = rwState === "fail" ? "Couldn't collect your reward right now. It's safe on the server, so try again."
+      : rwState === "already" ? "Reward already collected." : done ? (rwInfo.levelUp ? "⬆ Level up!" : "") : "Collecting your reward…";
+    box.innerHTML = `<div class="rewardbox"><div class="rchips"><div class="chip"><b id="bt-rc">+${coins}</b><small>🪙 Coins</small></div><div class="chip xpc"><b id="bt-rx">+${xp}</b><small>⚡ XP</small></div></div>`
+      + (done ? `<small id="bt-rb" class="r-balance">Balance: ${Player.data.coins} 🪙</small><div class="xp"><i id="bt-xp" style="width:${Math.round(lv.xp / lv.need * 100)}%"></i></div><small>Level ${lv.level} · ${lv.xp}/${lv.need} XP</small>` : "")
+      + (note ? `<p class="bt-note2${rwState === "fail" ? " warn" : ""}">${note}</p>` : "")
+      + (rwState === "fail" ? '<button class="primary alt" type="button" data-bt="claim">Collect reward</button>' : "") + "</div>";
+    if (!(fx && done)) return;
+    const old = Math.max(0, Player.data.coins - coins), b = $("#bt-rb");                // until the coins land the balance shows the number from before
+    gfx("countUp", $("#bt-rc"), coins, "+"); gfx("countUp", $("#bt-rx"), xp, "+");
+    if (b) b.textContent = `Balance: ${old} 🪙`; $$(".coin-val").forEach((v) => (v.textContent = old));
+    setTimeout(() => {
+      if (!$("#bt-rc")) return gfx("refreshCoins");
+      gfx("coinsToBalance", $("#bt-rc"), coins, { onTick: (v) => { const e = $("#bt-rb"); if (e) e.textContent = `Balance: ${v} 🪙`; } });
+    }, quick() ? 0 : 900);
+    gfx("animateXp", "#bt-xp", Math.round(lv.xp / lv.need * 100));
+    if (m.outcome === "win") gfx("confetti");
+    snd("coin");
+  }
+
+  // ---------- rematch: the server keeps the request (30 seconds) and creates the new battle when both agree ----------
+  function drawRematch() {
+    const box = $("#bt-rm"); if (!box) return;
+    const o = opp(), rm = S && S.rematch, nm = esc(o ? o.username : "Your opponent");
+    if (!o || o.connection === "left") { box.innerHTML = `<p class="bt-note2">${nm} left, so there's no rematch.</p>`; return; }
+    if (rm && rm.status === "accepted" && rm.new_room_id) { box.innerHTML = '<p class="bt-note2">Rematch accepted! Starting…</p>'; return; }
+    if (rm && rm.status === "pending" && rm.requested_by_me) { box.innerHTML = `<button class="primary big" type="button" disabled>Waiting for ${nm}… <span id="bt-rmt"></span></button>`; return; }
+    if (rm && rm.status === "pending") {
+      box.innerHTML = `<p class="bt-note2"><b>${nm}</b> wants a rematch!</p><div class="bt-two"><button class="primary big" type="button" data-bt="accept"${rmBusy ? " disabled" : ""}>Accept</button><button class="primary alt" type="button" data-bt="decline"${rmBusy ? " disabled" : ""}>Decline</button></div><small id="bt-rmt"></small>`; return;
+    }
+    const msg = rm && rm.status === "declined" && rm.requested_by_me ? `${nm} declined the rematch.` : rm && rm.status === "expired" ? "The rematch request expired." : "";
+    box.innerHTML = (msg ? `<p class="bt-note2">${msg}</p>` : "") + `<button class="primary big" type="button" data-bt="rematch"${rmBusy ? " disabled" : ""}>⚔️ Rematch</button>`;
+  }
+  function watchRematch() {                                            // called with every new server state while the result card is open
+    const rm = S && S.rematch;
+    if (rm && rm.status === "pending") rmDeadline = Date.now() + (rm.expires_in_ms | 0);
+    if (rm && rm.status === "accepted" && rm.new_room_id) { drawRematch(); goRematch(rm.new_room_id); return; }
+    const o = opp(), sig = [rm ? rm.status : "", rm ? rm.requested_by_me : "", o ? o.connection === "left" : "", rmBusy].join("|");
+    if (sig !== rmSig) { rmSig = sig; drawRematch(); }
+  }
+  function tickRematch() {
+    if (!resultShown || !S) return;
+    const rm = S.rematch; if (!rm || rm.status !== "pending") return;
+    const left = Math.max(0, rmDeadline - Date.now()), t = $("#bt-rmt"); if (t) t.textContent = Math.ceil(left / 1000) + "s";
+    if (left <= 0 && Date.now() - rmPoke > 2500) { rmPoke = Date.now(); fb().sync(); }   // ask the server to settle the expired request
+  }
+  async function goRematch(id) {                                       // both agreed: leave this result and drop into the new battle's countdown
+    if (rmGo) return; rmGo = true;
+    try {
+      if (rwWait) await rwWait;                                        // finish collecting this battle's reward first
+      const r = await fb().call("bt_sync", { p_room: id });
+      if (!r.ok || !r.state) { toast("Couldn't start the rematch. Try again.", "error"); return; }
+      exit(false); fb().enter(r.state);
+    } finally { rmGo = false; }
+  }
+  async function afterRematch(r, id) {
+    if (!S || room().id !== id) return;
+    if (r.new_room_id && (r.accepted || (r.state && r.state.rematch && r.state.rematch.status === "accepted"))) return goRematch(r.new_room_id);
+    if (r.state) fb().apply(r.state); else watchRematch();
+    if (!r.ok) {
+      toast({ opponent_left: "Your opponent left, so there's no rematch.", already_rematched: "A rematch already started.", not_finished: "The battle isn't over yet.", no_request: "That request is no longer open.", network: "Can't reach the server. Try again.", try_again: "Couldn't set up the rematch. Try again." }[r.reason] || "Couldn't start the rematch. Try again.", "error");
+      fb().sync();
+    }
+  }
+  document.addEventListener("click", async (e) => {
+    const b = e.target.closest && e.target.closest("#bt-res [data-bt]"); if (!b || b.disabled) return;
+    e.preventDefault(); const a = b.dataset.bt, id = room() && room().id; if (!id) return;
+    if (a === "claim") { rwWait = claimReward(); return; }
+    if (rmBusy) return;
+    rmBusy = true; rmSig = ""; watchRematch();
+    const r = a === "rematch" ? await fb().call("bt_rematch_request", { p_room: id }) : await fb().call("bt_rematch_respond", { p_room: id, p_accept: a === "accept" });
+    rmBusy = false; rmSig = ""; await afterRematch(r, id);
+  });
 
   // ---------- lifecycle ----------
   function update(st) {
@@ -263,12 +371,12 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     if (!on) enter();
     drawBar(); drawHints(); drawKeys(); drawTimer();
     if (!busy) syncBoard();
-    if (st2 === "finished" && !busy && !hintBusy) showResult();
+    if (st2 === "finished" && !busy && !hintBusy) { showResult(); if (resultShown) watchRematch(); }
   }
   function enter() {
     on = true; resultShown = false; cur = ""; rendered = 0; busy = false; lastCd = -1; leaving = false;
     buildUi(); buildBoard(); show("game");
-    clearInterval(tmr); tmr = setInterval(() => { if (!S) return; drawTimer(); drawBar(); }, 250);
+    clearInterval(tmr); tmr = setInterval(() => { if (!S) return; drawTimer(); drawBar(); tickRematch(); }, 250);
   }
   function exit(toBattle) {
     clearInterval(tmr); tmr = 0; on = false; leaving = true;
@@ -279,6 +387,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     $$(".hint").forEach((b) => { delete b.dataset.state; b.title = ""; const bd = b.querySelector(".badge"); if (bd) bd.textContent = ""; });
     $$("#keyboard .key").forEach((k) => k.classList.remove("correct", "present", "absent", "disabled"));
     S = null; rendered = 0; cur = ""; busy = false; resultShown = false;
+    rwState = "idle"; rwInfo = null; rwRoom = ""; rmSig = ""; rmDeadline = 0; rmBusy = false;
     if (toBattle) { fb().end(); show("battle"); }
     leaving = false;
   }

@@ -326,6 +326,11 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     if (r.ok && ["waiting", "lobby", "playing"].includes(r.state.room.status)) { enter(r.state); return true; }
     err = ""; errRoom = ""; render(); return false;
   }
+  async function resumeResult(id) {                                              // reopen a finished battle: its result card collects the reward
+    const r = await call("bt_sync", { p_room: id });
+    if (!active || S) return;
+    if (r.ok && r.state && r.state.room.status === "finished") enter(r.state);
+  }
   async function toggleReady() {
     const me = myPlayer(); if (!me || !S) return;
     const r = await call("bt_ready", { p_room: S.room.id, p_ready: !me.ready });
@@ -398,7 +403,8 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     if (!client()) return;
     const g = await call("bt_get_active", {});                                  // refreshed or came back: go straight to my room
     if (!active || S) return;
-    if (g.ok && g.active && g.active.room_id) resume(g.active.room_id);
+    if (g.ok && g.active && g.active.room_id) { resume(g.active.room_id); return; }
+    if (g.ok && g.unclaimed_room_id) resumeResult(g.unclaimed_room_id);          // a finished battle whose reward was not collected yet
   }
   function close() {
     active = false;
@@ -411,5 +417,18 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     else if (name === "game" && window.BattleGame && BattleGame.isOn()) return;   // the battle screen itself
     else close();
   }
-  window.FriendBattle = { open, close, screenChanged, state: () => S, api: { call, srvNow, apply: setState, sync, end } };
+  // ---------- automatic return: after a refresh or a reopened app, jump straight back to a battle in progress (or an unpaid result) ----------
+  async function autoReturn(n) {
+    if (S || active) return;
+    if (typeof screen !== "undefined" && screen !== "dashboard") { if (n < 4) setTimeout(() => autoReturn(n + 1), 1500); return; }   // still on the splash / sign-in
+    try { if (window.Auth && Auth.whenReady) await Auth.whenReady(); } catch {}
+    if (!client() || S || active) return;
+    const g = await call("bt_get_active", {});
+    if (!g.ok || S || active || (!(g.active && g.active.room_id) && !g.unclaimed_room_id)) return;
+    if (typeof screen !== "undefined" && screen !== "dashboard") return;
+    if (typeof show === "function") show("battle");                              // open() above resumes the room or the result
+  }
+  setTimeout(() => autoReturn(0), 2600);
+
+  window.FriendBattle = { open, close, screenChanged, state: () => S, api: { call, srvNow, apply: setState, sync, end, enter } };
 })();

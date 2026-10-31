@@ -97,6 +97,18 @@ const Player = (() => {
       return { ...r, levelUp: this.levelInfo().level > before };
     },
     // For the future online mode: call once per finished online battle (never from the client for real rewards, see the note at the top).
+    // Online battle reward. The server decides the amounts and pays each battle once (bt_claim_reward); this only writes them to the local save,
+    // once per battle room id, so a refresh, a second tab or a retry can never add them twice. Leaving a battle (forfeit) earns nothing.
+    rewardBattle(roomId, outcome, coins, xp) {
+      const key = "B:" + roomId;
+      if (!roomId || p.rewarded.includes(key) || !["win", "loss", "draw"].includes(outcome)) return null;
+      coins = Math.min(1000, Math.max(0, Number(coins) | 0)); xp = Math.min(1000, Math.max(0, Number(xp) | 0));
+      const before = this.levelInfo().level;
+      p.coins += coins; p.earned += coins; p.xp += xp;
+      p.battles.played++; if (outcome === "win") { p.battles.won++; p.wins++; } else if (outcome === "loss") p.losses++;
+      countSession(); p.rewarded.push(key); p.rewarded = p.rewarded.slice(-300); save();
+      return { coins, xp, outcome, levelUp: this.levelInfo().level > before };
+    },
     recordBattle(won) { p.battles.played++; if (won) p.battles.won++; save(); },
     recordLoss(gameId) {
       if (p.rewarded.includes("W:" + gameId) || p.rewarded.includes("L:" + gameId)) return;
