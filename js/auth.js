@@ -420,9 +420,6 @@
   function renderAccount() {
     const acct = isAccount();
     $$("#d-acct,#p-acct").forEach((b) => { b.textContent = acct ? "" : "Guest"; b.classList.toggle("hidden", acct); });
-    $("#battle-title").textContent = acct ? "Online battles need a server" : "Online battles need an account";
-    $("#battle-note").textContent = acct ? "Matchmaking, secret words and rewards must be controlled by Supabase so nobody can cheat. Wordle Battle will not fake opponents, so this mode unlocks in the next stages."
-      : "Sign in to play online. Guests can still play Solo and the Daily Challenge.";
     const panel = $("#acct"); if (!panel) return;
     if (acct) {
       panel.innerHTML = '<h4>Account</h4><p><b class="em"></b></p><small>Signed in · progress syncs to your account</small><div class="actions"><button class="primary danger" id="btn-logout">Log out</button></div>';
