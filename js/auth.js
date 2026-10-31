@@ -286,8 +286,9 @@
     }
     let snap = snapshot(); const g = guestSnapshot();            // brand-new account: nothing in the cloud yet
     if (hasProgress(g) && !localStorage.getItem("wb_guest_migrated")) {
-      if (await confirmBox("Move your guest progress?", "Copy the coins, XP and stats from this device into your new account? You can only do this once.", "Move progress")) {
+      if (await confirmBox("Move your guest progress?", "Copy the coins, XP, stats and friends from this device into your new account? You can only do this once.", "Move progress")) {
         snap = g; applySnapshot(g); localStorage.setItem("wb_guest_migrated", "1");
+        if (window.Friends) Friends.adoptGuest();            // the guest's friends and pending requests move into this account (no duplicates)
         if (window.Leaderboard) Leaderboard.mergeGuest();   // the guest's leaderboard entry moves into this account (no duplicate)
       }
     }

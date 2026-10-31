@@ -129,9 +129,10 @@ function show(name, fromHistory) {
   $$(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== name));
   const el = $("#" + name); el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
   $("#bottomnav").classList.toggle("hidden", name === "game" || AUTH_SCREENS.includes(name));
-  const navMap = { game: "play", battle: "play" };
+  const navMap = { game: "play", battle: "play", friends: "play" };
   $$("#bottomnav [data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === (navMap[name] || name)));
   if (name === "leaderboard") renderLeaderboard();
+  if (window.Friends) Friends.screenChanged(name);   // js/friends.js: friends, requests, invitations
   if (window.FriendBattle) FriendBattle.screenChanged(name);   // js/friend-battle.js + js/battle-game.js: Friend Zone rooms and battles
   if (name === "dashboard") renderDashboard();
   if (name === "dashboard" && window.Tutorial) Tutorial.maybeAutoShow();

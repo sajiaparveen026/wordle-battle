@@ -32,6 +32,12 @@ Realtime channels is enabled (it is by default). The app uses Realtime *broadcas
 Nobody can read the battle tables directly: the secret word and the opponent's guesses stay inside the database until the battle ends.
 The server applies timeouts and 60-second reconnect forfeits the next time either player's browser checks in, so no scheduled job is needed.
 
+### 1f. Turn on Friends (friend list, requests, battle invitations)
+Run `supabase/migrations/007_friends.sql` the same way, **after** 005 and 006. It adds the friends, requests, invitations and
+notifications tables (locked down: only the app's checked functions can touch them) and uses the same Realtime broadcast as battles.
+Without it the Friends page shows a "not set up yet" message and everything else works as before. Guests and registered players both
+can use it; a guest's friends live on that device until they create an account, when they move over.
+
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`

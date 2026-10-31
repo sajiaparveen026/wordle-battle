@@ -254,8 +254,14 @@
 
 <!-- BATTLE -->
 <section id="battle" class="screen hidden">
-  <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b id="fb-title">Battle Online</b><span style="width:44px" aria-hidden="true"></span></header>
+  <header class="top bt-head"><div class="bt-l"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><button class="ibtn fr-open" id="fr-open" type="button" data-go="friends" aria-label="Friends"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><b class="fr-badge hidden" data-fr-badge aria-hidden="true"></b></button></div><b id="fb-title">Battle Online</b><div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div></header>
   <div id="fb-root" class="fb" aria-live="off"></div>
+</section>
+
+<!-- FRIENDS -->
+<section id="friends" class="screen hidden">
+  <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><div class="fr-ttl"><b>Friends</b><small id="fr-count" aria-live="polite"></small></div><span style="width:44px" aria-hidden="true"></span></header>
+  <div id="fr-root" class="frx"></div>
 </section>
 
 <!-- LEADERBOARD -->
@@ -778,6 +784,7 @@
 <script src="js/leaderboard.js"></script>
 <script src="js/friend-battle.js"></script>
 <script src="js/battle-game.js"></script>
+<script src="js/friends.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/freecoins.js"></script>
 <script src="js/pwa.js"></script>
