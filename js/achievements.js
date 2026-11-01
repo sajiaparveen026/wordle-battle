@@ -77,6 +77,44 @@
 #ach-d-prog{margin:0 0 10px}#ach-d-prog:empty{display:none}
 .ach-d-state{margin:0 0 14px;font-weight:800;color:var(--muted)}.ach-d-state.on{color:var(--win)}
 @media (max-width:380px){.ach-item{width:140px}}
+/* Profile: "See All" capsule beside the heading + the empty state */
+.ach-count{padding:4px 10px}
+.pf-ach .pf-sechead{gap:8px}.pf-ach .pf-sechead b{min-width:0}
+@media (max-width:360px){.pf-ach .ach-count{display:none}}
+.ach-all{flex:none;display:inline-flex;align-items:center;gap:2px;padding:5px 6px 5px 11px;border-radius:999px;background:var(--panel-2);border:1px solid var(--gold-dim);color:var(--gold);font-size:.76rem;font-weight:800;letter-spacing:.3px;white-space:nowrap;transition:border-color .2s,background .2s,transform .12s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.ach-all svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.ach-all:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--panel-2))}.ach-all:active{transform:scale(.96)}
+.ach-all:focus-visible,.ach-f:focus-visible,.ach-play:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.ach-track.is-empty{cursor:default;overflow:hidden}
+.ach-empty{flex:1 1 100%;min-width:0;display:grid;justify-items:center;gap:6px;padding:18px 12px 14px;text-align:center;border-radius:18px;border:1px dashed var(--line);background:linear-gradient(165deg,color-mix(in srgb,var(--gold) 6%,var(--panel)),var(--panel))}
+.ach-empty .ico{font-size:2rem;line-height:1;filter:grayscale(.4);opacity:.85}
+.ach-empty b{font-size:1rem}.ach-empty small{max-width:30ch;color:var(--muted);font-size:.84rem;line-height:1.35}
+.ach-play{margin-top:6px;padding:8px 18px;border-radius:999px;background:var(--gold);color:var(--on-color);font-size:.84rem;font-weight:900;letter-spacing:.3px;box-shadow:0 3px 0 color-mix(in srgb,var(--gold) 45%,#000);touch-action:manipulation}
+.ach-play:active{transform:translateY(2px);box-shadow:0 1px 0 color-mix(in srgb,var(--gold) 45%,#000)}
+
+/* Achievements page */
+#achievements{max-width:1000px}
+#achievements .pf-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;text-align:center;margin-bottom:2px}
+.ach-filters{display:flex;gap:6px;padding:4px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;width:100%;max-width:520px;margin:0 auto}
+.ach-f{flex:1 1 0;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 6px;border-radius:999px;background:transparent;color:var(--muted);font-size:.88rem;font-weight:800;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.ach-f i{font-style:normal;min-width:22px;padding:1px 7px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:.72rem;font-variant-numeric:tabular-nums;color:var(--text)}
+.ach-f:hover:not(.on){color:var(--text)}
+.ach-f.on{background:var(--gold);color:var(--on-color);box-shadow:0 0 14px color-mix(in srgb,var(--gold) 45%,transparent)}
+.ach-f.on i{background:rgba(0,0,0,.2);border-color:transparent;color:inherit}
+.ach-grid{list-style:none;margin:0;padding:6px 0 96px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;align-items:stretch}
+.ach-grid .ach-item{width:auto;min-width:0}
+.ach-grid .ach-card{cursor:pointer}
+.ach-group{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:8px;padding:0 4px 6px;border-bottom:1px solid var(--line)}
+.ach-group:first-child{margin-top:0}
+.ach-group b{font-size:.78rem;font-weight:900;letter-spacing:1.6px;text-transform:uppercase;color:#d98c4a}
+.ach-group.tier-silver b{color:#c8d0dc}.ach-group.tier-gold b{color:#ffcf3a}
+[data-theme=light] .ach-group b{color:#9a5a22}[data-theme=light] .ach-group.tier-silver b{color:#5f6b7a}[data-theme=light] .ach-group.tier-gold b{color:#8a6300}
+.ach-group small{color:var(--muted);font-size:.74rem;font-weight:700}
+.ach-none{grid-column:1/-1;display:grid;justify-items:center;gap:6px;padding:34px 12px;text-align:center;border-radius:18px;border:1px dashed var(--line);background:var(--panel)}
+.ach-none .ico{font-size:2.2rem;line-height:1}.ach-none b{font-size:1.02rem}.ach-none small{max-width:32ch;color:var(--muted);font-size:.86rem;line-height:1.4}
+@media (min-width:700px){.ach-grid{grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:14px}.ach-f{font-size:.95rem;padding:10px 8px}}
+@media (max-width:360px){.ach-f{font-size:.8rem;gap:4px}.ach-f i{padding:1px 5px;min-width:20px}.ach-grid{gap:10px;grid-template-columns:repeat(auto-fill,minmax(136px,1fr))}}
+html[data-motion=reduced] .ach-all,html[data-motion=reduced] .ach-f{transition:none}
 html[data-motion=reduced] .ach-medal::after{animation:none!important;display:none}
 @media (prefers-reduced-motion:reduce){.ach-medal::after{animation:none!important;display:none}}
 `;
@@ -182,16 +220,45 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
   const day = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }); };
   const num = (n) => n.toLocaleString();
   const progress = (a, tall) => a.target > 1 ? `<span class="ach-prog${tall ? " tall" : ""}"><span class="ach-bar"><i style="width:${Math.round((a.cur / a.target) * 100)}%"></i></span><small>${num(a.cur)} / ${num(a.target)}</small></span>` : "";
+  const cardHTML = (a) => `<li class="ach-item"><button type="button" class="ach-card tier-${a.tier}${a.unlocked ? " is-on" : " is-off"}" data-ach="${a.id}" aria-label="${a.name}, ${TIER[a.tier]} plate, ${a.unlocked ? "unlocked" : "locked" + (a.target > 1 ? `, ${a.cur} of ${a.target}` : "")}">
+      ${badge(a, !a.unlocked)}<span class="ach-tier">${TIER[a.tier]}</span><b class="ach-name">${a.name}</b><span class="ach-desc">${a.desc}</span>
+      ${a.unlocked ? '<span class="ach-state on">✓ Unlocked</span>' : progress(a) || '<span class="ach-state"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#s-lock"/></svg>Locked</span>'}</button></li>`;
+  // Profile: only what the player has unlocked (same cards, same carousel). Nothing unlocked yet = a friendly empty state.
   function render() {
     const track = $("#ach-track"); if (!track) return;
     if (!$("#ach-defs")) { const d = document.createElement("div"); d.id = "ach-defs"; d.innerHTML = defs(); document.body.append(d); }
-    const list = status(), done = list.filter((a) => a.unlocked).length;
-    $("#ach-count").textContent = `${done}/${LIST.length} Unlocked`;
-    track.innerHTML = list.map((a) => `<li class="ach-item"><button type="button" class="ach-card tier-${a.tier}${a.unlocked ? " is-on" : " is-off"}" data-ach="${a.id}" aria-label="${a.name}, ${TIER[a.tier]} plate, ${a.unlocked ? "unlocked" : "locked" + (a.target > 1 ? `, ${a.cur} of ${a.target}` : "")}">
-      ${badge(a, !a.unlocked)}<span class="ach-tier">${TIER[a.tier]}</span><b class="ach-name">${a.name}</b><span class="ach-desc">${a.desc}</span>
-      ${a.unlocked ? '<span class="ach-state on">✓ Unlocked</span>' : progress(a) || '<span class="ach-state"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#s-lock"/></svg>Locked</span>'}</button></li>`).join("");
+    const list = status(), got = list.filter((a) => a.unlocked);
+    const cnt = $("#ach-count"); cnt.textContent = `${got.length}/${LIST.length}`; cnt.setAttribute("aria-label", `${got.length} of ${LIST.length} achievements unlocked`);
+    track.classList.toggle("is-empty", !got.length);
+    track.innerHTML = got.length ? got.map(cardHTML).join("") : emptyHTML("li", "ach-empty");
     edges();
+    renderPage();
   }
+  const emptyHTML = (tag, cls) => `<${tag} class="${cls}"><span class="ico" aria-hidden="true">🏅</span><b>No achievements yet</b><small>Play a game to unlock your first badge. They'll show up here.</small><button type="button" class="ach-play" data-go="practice">Play now</button></${tag}>`;
+
+  // ---------- Achievements page (all 25, filtered All / Unlocked / Locked) ----------
+  let filter = "all";
+  const pageOn = () => { const s = $("#achievements"); return !!s && !s.classList.contains("hidden"); };
+  function renderPage() {
+    const grid = $("#ach-grid"); if (!grid || !pageOn()) return;
+    if (!$("#ach-defs")) ensureDefs();
+    const list = status(), un = list.filter((a) => a.unlocked), lo = list.filter((a) => !a.unlocked);
+    $("#ach-n-all").textContent = list.length; $("#ach-n-unlocked").textContent = un.length; $("#ach-n-locked").textContent = lo.length;
+    document.querySelectorAll("#ach-filters [data-f]").forEach((b) => { const on = b.dataset.f === filter; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    const shown = filter === "unlocked" ? un : filter === "locked" ? lo : list;
+    if (!shown.length) {
+      grid.innerHTML = filter === "unlocked" ? emptyHTML("li", "ach-none")
+        : `<li class="ach-none"><span class="ico" aria-hidden="true">🏆</span><b>Everything unlocked!</b><small>You've earned all ${LIST.length} achievements. Legendary.</small></li>`;
+      return;
+    }
+    grid.innerHTML = ["bronze", "silver", "gold"].map((t) => {
+      const items = shown.filter((a) => a.tier === t); if (!items.length) return "";
+      const u = items.filter((a) => a.unlocked).length;
+      const note = filter === "all" ? `${u}/${items.length} unlocked` : filter === "unlocked" ? `${items.length} unlocked` : `${items.length} locked`;
+      return `<li class="ach-group tier-${t}"><b>${TIER[t]}</b><small>${note}</small></li>` + items.map(cardHTML).join("");
+    }).join("");
+  }
+  function screenChanged(name) { if (name === "achievements") { renderPage(); try { window.scrollTo(0, 0); } catch {} } }
   function edges() { const t = $("#ach-track"); if (!t) return; const max = t.scrollWidth - t.clientWidth - 2; $("#ach-prev").disabled = t.scrollLeft <= 2; $("#ach-next").disabled = t.scrollLeft >= max; }
 
   // ---------- detail popup ----------
@@ -382,6 +449,11 @@ html[data-motion=reduced] .ach-sp,html[data-motion=reduced] .ach-ring,html[data-
     addEventListener("pointerup", () => { if (!down) return; down = false; track.classList.remove("dragging"); setTimeout(() => (dragged = false), 0); });
     addEventListener("resize", edges);
   }
+  // "See All" opens the page (always on All); Back returns to the Profile, which redraws itself from the same saved data
+  const seeAll = $("#ach-all"); if (seeAll) seeAll.onclick = () => { filter = "all"; if (typeof show === "function") show("achievements"); };
+  const pgBack = $("#ach-back"); if (pgBack) pgBack.onclick = () => { if (typeof show === "function") show("profile"); };
+  const filters = $("#ach-filters"); if (filters) filters.addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (!b || b.dataset.f === filter) return; filter = b.dataset.f; renderPage(); });
+  const grid = $("#ach-grid"); if (grid) grid.addEventListener("click", (e) => { const c = e.target.closest("[data-ach]"); if (c) open(c.dataset.ach, c); });
   $("#ach-close").onclick = $("#ach-ok").onclick = close;
   $("#ach-modal").addEventListener("click", (e) => { if (e.target.id === "ach-modal") close(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
@@ -391,7 +463,7 @@ html[data-motion=reduced] .ach-sp,html[data-motion=reduced] .ach-ring,html[data-
   check({ announce: false });   // quiet scan on load: existing players get the badges they already earned without a pile of pop-ups
   // A card the player never acknowledged (page refreshed mid-celebration) comes back once; ids that are no longer unlocked are dropped.
   enqueue(readPending().map((id) => LIST.find((a) => a.id === id)).filter(Boolean));
-  window.Achievements = { list: () => status(), check, render, open, close, total: LIST.length,
+  window.Achievements = { list: () => status(), check, render, renderPage, screenChanged, open, close, total: LIST.length,
     // Try the celebration without unlocking anything or touching the save, e.g. in the browser console: Achievements.preview(["first-victory", "unstoppable", "winning-machine"])
     preview: (ids) => enqueue((ids || ["first-victory"]).map((id) => LIST.find((a) => a.id === id)).filter(Boolean).map((a) => ({ ...a, preview: true }))) };
 })();
