@@ -133,6 +133,7 @@ function show(name, fromHistory) {
   $$("#bottomnav [data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === (navMap[name] || name)));
   if (name === "leaderboard") renderLeaderboard();
   if (window.TeamZone) TeamZone.screenChanged(name);  // js/team.js: Team Zone
+  if (window.Achievements) Achievements.screenChanged(name);   // js/achievements.js: the full Achievements page
   if (window.Wheel) Wheel.screenChanged(name);       // js/wheel.js: Spin Wheel
   if (window.Friends) Friends.screenChanged(name);   // js/friends.js: friends, requests, invitations
   if (window.FriendBattle) FriendBattle.screenChanged(name);   // js/friend-battle.js + js/battle-game.js: Friend Zone rooms and battles
@@ -753,7 +754,18 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEdit(
 $("#pf-viewall").onclick = () => { showAllGames = !showAllGames; renderRecentGames(); };
 $("#pf-modes").addEventListener("click", (e) => { const b = e.target.closest("[data-pfs]"); if (!b || b.dataset.pfs === pfStatMode) return; pfStatMode = b.dataset.pfs; renderProfileStats(); const st = $("#pf-stats"); st.classList.remove("swap"); void st.offsetWidth; st.classList.add("swap"); });   // no page reload
 $("#pf-rfilter").addEventListener("click", (e) => { const b = e.target.closest("[data-pfr]"); if (!b || b.dataset.pfr === pfRecent) return; pfRecent = b.dataset.pfr; showAllGames = false; renderRecentGames(); });
-$$("#bottomnav [data-nav]").forEach((b) => (b.onclick = () => (b.dataset.nav === "play" ? openGame("practice") : show(b.dataset.nav))));
+// Bottom-bar "Play" asks first: Solo Play or Online Battle
+function openPlayChooser() { $("#play-modal").classList.remove("hidden"); lockModal(true); const f = $("#play-modal [data-play]"); if (f) f.focus({ preventScroll: true }); }
+function closePlayChooser() { $("#play-modal").classList.add("hidden"); lockModal(false); }
+$$("#bottomnav [data-nav]").forEach((b) => (b.onclick = () => (b.dataset.nav === "play" ? openPlayChooser() : show(b.dataset.nav))));
+$("#play-close").onclick = closePlayChooser;
+$("#play-modal").addEventListener("click", (e) => {
+  if (e.target.id === "play-modal") return closePlayChooser();            // tap outside the card
+  const o = e.target.closest("[data-play]"); if (!o) return;
+  closePlayChooser();
+  if (o.dataset.play === "solo") openGame("practice"); else show("battle");
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#play-modal").classList.contains("hidden")) closePlayChooser(); });
 $("#g-back").onclick = async () => {
   if (status === "playing" && guesses.length > 0 && !(await confirmBox("Leave this game?", "Your progress is saved, so you can continue later.", "Leave"))) return;
   show("dashboard");

@@ -129,9 +129,9 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
   }
   function vHome() {
     return `<div class="tz-hero"><h2>Team Zone</h2><p>3 to 5 players, one secret word. First to solve it wins.</p></div>
-      <div class="tz-cards">
-        <button class="tz-card" type="button" data-tz="create" style="--c:#FACC15"><span class="ic" aria-hidden="true">➕</span><h3>Create a Team Room</h3><p>Pick the group size and difficulty, then share the code.</p><span class="go">Create →</span></button>
-        <button class="tz-card" type="button" data-tz="join" style="--c:#22D3EE"><span class="ic" aria-hidden="true">🔑</span><h3>Enter a Room Code</h3><p>Have a code from a friend? Jump into their team.</p><span class="go">Join →</span></button>
+      <div class="fb-cards two">
+        <button class="fb-card create" type="button" data-tz="create"><span class="fb-ico" aria-hidden="true">➕</span><h3>Create a Team Room</h3><p>Pick the group size and difficulty, then share the code.</p><span class="fb-go">Create →</span></button>
+        <button class="fb-card join" type="button" data-tz="join"><span class="fb-ico" aria-hidden="true">🔑</span><h3>Enter a Room Code</h3><p>Have a code from a friend? Jump into their team.</p><span class="fb-go">Join →</span></button>
       </div>
       ${err ? `<p class="tz-err" role="alert">${esc(err)}</p>` : ""}`;
   }
@@ -317,7 +317,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     paint(true);                                               // draw the landing screen straight away, so the page is never blank while the server answers
     if (S) return;
     const slow = new Promise((res) => setTimeout(() => res({ ok: false, reason: "network" }), 6000));
-    const g = await Promise.race([call("tz_get_active", {}), slow]);   // resume a room I am still in, or a finished one whose reward I have not collected
+    const g = await Promise.race([call("tz_get_active", {}), slow]);   // a stalled server can no longer hold the screen empty                  // resume a room I am still in, or a finished one whose reward I have not collected
     const id = g.ok ? (g.active && g.active.room_id) || g.unclaimed_room_id : "";
     if (id) { const s = await call("tz_sync", { p_room: id }); if (s.ok) return apply(s.state); }
     paint(true);

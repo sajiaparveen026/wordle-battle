@@ -230,6 +230,17 @@
   <div id="wh-root" class="wh"></div>
 </section>
 
+<!-- ACHIEVEMENTS (all 25 badges: opened from "See All" on the Profile) -->
+<section id="achievements" class="screen hidden" aria-labelledby="ach-page-t">
+  <header class="top pf-top"><button class="ibtn" id="ach-back" aria-label="Back to Profile" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b id="ach-page-t">Achievements</b><span aria-hidden="true"></span></header>
+  <div class="ach-filters" id="ach-filters" role="group" aria-label="Filter achievements">
+    <button type="button" class="ach-f on" data-f="all" aria-pressed="true">All<i id="ach-n-all">25</i></button>
+    <button type="button" class="ach-f" data-f="unlocked" aria-pressed="false">Unlocked<i id="ach-n-unlocked">0</i></button>
+    <button type="button" class="ach-f" data-f="locked" aria-pressed="false">Locked<i id="ach-n-locked">25</i></button>
+  </div>
+  <ul class="ach-grid" id="ach-grid"></ul>
+</section>
+
 <!-- TEAM ZONE -->
 <section id="team" class="screen hidden">
   <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b>Team Zone</b><span style="width:44px" aria-hidden="true"></span></header>
@@ -416,7 +427,7 @@
   </button>
 
   <section class="pf-card pf-ach" aria-labelledby="pf-ach-t">
-    <div class="pf-sechead"><span class="pf-tile c-gold"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-medal"/></svg></span><b id="pf-ach-t">Achievements</b><span class="ach-count" id="ach-count" aria-live="polite">0/25 Unlocked</span></div>
+    <div class="pf-sechead"><span class="pf-tile c-gold"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-medal"/></svg></span><b id="pf-ach-t">Achievements</b><span class="ach-count" id="ach-count" aria-live="polite" title="Unlocked achievements">0/25</span><button class="ach-all" id="ach-all" type="button" aria-label="See all achievements">See All<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button></div>
     <div class="ach-wrap">
       <button class="ach-nav prev" id="ach-prev" type="button" aria-label="Scroll achievements left"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
       <ul class="ach-track" id="ach-track" tabindex="0" aria-label="Achievements. Swipe or scroll sideways to see more."></ul>
@@ -588,6 +599,19 @@
     <div id="ach-d-prog"></div>
     <p id="ach-d-state" class="ach-d-state"></p>
     <button id="ach-ok" class="primary big" type="button">Close</button>
+  </div>
+</div>
+
+<!-- Play chooser (bottom bar "Play": pick Solo or Online Battle first) -->
+<div id="play-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="play-title">
+  <div class="card pc-card">
+    <button id="play-close" class="x" type="button" aria-label="Close">&#10005;</button>
+    <h2 id="play-title">What do you want to play?</h2>
+    <p class="pc-sub">Pick a mode to get started.</p>
+    <div class="pc-opts">
+      <button class="fb-card pc-solo" type="button" data-play="solo"><span class="fb-ico" aria-hidden="true">&#127919;</span><h3>Solo Play</h3><p>Guess the secret word on your own, at your own pace.</p><span class="fb-go">Play &rarr;</span></button>
+      <button class="fb-card pc-battle" type="button" data-play="battle"><span class="fb-ico" aria-hidden="true">&#9876;&#65039;</span><h3>Online Battle</h3><p>Race a friend or a whole team in a private room.</p><span class="fb-go">Battle &rarr;</span></button>
+    </div>
   </div>
 </div>
 
