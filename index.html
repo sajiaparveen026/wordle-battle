@@ -397,11 +397,16 @@
     </div>
   </div>
 
+  <div class="pf-seg" id="pf-modes" role="tablist" aria-label="Statistics mode">
+    <button class="pf-cap on" type="button" role="tab" aria-selected="true" data-pfs="solo">Solo</button>
+    <button class="pf-cap" type="button" role="tab" aria-selected="false" data-pfs="battle">Battle</button>
+  </div>
+
   <div class="pf-stats" id="pf-stats">
-    <div class="pf-stat c-purple"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-pad"/></svg><b id="pf-played">0</b><small>Games Played</small></div>
-    <div class="pf-stat c-gold"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-cup"/></svg><b id="pf-won">0</b><small>Games Won</small></div>
+    <div class="pf-stat c-purple"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-pad"/></svg><b id="pf-played">0</b><small id="pf-l-played">Games Played</small></div>
+    <div class="pf-stat c-gold"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-cup"/></svg><b id="pf-won">0</b><small id="pf-l-won">Games Won</small></div>
     <div class="pf-stat c-green"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-bars"/></svg><b id="pf-rate">—</b><small>Win Rate</small></div>
-    <div class="pf-stat c-orange"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-flame"/></svg><b id="pf-wstreak">0</b><small>Win Streak</small></div>
+    <div class="pf-stat c-orange"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-flame"/></svg><b id="pf-wstreak">0</b><small id="pf-l-streak">Win Streak</small></div>
   </div>
 
   <button class="pf-card pf-daily" type="button" data-go="daily" aria-label="Daily Challenge">
@@ -420,7 +425,12 @@
   </section>
 
   <section class="pf-card pf-recent" aria-labelledby="pf-rec-t">
-    <div class="pf-sechead"><span class="pf-tile c-blue"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-clock"/></svg></span><b id="pf-rec-t">Recent Games</b><button class="pf-viewall hidden" id="pf-viewall" type="button" aria-expanded="false">View All</button></div>
+    <div class="pf-sechead"><span class="pf-tile c-blue"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-clock"/></svg></span><b id="pf-rec-t">Recent Plays</b><button class="pf-viewall hidden" id="pf-viewall" type="button" aria-expanded="false">View All</button></div>
+    <div class="pf-seg pf-seg3" id="pf-rfilter" role="tablist" aria-label="Recent plays category">
+      <button class="pf-cap" type="button" role="tab" aria-selected="false" data-pfr="daily">Daily</button>
+      <button class="pf-cap on" type="button" role="tab" aria-selected="true" data-pfr="solo">Solo</button>
+      <button class="pf-cap" type="button" role="tab" aria-selected="false" data-pfr="battle">Battle</button>
+    </div>
     <ul class="pf-games" id="pf-games"></ul>
   </section>
 </section>
@@ -617,7 +627,7 @@
 <div id="install-help" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ih-title">
   <div class="card"><button id="ih-x" class="x" aria-label="Close">✕</button><h2 id="ih-title">📲 Install Wordle Battle</h2><p>Your browser didn't offer the one-tap install, so do this:</p><ol id="ih-steps" class="ih-steps"></ol><div class="actions"><button id="ih-ok" class="primary" type="button">Got it</button></div></div>
 </div>
-<div id="offline-bar" class="hidden" role="status">📡 You're offline. Solo play still works; sign-in and online battles need a connection.</div>
+<div id="offline-bar" class="hidden" role="status"><span class="ob-txt">📡 You're offline. Solo play still works; sign-in and online battles need a connection.</span><button class="ob-x" id="offline-x" type="button" aria-label="Dismiss offline notice">✕</button></div>
 
 <nav id="bottomnav" aria-label="Main navigation">
   <button data-nav="dashboard"><i>🏠</i><span>Home</span></button>

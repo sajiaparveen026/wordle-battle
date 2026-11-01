@@ -80,7 +80,7 @@ html[data-motion=reduced] .lbx *{animation:none!important}
   }
 
   // ---------- sending my numbers ----------
-  let busy = false, again = false, dirty = false, lastSig = "", timer = 0;
+  let busy = false, again = false, dirty = false, lastSig = "", timer = 0; let lastHtml = "";
   const later = (ms) => { clearTimeout(timer); timer = setTimeout(async () => { const r = await submit(false); if (r && visible()) load(true); }, ms || 2300); };
   async function retire(c, g) { try { const r = await c.rpc("lb_remove_guest", { p_pid: g.pid, p_secret: g.secret }); if (!r.error) { g.sent = false; saveGuest(g); lastSig = ""; } } catch {} }
   async function submit(force) {
@@ -183,7 +183,8 @@ html[data-motion=reduced] .lbx *{animation:none!important}
         html += `<p class="lbx-tagline">Keep playing. Keep winning. Climb the leaderboard.</p>`;
       }
     }
-    root.innerHTML = html;
+    if (html === lastHtml && root.firstChild) return;      // nothing changed (the 30 s refresh): do not rebuild, or every row would play its entrance animation again = visible blinking
+    lastHtml = html; root.innerHTML = html;
   }
 
   // ---------- wiring ----------

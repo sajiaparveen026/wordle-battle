@@ -111,8 +111,10 @@
 
   // ----- Offline notice -----
   const offlineBar = $("#offline-bar");
-  const syncOnline = () => offlineBar.classList.toggle("hidden", navigator.onLine);
-  addEventListener("online", syncOnline); addEventListener("offline", syncOnline); syncOnline();
+  let offlineDismissed = false;   // the X only hides the notice for this offline period; going offline again shows it again
+  const syncOnline = () => { if (navigator.onLine) offlineDismissed = false; offlineBar.classList.toggle("hidden", navigator.onLine || offlineDismissed); };
+  $("#offline-x").addEventListener("click", () => { offlineDismissed = true; offlineBar.classList.add("hidden"); });
+  addEventListener("online", syncOnline); addEventListener("offline", () => { offlineDismissed = false; syncOnline(); }); syncOnline();
 
   window.PWA = { renderAbout, isUpdateReady: () => updateReady, checkForUpdate, isOnline: () => navigator.onLine };
   renderAbout();

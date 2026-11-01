@@ -191,7 +191,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
   }
   function bad(msg) { submitMsg(msg); snd("bad"); const el = rowEl(rendered); if (!el) return; el.classList.add("shake", "invalid"); setTimeout(() => el.classList.remove("shake", "invalid"), 450); }
   async function submit() {
-    if (!canType()) return;
+    if (busy || !canType()) return;   // a guess already being sent can never be sent twice (double click / Enter + tap)
     if (cur.length < COLS) return bad("Not enough letters");
     if (typeof VALID !== "undefined" && !VALID.has(cur)) return bad("Not a word!");
     if (guesses().some((g) => g.word === cur)) return bad("Already guessed");
@@ -269,6 +269,8 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
   let rwState = "idle", rwInfo = null, rwRoom = "", rwBusyFor = "", rwWait = null, rmSig = "", rmDeadline = 0, rmBusy = false, rmGo = false, rmPoke = 0;
   const gfx = (n, ...a) => { try { if (typeof window[n] === "function") return window[n](...a); } catch {} };   // app.js helpers (confetti, countUp, ...)
   const quick = () => typeof reduced === "function" && reduced();
+  // What the Profile keeps about a finished battle (no word, no answer): opponent, attempts, final status.
+  const histMeta = (rid) => { const r = room(), m = me(), o = opp(); if (!r || r.id !== rid || !m) return { type: "friend" }; return { type: "friend", tries: m.attempts_used, status: m.status, ms: m.completion_ms, opp: o ? { name: o.username, avatar: o.avatar } : null }; };
   const canPay = () => typeof Player !== "undefined" && Player && typeof Player.rewardBattle === "function";
   const paidOutcome = () => { const m = me(); return !!m && (m.outcome === "win" || m.outcome === "loss" || m.outcome === "draw"); };
 
@@ -282,7 +284,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     if (recovered || !canPay() || !fb()) return; recovered = true;
     for (const rid of unsureList()) {
       const res = await fb().call("bt_claim_reward", { p_room: rid });
-      if (res.ok) { if (Player.rewardBattle(rid, res.outcome, res.coins, res.xp)) gfx("refreshCoins"); markUnsure(rid, false); }
+      if (res.ok) { if (Player.rewardBattle(rid, res.outcome, res.coins, res.xp, { type: "friend" })) gfx("refreshCoins"); markUnsure(rid, false); }
       else if (res.reason === "forbidden" || res.reason === "not_finished") markUnsure(rid, false);
     }
   }
@@ -294,7 +296,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     const res = await fb().call("bt_claim_reward", { p_room: rid });
     if (rwBusyFor === rid) rwBusyFor = "";
     let applied = null;
-    if (res.ok && (res.granted || wasUnsure) && canPay()) applied = Player.rewardBattle(rid, res.outcome, res.coins, res.xp);
+    if (res.ok && (res.granted || wasUnsure) && canPay()) applied = Player.rewardBattle(rid, res.outcome, res.coins, res.xp, histMeta(rid));
     if (res.ok || res.reason === "forbidden" || res.reason === "not_finished") markUnsure(rid, false);   // saved right away, even if the card was closed meanwhile
     if (rwRoom !== rid || !resultShown) { if (applied) gfx("refreshCoins"); return; }
     if (!res.ok) { rwState = "fail"; drawReward(); return; }                                                  // nothing is lost: the server keeps it claimable

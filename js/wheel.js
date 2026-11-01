@@ -35,11 +35,12 @@
 .wh-chip{display:inline-flex;align-items:center;gap:5px;height:44px;padding:0 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-weight:900;font-variant-numeric:tabular-nums}
 .wh-chip.on{border-color:#4ADE80;box-shadow:0 0 14px color-mix(in srgb,#4ADE80 40%,transparent)}
 .wh-chip svg{width:24px;height:24px}
-.wh{position:relative;display:grid;justify-items:center;gap:14px;padding:6px 0 90px;isolation:isolate}
-.wh::before{content:"";position:absolute;z-index:-1;left:50%;top:-10px;width:min(130vw,760px);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;
+#wheel{overflow-x:clip}   /* the glow behind the wheel is wider than a phone: without this it stretched the whole page sideways */
+.wh{position:relative;display:grid;justify-items:center;gap:14px;padding:6px 0 calc(96px + env(safe-area-inset-bottom));isolation:isolate;max-width:100%}
+.wh::before{content:"";position:absolute;z-index:-1;left:50%;top:-10px;width:min(120%,760px);aspect-ratio:1;transform:translateX(-50%);border-radius:50%;
   background:radial-gradient(circle,color-mix(in srgb,#8B5CF6 26%,transparent) 0,color-mix(in srgb,#EC4899 12%,transparent) 38%,transparent 66%);filter:blur(10px);pointer-events:none}
 .wh-stage{position:relative;width:100%;display:grid;justify-items:center;padding-top:34px}
-.wh-box{position:relative;width:min(88vw,46vh,470px);min-width:230px;aspect-ratio:1;filter:drop-shadow(0 20px 26px rgba(0,0,0,.5)) drop-shadow(0 0 28px color-mix(in srgb,#F472B6 30%,transparent))}
+.wh-box{position:relative;width:min(88%,46vh,470px);min-width:min(230px,100%);aspect-ratio:1;filter:drop-shadow(0 20px 26px rgba(0,0,0,.5)) drop-shadow(0 0 28px color-mix(in srgb,#F472B6 30%,transparent))}
 .wh-box svg.wh-svg{width:100%;height:100%;display:block;overflow:visible}
 .wh-bulb{animation:wh-tw 1.1s ease-in-out infinite alternate}.wh-bulb.b{animation-delay:.55s}
 .wh-box.spin .wh-bulb{animation-duration:.25s}
@@ -60,24 +61,19 @@
 .wh-spin:active:not([disabled]){transform:translateY(6px);box-shadow:0 3px 0 #2B8512,0 8px 16px rgba(70,210,25,.3),inset 0 3px 0 rgba(255,255,255,.5),inset 0 -5px 0 rgba(0,0,0,.14)}
 .wh-spin.low{background:linear-gradient(180deg,#a8a8b3,#85858f 55%,#6c6c76);box-shadow:0 9px 0 #4b4b53,0 16px 24px rgba(0,0,0,.35),inset 0 3px 0 rgba(255,255,255,.4);text-shadow:0 3px 0 rgba(0,0,0,.35);animation:none}
 .wh-spin[disabled]{cursor:not-allowed;filter:grayscale(.6) brightness(.9);animation:none}
-.wh-hist{width:min(100%,420px);display:grid;gap:8px}
-.wh-hist h3{margin:0 2px;font-size:.74rem;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
-.wh-hist ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.wh-hist li{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 12px;border-radius:13px;background:var(--panel);border:1px solid var(--line);font-size:.86rem;font-weight:700;animation:wh-in .3s ease both}
-.wh-hist li .ic{font-size:1.25rem}.wh-hist li small{color:var(--muted);font-weight:800;font-size:.72rem}
 .wh-note{margin:0;width:min(100%,420px);text-align:center;color:var(--muted);font-size:.78rem;line-height:1.45}
 .wh-msg{width:min(100%,420px);text-align:center;padding:18px;border-radius:18px;background:var(--panel);border:1px dashed var(--line);color:var(--muted);font-size:.9rem;line-height:1.45}
-.wh-win{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(5,5,12,.74);backdrop-filter:blur(5px);animation:wh-fade .25s ease both}
-.wh-win-card{position:relative;overflow:hidden;width:min(100%,380px);padding:28px 22px 22px;border-radius:28px;text-align:center;background:linear-gradient(170deg,color-mix(in srgb,var(--c,#FACC15) 24%,var(--panel)),var(--panel) 62%);
+.wh-win{position:fixed;inset:0;z-index:60;display:flex;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));background:rgba(5,5,12,.74);backdrop-filter:blur(5px);overflow-y:auto;overscroll-behavior:contain;animation:wh-fade .25s ease both}
+.wh-win-card{position:relative;overflow:hidden;width:min(100%,380px);margin:auto;padding:clamp(16px,4.2vh,28px) clamp(14px,5vw,22px) clamp(14px,3.2vh,22px);border-radius:28px;text-align:center;background:linear-gradient(170deg,color-mix(in srgb,var(--c,#FACC15) 24%,var(--panel)),var(--panel) 62%);
   border:2px solid var(--c,#FACC15);box-shadow:0 0 50px color-mix(in srgb,var(--c,#FACC15) 45%,transparent),0 24px 50px rgba(0,0,0,.55);animation:wh-pop .5s cubic-bezier(.2,1.2,.3,1) both}
-.wh-rays{position:absolute;left:50%;top:78px;width:560px;height:560px;margin:-280px 0 0 -280px;background:repeating-conic-gradient(color-mix(in srgb,var(--c,#FACC15) 26%,transparent) 0 9deg,transparent 9deg 18deg);
+.wh-rays{position:absolute;left:50%;top:clamp(52px,12vh,78px);width:560px;height:560px;margin:-280px 0 0 -280px;background:repeating-conic-gradient(color-mix(in srgb,var(--c,#FACC15) 26%,transparent) 0 9deg,transparent 9deg 18deg);
   -webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%);animation:wh-rot 14s linear infinite;pointer-events:none}
-.wh-win-ic{position:relative;display:grid;place-items:center;width:112px;height:112px;margin:0 auto 6px;border-radius:50%;font-size:3.5rem;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--c,#FACC15) 50%,#fff),color-mix(in srgb,var(--c,#FACC15) 80%,#000));
+.wh-win-ic{position:relative;display:grid;place-items:center;width:clamp(72px,15vh,112px);height:clamp(72px,15vh,112px);margin:0 auto 6px;border-radius:50%;font-size:clamp(2.2rem,7.5vh,3.5rem);background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--c,#FACC15) 50%,#fff),color-mix(in srgb,var(--c,#FACC15) 80%,#000));
   border:4px solid #fff;box-shadow:0 8px 24px rgba(0,0,0,.4),0 0 30px color-mix(in srgb,var(--c,#FACC15) 60%,transparent);animation:wh-bounce 1.2s ease-in-out infinite}
 .wh-win h2{position:relative;margin:8px 0 2px;font-size:.95rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
-.wh-win-p{position:relative;margin:0;font-size:2rem;font-weight:900;line-height:1.1;color:var(--text);text-shadow:0 0 20px color-mix(in srgb,var(--c,#FACC15) 55%,transparent)}
-.wh-win small{position:relative;display:block;margin:8px 0 16px;color:var(--muted);font-size:.84rem;line-height:1.4}
-.wh-win .wh-collect{position:relative;width:100%;padding:14px;border:0;border-radius:16px;cursor:pointer;font:inherit;font-size:1.1rem;font-weight:900;color:#0b3a05;background:linear-gradient(180deg,#9BF55C,#5ED823);box-shadow:0 6px 0 #2B8512,inset 0 2px 0 rgba(255,255,255,.6)}
+.wh-win-p{position:relative;margin:0;font-size:clamp(1.45rem,7.2vw,2rem);font-weight:900;line-height:1.15;overflow-wrap:anywhere;color:var(--text);text-shadow:0 0 20px color-mix(in srgb,var(--c,#FACC15) 55%,transparent)}
+.wh-win small{position:relative;display:block;margin:8px 0 clamp(10px,2.4vh,16px);color:var(--muted);font-size:.84rem;line-height:1.4}
+.wh-win .wh-collect{position:relative;width:100%;min-height:52px;padding:14px;touch-action:manipulation;border:0;border-radius:16px;cursor:pointer;font:inherit;font-size:1.1rem;font-weight:900;color:#0b3a05;background:linear-gradient(180deg,#9BF55C,#5ED823);box-shadow:0 6px 0 #2B8512,inset 0 2px 0 rgba(255,255,255,.6)}
 .wh-win .wh-collect:active{transform:translateY(4px);box-shadow:0 2px 0 #2B8512}
 .whcard{--c:#EC4899;position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;width:100%;padding:12px 16px 12px 12px;border-radius:20px;text-align:left;color:var(--text);font:inherit;cursor:pointer;overflow:hidden;
   background:linear-gradient(115deg,color-mix(in srgb,#8B5CF6 26%,var(--panel)),color-mix(in srgb,#EC4899 16%,var(--panel)) 55%,var(--panel));border:1px solid color-mix(in srgb,#F472B6 45%,var(--line));
@@ -90,7 +86,8 @@
 .whc-tag{padding:6px 12px;border-radius:999px;font-size:.72rem;font-weight:900;letter-spacing:1px;color:#0b3a05;background:linear-gradient(180deg,#9BF55C,#5ED823);box-shadow:0 3px 0 #2B8512;white-space:nowrap}
 .whc-tag.used{color:var(--muted);background:var(--panel-2);box-shadow:none;border:1px solid var(--line)}
 .whc-tag:not(.used){animation:wh-pulse 1.6s ease-in-out infinite}
-@media (max-height:700px){.wh-box{width:min(80vw,44vh,470px)}}
+@media (max-height:700px){.wh-box{width:min(80%,42vh,470px)}.wh-stage{padding-top:28px}.wh-spin{padding-top:11px;padding-bottom:15px}}
+@media (max-width:360px){.wh-title{font-size:.95rem}.wh-status{font-size:.82rem;padding:7px 12px}}
 @media (min-width:700px){.wh{gap:18px}}
 @keyframes wh-tw{from{opacity:.45;transform:scale(.8)}to{opacity:1;transform:scale(1.12)}}
 @keyframes wh-flick{0%{transform:translateX(-50%) rotate(0)}40%{transform:translateX(-50%) rotate(-16deg)}100%{transform:translateX(-50%) rotate(0)}}
@@ -202,8 +199,7 @@ html[data-motion=reduced] .whcard,html[data-motion=reduced] .whcard::after,html[
     root.innerHTML = `<div class="wh-stage"><div class="wh-box" id="wh-box">${wheelSvg(prizes, { pfx: "w" })}<div class="wh-pointer" id="wh-pointer">${POINTER}</div></div></div>
       <div class="wh-status" id="wh-status" role="status" aria-live="polite"></div>
       <button class="wh-spin" id="wh-spin" type="button"><span id="wh-spin-t">SPIN</span></button>
-      <p class="wh-note" id="wh-note"></p>
-      <div class="wh-hist" id="wh-hist"></div>`;
+      <p class="wh-note" id="wh-note"></p>`;
     built = true; applyRot();
     $("#wh-spin").addEventListener("click", spin);
   }
@@ -228,12 +224,6 @@ html[data-motion=reduced] .whcard,html[data-motion=reduced] .whcard::after,html[
     else if (low) { s.classList.add("warn"); s.innerHTML = `Not enough coins · a spin costs <b>${WHEEL.cost}</b> 🪙`; }
     else s.innerHTML = `✅ Free spin used · next free spin in <b id="wh-count">${clock(nextMidnight() - Date.now())}</b>`;
     const note = $("#wh-note"); if (note) note.textContent = isAcct() ? "The prize is picked securely on the server. Your free spin resets every day." : "You're a guest: spins are saved on this device. Create an account to keep them safe across devices.";
-    drawHist();
-  }
-  function drawHist() {
-    const el = $("#wh-hist"); if (!el) return;
-    const items = hist.slice(0, WHEEL.historyShown).map((h) => { const p = prizes.find((x) => x.id === h.prize) || WHEEL_PRIZES.find((x) => x.id === h.prize); return p ? `<li><span class="ic" aria-hidden="true">${iconOf(p)}</span><span>${esc(p.label)}</span><small>${h.free ? "FREE" : "-" + (h.cost || WHEEL.cost)}</small></li>` : ""; }).join("");
-    el.innerHTML = items ? `<h3>Recent spins</h3><ul>${items}</ul>` : "";
   }
   function cardUpdate() {
     const free = freeAvailable(), sub = $("[data-wh-sub]"), tag = $("[data-wh-tag]");

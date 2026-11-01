@@ -141,7 +141,7 @@ function show(name, fromHistory) {
   if (window.Auth) Auth.renderAccount();
   if (name === "signup" && window.Auth && Auth.restoreSignupDraft) Auth.restoreSignupDraft(); // typed email / username come back (never passwords)
   if (name === "shop") renderShop();
-  if (name === "profile") renderProfile();
+  if (name === "profile") { pfStatMode = "solo"; pfRecent = "solo"; showAllGames = false; renderProfile(); }   // Solo stats + Solo plays are the default every time the Profile opens
   window.scrollTo(0, 0);
 }
 function openSettings() { if (window.Settings) window.Settings.open(); }
@@ -179,7 +179,7 @@ function renderLeaderboard() { if (window.Leaderboard) Leaderboard.render(); }  
 
 // ---------- Profile (separate from Settings) ----------
 const fmtDate = (iso, long) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString([], long ? { month: "short", day: "numeric", year: "numeric" } : { month: "short", year: "numeric" }); };
-let showAllGames = false;
+let showAllGames = false, pfStatMode = "solo", pfRecent = "solo";
 function renderProfile() {
   const p = Player.data, lv = Player.levelInfo(), meta = (window.Auth && Auth.profileMeta && Auth.profileMeta()) || {};
   $("#pf-avatar").textContent = p.avatar; $("#pf-name").textContent = p.username; $("#pf-badge").textContent = lv.level;
@@ -187,26 +187,51 @@ function renderProfile() {
   $("#pf-xptext").textContent = `${lv.xp.toLocaleString()} / ${lv.need.toLocaleString()} XP`; animateXp("#pf-xp", (lv.xp / lv.need) * 100);
   const joined = fmtDate(meta.joined || p.joinedAt);
   $("#pf-meta").textContent = [joined ? `${meta.id ? "Joined" : "Playing since"} ${joined}` : "", meta.id ? `ID: ${meta.id}` : ""].filter(Boolean).join(" · ");
-  const played = p.wins + p.losses;                               // real numbers from this player's save
-  $("#pf-played").textContent = played; $("#pf-won").textContent = p.wins;
-  $("#pf-rate").textContent = played ? Math.round((p.wins / played) * 100) + "%" : "—"; $("#pf-wstreak").textContent = p.streak;
+  renderProfileStats();
   const day = (n) => `${n} day${n === 1 ? "" : "s"}`;              // daily challenge numbers come from the daily stats
   $("#pf-dstreak").textContent = `🔥 ${day(stats.streak)}`;
   $("#pf-dbest").textContent = `Best streak: ${day(stats.best)}`; $("#pf-ddone").textContent = `Completed: ${stats.played}`;
   renderRecentGames();
   if (window.Achievements) Achievements.render();   // achievements carousel + counter
 }
+function renderProfileStats() {           // Solo and Battle numbers come from separate counters and never mix
+  const p = Player.data, battle = pfStatMode === "battle";
+  let played, won, streak;
+  if (battle) { const b = p.bstats; played = b.played; won = b.won; streak = b.streak; }
+  else { const c = Player.soloCounts(); played = c.played; won = c.won; streak = p.streak; }   // Solo: battle results taken out (see Player.soloCounts)
+  $("#pf-played").textContent = played; $("#pf-won").textContent = won;
+  $("#pf-rate").textContent = played ? Math.round((won / played) * 100) + "%" : "—"; $("#pf-wstreak").textContent = streak;
+  $("#pf-l-played").textContent = battle ? "Battles Played" : "Games Played"; $("#pf-l-won").textContent = battle ? "Battles Won" : "Games Won";
+  $("#pf-l-streak").textContent = battle ? "Battle Streak" : "Win Streak";
+  $$("#pf-modes [data-pfs]").forEach((b) => { const on = b.dataset.pfs === pfStatMode; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
+}
+const fmtDT = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }) + " · " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); };
+const ordinalN = (n) => { const t = n % 100; return n + (t >= 11 && t <= 13 ? "th" : ({ 1: "st", 2: "nd", 3: "rd" })[n % 10] || "th"); };
+const pfEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 function renderRecentGames() {
-  const all = [...Player.data.history].reverse(), list = showAllGames ? all : all.slice(0, 5), ul = $("#pf-games");   // newest first; only finished games are listed, so no answer is ever shown
-  ul.innerHTML = "";
-  if (!all.length) { const li = document.createElement("li"); li.className = "pf-none"; li.textContent = "No games yet. Finish a game and it will show up here."; ul.append(li); }
+  const p = Player.data;   // newest first; only finished games are listed and no word/answer is ever stored, so none can be shown
+  const all = (pfRecent === "battle" ? [...p.bhist] : p.history.filter((h) => h.mode === (pfRecent === "daily" ? "daily" : "practice"))).reverse();
+  const list = showAllGames ? all : all.slice(0, 5), ul = $("#pf-games"); ul.innerHTML = "";
+  $$("#pf-rfilter [data-pfr]").forEach((b) => { const on = b.dataset.pfr === pfRecent; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
+  if (!all.length) ul.append(pfEl("li", "pf-none", { daily: "No Daily Challenges yet. Finish one and it will show up here.", solo: "No Solo games yet. Finish a game and it will show up here.", battle: "No battles yet. Finish a Friend or Team battle and it will show up here." }[pfRecent]));
   list.forEach((g) => {
-    const li = document.createElement("li"); li.className = "pf-game";
-    const mode = document.createElement("span"); mode.className = "pf-mode " + g.mode; mode.textContent = g.mode === "daily" ? "Daily" : "Solo";
-    const res = document.createElement("b"); res.className = g.won ? "win" : "loss"; res.textContent = g.won ? "WIN" : "LOSS";
-    const att = document.createElement("span"); att.className = "pf-att"; att.textContent = `${g.tries} attempt${g.tries === 1 ? "" : "s"}`;
-    const dt = document.createElement("time"); dt.dateTime = g.at; dt.textContent = fmtDate(g.at, true);
-    li.append(mode, res, att, dt); ul.append(li);
+    const li = pfEl("li", "pf-game"), battle = pfRecent === "battle";
+    const result = battle ? g.result : g.won ? "win" : "loss";
+    const coins = battle ? g.coins : g.won ? REWARDS[g.mode === "daily" ? "daily" : "practice"].coins : 0, xp = battle ? g.xp : g.won ? REWARDS[g.mode === "daily" ? "daily" : "practice"].xp : 0;
+    const tries = g.tries;
+    li.append(pfEl("span", "pf-mode " + (battle ? "battle" : g.mode), battle ? "Battle" : g.mode === "daily" ? "Daily" : "Solo"), pfEl("b", result, result.toUpperCase()),
+      pfEl("span", "pf-att", tries == null ? "" : `${tries} attempt${tries === 1 ? "" : "s"}`));
+    const dt = pfEl("time", "", fmtDT(g.at)); dt.dateTime = g.at; li.append(dt);
+    const sub = pfEl("div", "pf-sub");
+    if (battle) {
+      sub.append(pfEl("span", "pf-tag " + g.type, g.type === "team" ? "👥 Team Battle" : "⚔️ Friend Battle"));
+      if (g.type === "friend" && g.opp) { const o = pfEl("span", "pf-opp"); o.append(pfEl("i", "pf-oav", g.opp.avatar), pfEl("span", "pf-oname", g.opp.name)); sub.append(o); }
+      if (g.type === "team" && g.place) sub.append(pfEl("span", "pf-place", `${ordinalN(g.place)}${g.size ? ` of ${g.size} players` : ""}`));
+      const fin = g.status === "solved" ? (g.ms != null ? `Solved in ${g.ms >= 60000 ? Math.floor(g.ms / 60000) + ":" + String(((g.ms / 1000) % 60).toFixed(0)).padStart(2, "0") : (g.ms / 1000).toFixed(1) + "s"}` : "Solved") : g.status === "failed" ? "Out of attempts" : result === "draw" ? "Draw" : "Time's up";
+      sub.append(pfEl("span", "pf-fin", fin));
+    }
+    sub.append(pfEl("span", "pf-rw", `🪙 +${coins || 0} · ⚡ +${xp || 0} XP`));
+    li.append(sub); ul.append(li);
   });
   const v = $("#pf-viewall"); v.classList.toggle("hidden", all.length <= 5); v.textContent = showAllGames ? "Show less" : "View All"; v.setAttribute("aria-expanded", String(showAllGames));
 }
@@ -726,6 +751,8 @@ $("#pf-edit").onclick = openEdit; $("#ep-done").onclick = closeEdit; $("#ep-x").
 $("#edit-profile").addEventListener("click", (e) => { if (e.target.id === "edit-profile") closeEdit(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEdit(); });
 $("#pf-viewall").onclick = () => { showAllGames = !showAllGames; renderRecentGames(); };
+$("#pf-modes").addEventListener("click", (e) => { const b = e.target.closest("[data-pfs]"); if (!b || b.dataset.pfs === pfStatMode) return; pfStatMode = b.dataset.pfs; renderProfileStats(); const st = $("#pf-stats"); st.classList.remove("swap"); void st.offsetWidth; st.classList.add("swap"); });   // no page reload
+$("#pf-rfilter").addEventListener("click", (e) => { const b = e.target.closest("[data-pfr]"); if (!b || b.dataset.pfr === pfRecent) return; pfRecent = b.dataset.pfr; showAllGames = false; renderRecentGames(); });
 $$("#bottomnav [data-nav]").forEach((b) => (b.onclick = () => (b.dataset.nav === "play" ? openGame("practice") : show(b.dataset.nav))));
 $("#g-back").onclick = async () => {
   if (status === "playing" && guesses.length > 0 && !(await confirmBox("Leave this game?", "Your progress is saved, so you can continue later.", "Leave"))) return;

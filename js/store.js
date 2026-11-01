@@ -30,7 +30,9 @@ const Player = (() => {
     rewarded: [], recent: [],
     joinedAt: new Date().toISOString(), history: [], // history = the last 50 finished games (shown on the Profile)
     // Achievements (js/achievements.js): lifetime counters + the unlock record { id: ISO date }, each achievement is stored once and never removed
-    earned: 0, noHintWins: 0, sessionsPlayed: 0, lastSession: "", lastGameAt: 0, battles: { played: 0, won: 0 }, ach: {}
+    earned: 0, noHintWins: 0, sessionsPlayed: 0, lastSession: "", lastGameAt: 0, battles: { played: 0, won: 0 }, ach: {},
+    // Battle profile stats (separate from Solo): bstats = completed Friend + Team battles, bhist = the last 50 of them (Recent Plays > Battle)
+    bstats: null, bhist: []
   });
   let p;
   let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY)); } catch {}
@@ -57,6 +59,11 @@ const Player = (() => {
   if (!p.battles || typeof p.battles !== "object") p.battles = { played: 0, won: 0 };
   p.battles = { played: cnt(p.battles.played), won: Math.min(cnt(p.battles.won), cnt(p.battles.played)) };
   if (!p.ach || typeof p.ach !== "object" || Array.isArray(p.ach)) p.ach = {};
+  // Battle stats (Profile > Battle). Older saves are seeded ONCE from the lifetime battle counters (losses = played - won, draws were never counted separately).
+  const seedB = () => ({ played: p.battles.played, won: p.battles.won, lost: Math.max(0, p.battles.played - p.battles.won), draw: 0, streak: 0, best: 0 });
+  const cleanB = (b) => { const o = { played: cnt(b.played), won: cnt(b.won), lost: cnt(b.lost), draw: cnt(b.draw), streak: cnt(b.streak), best: cnt(b.best) }; o.best = Math.max(o.best, o.streak); return o; };
+  p.bstats = p.bstats && typeof p.bstats === "object" ? cleanB(p.bstats) : seedB();
+  if (!Array.isArray(p.bhist)) p.bhist = [];
   // A "session" = one app visit. A game finished in a new visit (or 30+ minutes after the last game) counts as a new session.
   const sid = () => { try { let s = sessionStorage.getItem("wb_sid"); if (!s) { s = Math.random().toString(36).slice(2); sessionStorage.setItem("wb_sid", s); } return s; } catch { return "x"; } };
   function countSession() { const now = Date.now(), s = sid(); if (p.lastSession !== s || now - p.lastGameAt > 30 * 60 * 1000) p.sessionsPlayed++; p.lastSession = s; p.lastGameAt = now; }
@@ -112,16 +119,25 @@ const Player = (() => {
     },
     // Online battle reward. The server decides the amounts and pays each battle once (bt_claim_reward); this only writes them to the local save,
     // once per battle room id, so a refresh, a second tab or a retry can never add them twice. Leaving a battle (forfeit) earns nothing.
-    rewardBattle(roomId, outcome, coins, xp) {
+    // meta (optional, only for the Profile): { type: "friend" | "team", tries, status, ms, opp: { name, avatar }, place, size }. No word or answer is ever passed in.
+    rewardBattle(roomId, outcome, coins, xp, meta) {
       const key = "B:" + roomId;
       if (!roomId || p.rewarded.includes(key) || !["win", "loss", "draw"].includes(outcome)) return null;
       coins = Math.min(1000, Math.max(0, Number(coins) | 0)); xp = Math.min(1000, Math.max(0, Number(xp) | 0));
       const before = this.levelInfo().level;
       p.coins += coins; p.earned += coins; p.xp += xp;
       p.battles.played++; if (outcome === "win") { p.battles.won++; p.wins++; } else if (outcome === "loss") p.losses++;
+      const b = p.bstats; b.played++;                                       // Profile > Battle: completed battles only (forfeits never reach here); a draw is neither a win nor a loss
+      if (outcome === "win") { b.won++; b.streak++; b.best = Math.max(b.best, b.streak); } else if (outcome === "loss") { b.lost++; b.streak = 0; } else b.draw++;
+      const m = meta && typeof meta === "object" ? meta : {}, ok = (v, lo, hi) => (Number.isInteger(v) && v >= lo && v <= hi ? v : null);
+      p.bhist.push({ id: String(roomId).slice(0, 60), type: m.type === "team" ? "team" : "friend", result: outcome, tries: ok(m.tries, 0, 6), status: ["solved", "failed"].includes(m.status) ? m.status : "", ms: Number.isFinite(m.ms) && m.ms >= 0 ? Math.round(m.ms) : null,
+        opp: m.opp && typeof m.opp.name === "string" ? { name: m.opp.name.slice(0, 16), avatar: String(m.opp.avatar || "").slice(0, 8) } : null, place: ok(m.place, 1, 5), size: ok(m.size, 2, 5), coins, xp, at: new Date().toISOString() });
+      p.bhist = p.bhist.slice(-50);
       countSession(); p.rewarded.push(key); p.rewarded = p.rewarded.slice(-300); save();
       return { coins, xp, outcome, levelUp: this.levelInfo().level > before };
     },
+    // Solo numbers for the Profile: battle wins/losses are also added to wins/losses (achievements use those), so they are taken out here to keep Solo and Battle separate.
+    soloCounts() { const w = Math.max(0, p.wins - p.bstats.won), l = Math.max(0, p.losses - p.bstats.lost); return { won: w, played: w + l }; },
     recordBattle(won) { p.battles.played++; if (won) p.battles.won++; save(); },
     recordLoss(gameId) {
       if (p.rewarded.includes("W:" + gameId) || p.rewarded.includes("L:" + gameId)) return;
