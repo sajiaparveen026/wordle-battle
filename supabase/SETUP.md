@@ -51,6 +51,12 @@ functions (`tz_*`). Friend Zone's functions are not changed. Until it is run, Te
 Run `supabase/migrations/010_team_zone_play.sql` after 009. It adds guesses, hints, solving, timeouts and placements. It replaces the
 Team Zone functions it needs (Friend Zone is unchanged).
 
+### 1j. Team Zone results, rewards, rematch
+Run `supabase/migrations/011_team_zone_results.sql` after 010. It needs **007_friends.sql** to have been run first (Add Friend uses
+it). It adds placement rewards (edit the `tz_rewards` table to change amounts), the rematch, and a Friend Zone rule: a player
+who is in a Team Zone battle cannot be put into a Friend Zone room. Players who see a generic "Something went wrong" when
+joining a Friend Zone room are most likely in a Team Zone battle.
+
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`

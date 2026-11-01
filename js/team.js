@@ -201,7 +201,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     if (fresh) dropped.delete(state.room.id); else if (dropped.has(state.room.id)) return;   // a deliberate create / join clears the mark
     S = state; gotAt = Date.now(); netBad = false; err = ""; view = "room";
     if (state.room.id !== roomId) { roomId = state.room.id; watch(roomId); }
-    if (!["waiting", "playing"].includes(state.room.status)) { clearInterval(pollT); pollT = 0; }   // closed: stop polling
+    if (!["waiting", "playing", "finished"].includes(state.room.status)) { clearInterval(pollT); pollT = 0; }   // cancelled / expired: stop; a finished battle keeps polling so rematch requests show
     if (window.TeamGame && ["playing", "finished"].includes(state.room.status) && state.room.started_at_ms) { TeamGame.update(state); return; }
     paint(true);
   }
@@ -315,14 +315,27 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
   async function open() {
     wire();
     if (S) { paint(true); return; }
-    const g = await call("tz_get_active", {});                  // resume a room I am still in (refresh / reopened app)
-    if (g.ok && g.active && g.active.room_id) { const s = await call("tz_sync", { p_room: g.active.room_id }); if (s.ok) return apply(s.state, true); }
+    const g = await call("tz_get_active", {});                  // resume a room I am still in, or a finished one whose reward I have not collected
+    const id = g.ok ? (g.active && g.active.room_id) || g.unclaimed_room_id : "";
+    if (id) { const s = await call("tz_sync", { p_room: id }); if (s.ok) return apply(s.state); }
     paint(true);
   }
 
   function screenChanged(name) {
     if (name === "team") { open(); return; }
   }
+
+  // After a refresh or a reopened app: jump back into a battle in progress, or a finished one whose reward is not collected yet.
+  async function autoReturn(n) {
+    if (typeof screen !== "undefined" && screen !== "dashboard") { if (n < 4) setTimeout(() => autoReturn(n + 1), 1500); return; }
+    if (!client()) { if (n < 4) setTimeout(() => autoReturn(n + 1), 1500); return; }   // connection not ready yet: try again shortly
+    if (S) return;
+    const g = await call("tz_get_active", {});
+    if (!g.ok || S || (!(g.active && g.active.room_id) && !g.unclaimed_room_id)) return;
+    if (typeof screen !== "undefined" && screen !== "dashboard") return;
+    if (typeof show === "function") show("team");                    // open() resumes the room or the result
+  }
+  setTimeout(() => autoReturn(0), 3200);
 
   // Wire up once the screen exists (index.html has #team with #tz-root).
   function boot() { if (root()) { wire(); paint(true); } }

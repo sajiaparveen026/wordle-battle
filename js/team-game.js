@@ -50,12 +50,32 @@
 .tzg-card.win{--c:#FACC15}.tzg-card.loss{--c:#F87171}.tzg-card.draw{--c:#7C8CFF}
 .tzg-card h2{margin:0;font-size:1.6rem;font-weight:900;letter-spacing:2px;color:var(--c)}
 .tzg-card p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.45}
-.tzg-rank{list-style:none;margin:0;padding:0;display:grid;gap:6px;text-align:left}
-.tzg-rank li{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line);font-size:.9rem}
-.tzg-rank li.first{border-color:var(--gold)}
-.tzg-rank .pl{font-weight:900;font-variant-numeric:tabular-nums;min-width:2.2em}
-.tzg-rank .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
-.tzg-rank .sc{color:var(--muted);font-size:.78rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tzg-rank{list-style:none;margin:0;padding:0;display:grid;gap:8px;text-align:left}
+.tzg-rc{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line);font-size:.9rem;position:relative;overflow:hidden}
+.tzg-rc.me{box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent)}
+.tzg-rc.gold{background:linear-gradient(120deg,color-mix(in srgb,#FACC15 22%,var(--panel-2)),var(--panel-2) 70%);border-color:#FACC15;box-shadow:0 0 20px color-mix(in srgb,#FACC15 30%,transparent)}
+.tzg-rc.silver{background:linear-gradient(120deg,color-mix(in srgb,#CBD5E1 18%,var(--panel-2)),var(--panel-2) 70%);border-color:#CBD5E1}
+.tzg-rc.bronze{background:linear-gradient(120deg,color-mix(in srgb,#F59E0B 16%,var(--panel-2)),var(--panel-2) 70%);border-color:#B7791F}
+.tzg-pos{display:grid;justify-items:center;min-width:46px;font-variant-numeric:tabular-nums}
+.tzg-pos i{font-style:normal;font-size:1.05rem;line-height:1}
+.tzg-pos b{font-size:.78rem;font-weight:900;letter-spacing:.5px}
+.tzg-av{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;font-size:1.3rem;background:var(--panel);border:1px solid var(--line)}
+.tzg-who{display:grid;gap:2px;min-width:0}
+.tzg-who b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.92rem}
+.tzg-who small{color:var(--muted);font-size:.72rem;font-variant-numeric:tabular-nums}
+.tzg-earn{display:grid;justify-items:end;gap:3px}
+.tzg-coin,.tzg-xp{font-size:.74rem;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tzg-coin{color:var(--gold)}.tzg-xp{color:#7DD3FC}
+.tzg-add{margin-top:2px;padding:5px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold) 60%,var(--line));background:color-mix(in srgb,var(--gold) 16%,var(--panel));color:var(--text);font:inherit;font-size:.7rem;font-weight:800;cursor:pointer;white-space:nowrap}
+.tzg-add:disabled{opacity:.6;cursor:default}
+.tzg-fr{margin-top:2px;font-size:.7rem;font-weight:800;color:var(--muted);white-space:nowrap}.tzg-fr.ok{color:#4ADE80}
+.tzg-rmbox{display:grid;gap:8px;justify-items:stretch;text-align:center}
+.tzg-rmbox .tzg-row{display:flex;gap:8px}.tzg-rmbox .tzg-row>*{flex:1}
+.tzg-go{padding:11px 14px;border-radius:14px;border:0;font:inherit;font-weight:900;cursor:pointer;color:#0b3a05;background:linear-gradient(180deg,#9BF55C,#5ED823);box-shadow:0 4px 0 #2B8512}
+.tzg-go.alt{color:var(--text);background:var(--panel-2);box-shadow:0 3px 0 var(--line)}
+.tzg-go:disabled{opacity:.6;cursor:default}
+.tzg-ask{margin:0;font-size:.88rem;font-weight:700}
+@media (max-width:380px){.tzg-rc{grid-template-columns:auto minmax(0,1fr);}.tzg-rc .tzg-earn{grid-column:2;justify-items:start;grid-auto-flow:column;gap:8px;align-items:center}.tzg-rc .tzg-pos{grid-row:span 2}}
 .tzg-ans{font-size:.88rem;color:var(--muted)}.tzg-ans b{color:var(--text);letter-spacing:3px;font-size:1rem}
 @keyframes tzg-blink{50%{opacity:.45}}
 @keyframes tzg-pop{from{opacity:0;transform:scale(.6)}60%{transform:scale(1.05)}}
@@ -204,7 +224,7 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
     busy = false;
     if (r.ok) {
       cur = ""; rendered = row + 1;
-      flipRow(row, { word, pattern: r.pattern }, () => { api().apply(r.state); if (room() && room().status === "finished") showResult(); else paintTyping(); });
+      flipRow(row, { word, pattern: r.pattern }, () => { api().apply(r.state); if (room() && room().status === "finished") renderResult(); else paintTyping(); });
       return;
     }
     if (r.state) api().apply(r.state);
@@ -223,43 +243,140 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
     update(S);
   }
 
-  // ---------- result ----------
-  function showResult() {
-    if (resultShown) return; resultShown = true; lockModal(true);
-    const r = room(), m = me(), placed = S.players.slice().sort((a, b) => (a.finish_place || 99) - (b.finish_place || 99));
-    const mine = m && m.finish_place;
-    const outcome = mine === 1 ? "win" : mine ? "loss" : "draw";
-    const title = { win: "You solved it!", loss: mine ? `You finished ${ordinal(mine)}` : "Battle over", draw: "Battle over" }[outcome];
-    const solver = S.players.find((p) => p.status === "solved");
-    const reason = r.end_reason === "solved" ? (solver && solver.is_me ? "You got it first, so the battle ended." : `${solver ? solver.username : "A player"} solved it first, so the battle ended.`) : r.end_reason === "timeout" ? "Time ran out." : "Nobody could solve it.";
+  // ---------- result: ranked list, rewards, Add Friend, rematch ----------
+  let resRoom = "", claimedFor = "", friendOverride = {}, rmHop = "", lastRm = "", curRoom = "", lastResHtml = "";
+  const medal = (n) => (n === 1 ? { cls: "gold", ic: "👑" } : n === 2 ? { cls: "silver", ic: "🥈" } : n === 3 ? { cls: "bronze", ic: "🥉" } : { cls: "", ic: "" });
+  const RM_ERR = { busy: "Someone is already in another battle.", no_request: "That rematch request is no longer open.", host_left: "The host left, so there's no rematch.",
+                   no_opponents: "Nobody is left to play again with.", left: "You left this battle.", already_started: "The rematch has already started.", forbidden: "You're no longer in this battle.",
+                   not_found: "That player isn't in this battle.", self: "That's you!", friend_limit: "Your friends list is full.", throttled: "Slow down a little, then try again.", error: "Something went wrong. Try again." };
+  const FR_TXT = { friends: "Friends", sent: "Request sent", incoming: "Accept request", accepted: "Friends" };
+
+  // Collect my reward once per battle. Player.rewardBattle writes each room only once, so a refresh can never pay twice.
+  function claimOnce() {
+    const rid = room().id; if (claimedFor === rid) return; claimedFor = rid;
+    api().call("tz_claim_reward", { p_room: rid }).then((r) => {
+      if (!r || !r.ok) { claimedFor = ""; return; }
+      if (r.granted && r.outcome && typeof Player !== "undefined" && Player && typeof Player.rewardBattle === "function") {
+        Player.rewardBattle(rid, r.outcome, Number(r.coins) || 0, Number(r.xp) || 0);
+        if (typeof refreshCoins === "function") refreshCoins();
+        if (typeof toast === "function" && (Number(r.coins) || Number(r.xp))) toast(`+${r.coins} coins · +${r.xp} XP`, "success", 3000);
+      }
+      renderResult();
+    });
+  }
+  function friendBtn(p) {
+    const st = friendOverride[p.id] || p.friend_state;
+    if (!st || st === "self") return "";
+    if (st === "friends" || st === "accepted") return `<span class="tzg-fr ok">✓ Friends</span>`;
+    if (st === "sent") return `<span class="tzg-fr">Request sent</span>`;
+    if (st === "incoming") return `<button class="tzg-add" type="button" data-tzg="friend" data-id="${esc(p.id)}" aria-label="Accept ${esc(p.username)}'s friend request">${FR_TXT.incoming}</button>`;
+    return `<button class="tzg-add" type="button" data-tzg="friend" data-id="${esc(p.id)}" aria-label="Add ${esc(p.username)} as a friend">＋ Add Friend</button>`;
+  }
+  function rematchBlock() {
+    const rm = S.rematch || {}, others = S.players.filter((p) => !p.is_me && p.connection !== "left");
+    const me = S.players.find((p) => p.is_me);
+    const secs = Math.ceil((rm.expires_in_ms || 0) / 1000);
+    if (rm.state === "started") return `<p class="tzg-ans">Rematch starting… same team, new word.</p>`;
+    if (rm.state === "open" && rm.by_me) return `<p class="tzg-ans">Waiting for the others to accept (${rm.votes}/${rm.needed}) · ${secs}s</p>`;
+    if (rm.state === "open" && rm.voted) return `<p class="tzg-ans">Waiting for the others (${rm.votes}/${rm.needed}) · ${secs}s</p>`;
+    if (rm.state === "open") {
+      const asker = S.players.find((p) => p.id === rm.requested_by);
+      return `<p class="tzg-ask">${esc(asker ? asker.username : "A player")} wants a rematch with the same team.</p>
+        <div class="tzg-row"><button class="tzg-go" type="button" data-tzg="rm-yes">Accept · ${secs}s</button><button class="tzg-go alt" type="button" data-tzg="rm-no">Decline</button></div>`;
+    }
+    if (!me || me.connection === "left" || others.length === 0) return "";
+    return `<button class="tzg-go" type="button" data-tzg="rm-ask">⚔️ Rematch with the team</button>`;
+  }
+  function renderResult() {
+    if (!S || !room() || room().status !== "finished") return;
+    const rid = room().id; resultShown = true;
+    if (resRoom !== rid) { resRoom = rid; friendOverride = {}; }
+    let el = $("#tzg-res");
+    if (!el) {
+      el = document.createElement("div"); el.id = "tzg-res"; el.className = "tzg-res"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
+      document.body.append(el); lockModal(true);
+    }
+    const placed = S.players.slice().sort((a, b) => (a.finish_place || 99) - (b.finish_place || 99) || a.seat - b.seat);
+    const me = placed.find((p) => p.is_me);
+    const won = me && me.finish_place === 1;
+    const title = won ? "You solved it!" : me && me.finish_place ? `You finished ${ordinal(me.finish_place)}` : "Battle over";
+    const solver = placed.find((p) => p.finish_place === 1);
+    const reason = room().end_reason === "solved" ? (solver && solver.is_me ? "You got it first, so the battle ended." : `${solver ? esc(solver.username) : "A player"} solved it first, so the battle ended.`)
+                 : room().end_reason === "timeout" ? "Time ran out." : "Nobody could solve it.";
     const answer = S.answer ? `<p class="tzg-ans">The word was <b>${esc(S.answer.toUpperCase())}</b></p>` : "";
     const rows = placed.map((p) => {
-      const pos = p.finish_place ? ordinal(p.finish_place) : "–";
-      const sc = p.status === "solved" ? `Solved in ${(p.completion_ms / 1000).toFixed(1)}s` : `${p.best_exact || 0} right place · ${p.best_present || 0} wrong place`;
-      return `<li class="${p.finish_place === 1 ? "first" : ""}"><span class="pl">${pos}</span><span>${esc(p.avatar)}</span><span class="nm">${esc(p.username)}${p.is_me ? " (you)" : ""}</span><span class="sc">${esc(sc)}</span></li>`;
+      const m = medal(p.finish_place);
+      const sub = p.status === "solved" ? `Solved in ${(p.completion_ms / 1000).toFixed(1)}s`
+                : p.status === "failed" || p.connection === "left" ? `Out after ${p.attempts_used}/6`
+                : `${p.best_exact || 0} right place · ${p.best_present || 0} wrong place`;
+      const coins = p.reward ? p.reward.coins : 0, xp = p.reward ? p.reward.xp : 0;
+      return `<li class="tzg-rc ${m.cls}${p.is_me ? " me" : ""}">
+        <span class="tzg-pos" aria-label="${esc(ordinal(p.finish_place || 0))} place">${m.ic ? `<i aria-hidden="true">${m.ic}</i>` : ""}<b>${p.finish_place ? ordinal(p.finish_place) : "–"}</b></span>
+        <span class="tzg-av" aria-hidden="true">${esc(p.avatar)}</span>
+        <span class="tzg-who"><b>${esc(p.username)}${p.is_me ? " (you)" : ""}</b><small>${esc(sub)}</small></span>
+        <span class="tzg-earn"><span class="tzg-coin">+${coins} 🪙</span><span class="tzg-xp">+${xp} XP</span>${p.is_me ? "" : friendBtn(p)}</span></li>`;
     }).join("");
-    const el = document.createElement("div"); el.id = "tzg-res"; el.className = "tzg-res"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
-    el.innerHTML = `<div class="tzg-card ${outcome}"><h2>${esc(title)}</h2><p>${esc(reason)}</p>${answer}<ul class="tzg-rank">${rows}</ul><button class="primary" type="button" id="tzg-done">Back to Team Zone</button></div>`;
-    document.body.append(el);
-    if (outcome === "win") { snd("win"); if (typeof confetti === "function") confetti(); }
-    $("#tzg-done").addEventListener("click", finishAndLeave);
+    const rm = S.rematch || {};
+    if (lastRm === "open" && rm.state === "none" && !rm.new_room_id) { if (typeof toast === "function") toast("Rematch was declined or expired.", "", 4500); }
+    lastRm = rm.state || "none";
+    const html = `<div class="tzg-card ${won ? "win" : me && me.finish_place ? "loss" : "draw"}"><h2>${esc(title)}</h2><p>${esc(reason)}</p>${answer}
+      <ul class="tzg-rank">${rows}</ul><div class="tzg-rmbox">${rematchBlock()}</div>
+      <button class="primary" type="button" id="tzg-done">Back to Team Zone</button></div>`;
+    if (html !== lastResHtml || el.dataset.room !== rid) {                 // redraw only when something changed, so a tap is never lost mid-redraw
+      lastResHtml = html; el.dataset.room = rid; el.innerHTML = html;
+      $("#tzg-done").addEventListener("click", finishAndLeave);
+    }
+    claimOnce();
+    // a rematch was started by the others: move everyone into the new battle
+    if (rm.state === "started" && rm.new_room_id && rmHop !== rm.new_room_id) {
+      rmHop = rm.new_room_id;
+      api().call("tz_sync", { p_room: rm.new_room_id }).then((r) => { if (r && r.ok) api().apply(r.state); else rmHop = ""; });
+    }
   }
   function finishAndLeave() {
     const r = $("#tzg-res"); if (r) r.remove(); lockModal(false);
     exit(); if (api()) api().finish();
   }
+  document.addEventListener("click", async (e) => {
+    const b = e.target.closest && e.target.closest("#tzg-res [data-tzg]"); if (!b || b.disabled || !room()) return;
+    e.preventDefault();
+    const a = b.dataset.tzg, rid = room().id;
+    const fail = (r) => { if (typeof toast === "function") toast(RM_ERR[r.reason] || RM_ERR.error, "error", 3200); };
+    if (a === "friend") {
+      b.disabled = true;
+      const r = await api().call("tz_add_friend", { p_room: rid, p_target: b.dataset.id });
+      if (r.ok) { friendOverride[b.dataset.id] = r.status; if (typeof toast === "function") toast(r.status === "friends" ? "You're now friends! 🎉" : "Friend request sent!", "success", 2600); renderResult(); }
+      else { b.disabled = false; fail(r); }
+      return;
+    }
+    if (a === "rm-ask" || a === "rm-yes" || a === "rm-no") {
+      b.disabled = true;
+      const r = a === "rm-ask" ? await api().call("tz_rematch_request", { p_room: rid })
+                : await api().call("tz_rematch_respond", { p_room: rid, p_accept: a === "rm-yes" });
+      if (r.state) api().apply(r.state);
+      if (!r.ok && r.reason !== "left") fail(r);
+      return;
+    }
+  });
 
   // ---------- lifecycle ----------
   function update(st) {
     if (leaving) return; if (st) S = st; if (!S) return;
     const s = room().status;
     if (s !== "playing" && s !== "finished") return;
+    if (on && curRoom && room().id !== curRoom) resetForNewRoom();
     if (!on) enter();
     drawStrip(); drawNote(); drawKeys(); drawHints(); drawTimer();
     if (!busy && !flipping) syncBoard();
-    if (s === "finished" && !busy && !flipping) showResult();
+    if (s === "finished" && !busy && !flipping) renderResult();
+  }
+  function resetForNewRoom() {                          // a rematch started: same screen, fresh board
+    const r = $("#tzg-res"); if (r) r.remove(); lockModal(false);
+    cur = ""; rendered = 0; busy = false; flipping = false; resultShown = false; lastCd = -1;
+    makeBoard(); curRoom = room().id;
   }
   function enter() {
+    curRoom = room() ? room().id : "";
     on = true; resultShown = false; cur = ""; rendered = 0; busy = false; flipping = false; lastCd = -1; leaving = false;
     buildUi(); makeBoard(); show("game");
     clearInterval(tmr); tmr = setInterval(() => { if (!S) return; drawTimer(); drawStrip(); drawNote(); }, 250);
@@ -267,7 +384,7 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
   function exit() {
     clearInterval(tmr); tmr = 0; on = false; leaving = true;
     const r = $("#tzg-res"); if (r) r.remove(); lockModal(false);
-    const cd = $("#tzg-cd"); if (cd) cd.remove();
+    curRoom = ""; const cd = $("#tzg-cd"); if (cd) cd.remove();
     const g = $("#game"); if (g) g.classList.remove("team");
     ["tzg-top", "tzg-clue"].forEach((id) => { const e = document.getElementById(id); if (e) e.remove(); });
     $$(".hint").forEach((b) => { delete b.dataset.state; b.title = ""; const bd = b.querySelector(".badge"); if (bd) bd.textContent = ""; });
