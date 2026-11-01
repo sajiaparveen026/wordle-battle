@@ -17,7 +17,16 @@ header.top.bt-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:c
 .bt-head .bt-l{display:flex;align-items:center;gap:8px;min-width:0}
 .bt-head #fb-title{text-align:center;white-space:nowrap}
 .bt-head .coins{justify-self:end;height:44px}
-.fr-open{position:relative}
+.fr-open{position:relative;width:46px;height:46px;border-radius:15px;border:1.5px solid color-mix(in srgb,#FACC15 70%,var(--line));
+  background:radial-gradient(circle at 30% 22%,color-mix(in srgb,#FACC15 28%,var(--panel)),color-mix(in srgb,#A855F7 22%,var(--panel)) 68%,var(--panel));
+  box-shadow:0 4px 14px rgba(0,0,0,.35),0 0 16px color-mix(in srgb,#FACC15 28%,transparent),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .15s,box-shadow .2s}
+.fr-open::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.28) 50%,transparent 62%);transform:translateX(-130%);animation:fr-sheen 4.2s ease-in-out infinite;pointer-events:none}
+.fr-open:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.4),0 0 24px color-mix(in srgb,#FACC15 50%,transparent),inset 0 1px 0 rgba(255,255,255,.3)}
+.fr-open:active{transform:scale(.94)}
+.fr-open svg.fr-ico{width:30px;height:30px;fill:none;stroke:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.fr-open::after{clip-path:inset(0 round 15px)}
+@keyframes fr-sheen{0%,60%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
+html[data-motion=reduced] .fr-open::after{animation:none}
 .fr-open.has{border-color:var(--red1);color:var(--text);box-shadow:0 0 14px color-mix(in srgb,var(--red1) 40%,transparent)}
 .fr-badge{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;display:grid;place-items:center;font-size:.68rem;font-weight:900;line-height:1;color:#fff;background:var(--red1);border:2px solid var(--bg);animation:fr-pulse 2s ease-in-out infinite}
 .fr-ttl{display:grid;justify-items:center;gap:1px;min-width:0}.fr-ttl b{font-size:1.05rem}.fr-ttl small{font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.3px}

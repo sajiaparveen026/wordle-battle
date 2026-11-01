@@ -79,6 +79,20 @@ const Player = (() => {
     consumeSkip() { if (p.skips.free > 0) { p.skips.free--; save(); return true; } if (p.skips.credits > 0) { p.skips.credits--; save(); return true; } return false; }, // free skips first, then bought ones
     addSkipCredit() { p.skips.credits++; save(); },
     addHintCredit(type) { p.hints[type].credits++; save(); },
+    // Spin Wheel (js/wheel.js): takes the paid-spin cost and adds the prize in ONE save, once per spin request id (a retry or refresh can never pay twice).
+    // prize = { kind: "coins" | "hint" | "skip", amount, hint }. Returns { coins } (coins won) or null when it was already applied / cannot be applied.
+    applySpin(reqId, cost, prize) {
+      const key = "S:" + reqId;
+      if (!reqId || !prize || p.rewarded.includes(key) || !Number.isInteger(cost) || cost < 0 || p.coins < cost) return null;
+      const n = Math.min(1000, Math.max(1, Number(prize.amount) | 0)); let coins = 0;
+      if (prize.kind === "coins") coins = n;
+      else if (prize.kind === "hint" && p.hints[prize.hint]) p.hints[prize.hint].credits += Math.min(n, 5);
+      else if (prize.kind === "skip") p.skips.credits += Math.min(n, 5);
+      else return null;
+      p.coins = p.coins - cost + coins; p.earned += coins;
+      p.rewarded.push(key); p.rewarded = p.rewarded.slice(-300); save();
+      return { coins };
+    },
     // Remember a finished game for the Profile (once per game id). The answer word is never stored.
     logGame(id, kind, won, tries) {
       if (!id || p.history.some((h) => h.id === id)) return;

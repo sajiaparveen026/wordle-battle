@@ -180,6 +180,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     <div class="fb-cards two">
       <button class="fb-card ai" type="button" disabled aria-disabled="true"><span class="fb-ico" aria-hidden="true">🤖</span><h3>AI Zone</h3><p>Face a smart computer opponent.</p><span class="fb-chip soon">Coming Soon</span></button>
       <button class="fb-card" type="button" data-fb="friend"><span class="fb-ico" aria-hidden="true">👥</span><h3>Friend Zone</h3><p>Create a private room or join a friend's battle.</p><span class="fb-go">Enter →</span></button>
+      <button class="fb-card wide team" type="button" data-go="team"><span class="fb-ico" aria-hidden="true">🧑‍🤝‍🧑</span><h3>Team Zone</h3><p>Battle with 3 to 5 players in one room. First to solve the word wins.</p><span class="fb-go">Enter →</span></button>
     </div>`;
   }
   function vFriend() {

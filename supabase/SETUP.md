@@ -38,6 +38,19 @@ notifications tables (locked down: only the app's checked functions can touch th
 Without it the Friends page shows a "not set up yet" message and everything else works as before. Guests and registered players both
 can use it; a guest's friends live on that device until they create an account, when they move over.
 
+### 1g. Turn on the Spin Wheel
+Run `supabase/migrations/008_spin_wheel.sql` the same way. It stores the prize list (edit the `wheel_prizes` table to change prizes, odds or amounts),
+each player's free-spin day and their spin history, and picks every prize on the server. Without it the wheel still works for guests; signed-in
+players see a "not set up yet" message. Guests use the prize list inside `js/wheel.js` (`WHEEL_PRIZES`): keep the two lists equal.
+
+### 1h. Turn on Team Zone (3 to 5 players)
+Run `supabase/migrations/009_team_zone.sql` the same way, **after** 006 and 006b. It adds its own tables (`tz_rooms`, `tz_players`) and
+functions (`tz_*`). Friend Zone's functions are not changed. Until it is run, Team Zone shows a "not set up yet" message and nothing else is affected.
+
+### 1i. Team Zone gameplay
+Run `supabase/migrations/010_team_zone_play.sql` after 009. It adds guesses, hints, solving, timeouts and placements. It replaces the
+Team Zone functions it needs (Friend Zone is unchanged).
+
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`
