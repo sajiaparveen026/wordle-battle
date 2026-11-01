@@ -987,3 +987,22 @@ html[data-motion=reduced] #game .submit-btn{transition:none}
 #offline-bar .ob-txt{flex:1;min-width:0;line-height:1.3}
 #offline-bar .ob-x{flex:none;width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.14);color:inherit;font:inherit;font-weight:900;font-size:1rem;cursor:pointer;touch-action:manipulation}
 #offline-bar .ob-x:hover{background:rgba(0,0,0,.24)}#offline-bar .ob-x:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* ===== Play Battle / Friend Zone: premium Enter, Create and Join buttons ===== */
+#battle .fb-go{display:inline-flex;align-items:center;justify-content:center;gap:5px;align-self:end;justify-self:start;margin-top:4px;min-height:0;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--text);
+  background:color-mix(in srgb,var(--c) 20%,var(--panel-2));border:1px solid color-mix(in srgb,var(--c) 55%,var(--line));box-shadow:none;
+  transition:transform .15s ease,background .15s ease,border-color .15s ease}
+#battle .fb-card:not([disabled]):hover .fb-go,#battle .fb-card:not([disabled]):focus-visible .fb-go{background:color-mix(in srgb,var(--c) 34%,var(--panel-2));border-color:var(--c);transform:translateX(2px)}
+#battle .fb-card:not([disabled]):active .fb-go{transform:none}
+#battle .fb-card.ai .fb-go{background:var(--panel-2);color:var(--muted)}
+#battle .fb-card:focus-visible{outline:3px solid var(--c);outline-offset:3px}
+#battle .fb-cards.two{gap:16px}
+/* the Join Room / Copy / Ready buttons inside the Friend Zone */
+#battle .fb .primary{min-height:52px;border-radius:16px;font-weight:900;letter-spacing:.6px;touch-action:manipulation;transition:transform .12s ease,box-shadow .12s ease,filter .2s}
+#battle .fb .primary:not(.alt):not(:disabled){color:#1A1A1B;background:linear-gradient(180deg,#FFE066 0%,var(--gold) 55%,#E0B000 100%);border:0;box-shadow:0 5px 0 #9A7A00,0 12px 22px color-mix(in srgb,var(--gold) 30%,transparent),inset 0 2px 0 rgba(255,255,255,.5)}
+#battle .fb .primary:not(.alt):not(:disabled):hover{filter:brightness(1.07);transform:translateY(-2px)}
+#battle .fb .primary:not(:disabled):active{transform:translateY(4px);box-shadow:0 1px 0 #9A7A00}
+#battle .fb .primary:disabled{opacity:.55;cursor:not-allowed}
+#battle .fb .primary:focus-visible{outline:3px solid var(--text);outline-offset:3px}
+@media (min-width:900px){#battle .fb-cards.two{grid-template-columns:1fr 1fr}}
+html[data-motion=reduced] #battle .fb-go,html[data-motion=reduced] #battle .fb .primary{transition:none}
