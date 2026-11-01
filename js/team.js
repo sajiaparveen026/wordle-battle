@@ -1,429 +1,362 @@
-// Team Zone battle screen. It reuses the solo game screen (#game): same board, keyboard, tile colours, hint buttons and timer style.
-// Nothing here decides anything. Every guess and hint goes to the server (tz_guess / tz_hint), which checks the word, colours it,
-// keeps the clock, and ends the battle. This file only draws what comes back. The secret word is only sent after the battle.
-// While a team battle is on, the solo game's keyboard and click handlers are switched off (capture-phase listeners below).
+// Team Zone: 3, 4 or 5 players in one private room. Stage 1 = landing, create, join by code, lobby, ready, host cancel.
+// The page only draws what the server returns (supabase/migrations/009_team_zone.sql) and sends taps.
+// It reuses Friend Zone's caller identity and call wrapper (FriendBattle.api), so guests and accounts behave the same.
 (() => {
   "use strict";
-  const $ = (s) => document.querySelector(s);
-  const $$ = (s) => [...document.querySelectorAll(s)];
-  const ROWS = 6, COLS = 5;
-  const KIND = { g: "correct", y: "present", x: "absent" };
-  const HINT = { reveal: "Reveal a Letter", remove: "Remove Letters", word: "Use Clue" };
+  const $ = (s, r) => (r || document).querySelector(s);
+  const POLL_MS = 3000;
+  const DIFF = { easy: { icon: "🌿", name: "Easy", min: 12 }, medium: { icon: "🔥", name: "Medium", min: 8 }, hard: { icon: "⚡", name: "Hard", min: 5 } };
   const CSS = `
-#game.team #btn-skip{display:none}
-#game.team .hint .cnt{display:none}
-#game.team .controls{grid-template-columns:var(--side) minmax(0,1fr) var(--side)}
-#game.team .hint[data-state=used]{opacity:.5;filter:grayscale(.7)}
-#game.team .hint .badge{font-size:.62rem;font-weight:800;letter-spacing:.4px}
-#game.team #board{width:min(100%,340px,max(170px,calc((100dvh - 540px)*5/6)))}
-#game.team .winscore{visibility:hidden}
-.tzg-top{display:grid;gap:6px;flex:none;padding:2px 0 4px}
-.tzg-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.tzg-h{margin:0;text-align:left;font-size:.95rem;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,var(--gold),var(--red1,#E0264F),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.tzg-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}
-.tzg-strip{display:flex;gap:6px;width:100%;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 4px;scrollbar-width:none}
-.tzg-strip::-webkit-scrollbar{display:none}
-.tzg-pc{flex:1 0 118px;max-width:150px;scroll-snap-align:start;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px;align-items:center;padding:5px 7px 5px 5px;border-radius:12px;background:var(--panel);border:1px solid var(--line);transition:border-color .3s,box-shadow .3s}
-.tzg-pc.me{border-color:color-mix(in srgb,var(--gold) 60%,var(--line))}
-.tzg-pc.solved{border-color:#4ADE80;box-shadow:0 0 14px color-mix(in srgb,#4ADE80 35%,transparent)}
-.tzg-pc.out{opacity:.62}
-.tzg-av{position:relative;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;font-size:1.1rem;background:var(--panel-2);border:2px solid var(--line)}
-.tzg-av i{position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border-radius:50%;background:#8b8b92;border:2px solid var(--panel)}
-.tzg-av i.connected{background:#4ADE80}.tzg-av i.reconnecting{background:#FBBF24}.tzg-av i.disconnected,.tzg-av i.left{background:#F87171}
-.tzg-pc b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.74rem}
-.tzg-pc small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.64rem;color:var(--muted)}
-.tzg-pc small.on{color:#4ADE80}.tzg-pc small.re{color:#FBBF24}.tzg-pc small.off{color:#F87171}
-.tzg-dots{display:flex;gap:2px;margin-top:2px}
-.tzg-dots i{width:6px;height:6px;border-radius:50%;background:var(--panel-2);border:1px solid var(--line)}
-.tzg-dots i.used{background:var(--gold);border-color:var(--gold)}
-.tzg-dots i.bad{background:#F87171;border-color:#F87171}
-.tzg-tm{display:grid;justify-items:center;min-width:58px;font-variant-numeric:tabular-nums}
-.tzg-tm b{font-size:1.2rem;line-height:1;letter-spacing:.5px}.tzg-tm small{font-size:.58rem;font-weight:800;letter-spacing:1.5px;color:var(--muted)}
-.tzg-tm.low b{color:#F87171;animation:tzg-blink 1s steps(2) infinite}
-.tzg-note{margin:0;min-height:1.1em;text-align:center;font-size:.76rem;font-weight:700;color:var(--muted)}
-.tzg-note.warn{color:#FBBF24}
-.tzg-clue{margin:0;text-align:center;font-size:.76rem;color:var(--muted);padding:0 6px}.tzg-clue b{color:var(--gold)}
-.tzg-cd{position:absolute;inset:0;z-index:5;display:grid;place-items:center;align-content:center;gap:4px;border-radius:12px;background:color-mix(in srgb,var(--bg,#000) 78%,transparent);backdrop-filter:blur(3px)}
-.tzg-cd b{font-size:5rem;line-height:1;color:var(--gold);animation:tzg-pop .9s ease both}.tzg-cd span{font-size:.8rem;font-weight:800;letter-spacing:2px;color:var(--muted)}
-.tzg-res{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.66);backdrop-filter:blur(5px);animation:tzg-fade .3s ease both;overflow:auto}
-.tzg-card{display:grid;gap:12px;width:min(100%,420px);margin:auto;padding:22px 18px;border-radius:24px;text-align:center;background:linear-gradient(170deg,color-mix(in srgb,var(--c) 18%,var(--panel)),var(--panel) 65%);border:1px solid color-mix(in srgb,var(--c) 55%,var(--line));box-shadow:0 0 40px color-mix(in srgb,var(--c) 30%,transparent);animation:tzg-pop .5s cubic-bezier(.2,1.2,.3,1) both}
-.tzg-card.win{--c:#FACC15}.tzg-card.loss{--c:#F87171}.tzg-card.draw{--c:#7C8CFF}
-.tzg-card h2{margin:0;font-size:1.6rem;font-weight:900;letter-spacing:2px;color:var(--c)}
-.tzg-card p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.45}
-.tzg-rank{list-style:none;margin:0;padding:0;display:grid;gap:8px;text-align:left}
-.tzg-rc{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 12px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line);font-size:.9rem;position:relative;overflow:hidden}
-.tzg-rc.me{box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent)}
-.tzg-rc.gold{background:linear-gradient(120deg,color-mix(in srgb,#FACC15 22%,var(--panel-2)),var(--panel-2) 70%);border-color:#FACC15;box-shadow:0 0 20px color-mix(in srgb,#FACC15 30%,transparent)}
-.tzg-rc.silver{background:linear-gradient(120deg,color-mix(in srgb,#CBD5E1 18%,var(--panel-2)),var(--panel-2) 70%);border-color:#CBD5E1}
-.tzg-rc.bronze{background:linear-gradient(120deg,color-mix(in srgb,#F59E0B 16%,var(--panel-2)),var(--panel-2) 70%);border-color:#B7791F}
-.tzg-pos{display:grid;justify-items:center;min-width:46px;font-variant-numeric:tabular-nums}
-.tzg-pos i{font-style:normal;font-size:1.05rem;line-height:1}
-.tzg-pos b{font-size:.78rem;font-weight:900;letter-spacing:.5px}
-.tzg-av{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;font-size:1.3rem;background:var(--panel);border:1px solid var(--line)}
-.tzg-who{display:grid;gap:2px;min-width:0}
-.tzg-who b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.92rem}
-.tzg-who small{color:var(--muted);font-size:.72rem;font-variant-numeric:tabular-nums}
-.tzg-earn{display:grid;justify-items:end;gap:3px}
-.tzg-coin,.tzg-xp{font-size:.74rem;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
-.tzg-coin{color:var(--gold)}.tzg-xp{color:#7DD3FC}
-.tzg-add{margin-top:2px;padding:5px 9px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold) 60%,var(--line));background:color-mix(in srgb,var(--gold) 16%,var(--panel));color:var(--text);font:inherit;font-size:.7rem;font-weight:800;cursor:pointer;white-space:nowrap}
-.tzg-add:disabled{opacity:.6;cursor:default}
-.tzg-fr{margin-top:2px;font-size:.7rem;font-weight:800;color:var(--muted);white-space:nowrap}.tzg-fr.ok{color:#4ADE80}
-.tzg-rmbox{display:grid;gap:8px;justify-items:stretch;text-align:center}
-.tzg-rmbox .tzg-row{display:flex;gap:8px}.tzg-rmbox .tzg-row>*{flex:1}
-.tzg-go{padding:11px 14px;border-radius:14px;border:0;font:inherit;font-weight:900;cursor:pointer;color:#0b3a05;background:linear-gradient(180deg,#9BF55C,#5ED823);box-shadow:0 4px 0 #2B8512}
-.tzg-go.alt{color:var(--text);background:var(--panel-2);box-shadow:0 3px 0 var(--line)}
-.tzg-go:disabled{opacity:.6;cursor:default}
-.tzg-ask{margin:0;font-size:.88rem;font-weight:700}
-@media (max-width:380px){.tzg-rc{grid-template-columns:auto minmax(0,1fr);}.tzg-rc .tzg-earn{grid-column:2;justify-items:start;grid-auto-flow:column;gap:8px;align-items:center}.tzg-rc .tzg-pos{grid-row:span 2}}
-.tzg-ans{font-size:.88rem;color:var(--muted)}.tzg-ans b{color:var(--text);letter-spacing:3px;font-size:1rem}
-@keyframes tzg-blink{50%{opacity:.45}}
-@keyframes tzg-pop{from{opacity:0;transform:scale(.6)}60%{transform:scale(1.05)}}
-@keyframes tzg-fade{from{opacity:0}}
-html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[data-motion=reduced] .tzg-tm.low b{animation:none!important}
+.tz{width:100%;display:grid;gap:14px;padding-bottom:90px;align-content:start;justify-items:stretch}
+.tz-hero{text-align:center;display:grid;gap:4px;padding:6px 0 2px}
+.tz-hero h2{margin:0;font-size:1.35rem;letter-spacing:.3px}
+.tz-hero p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.4}
+.tz-cards{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:640px){.tz-cards{grid-template-columns:1fr 1fr}}
+.tz-card{position:relative;display:grid;gap:6px;justify-items:start;text-align:left;padding:18px;border-radius:20px;cursor:pointer;color:var(--text);font:inherit;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--c,#22D3EE) 20%,var(--panel)),var(--panel) 70%);border:1px solid color-mix(in srgb,var(--c,#22D3EE) 45%,var(--line));
+  box-shadow:0 8px 22px rgba(0,0,0,.3),0 0 20px color-mix(in srgb,var(--c,#22D3EE) 18%,transparent);transition:transform .18s,box-shadow .2s}
+.tz-card:hover{transform:translateY(-2px)}
+.tz-card .ic{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;font-size:1.7rem;background:color-mix(in srgb,var(--c,#22D3EE) 25%,var(--panel-2));border:1px solid color-mix(in srgb,var(--c,#22D3EE) 55%,var(--line))}
+.tz-card h3{margin:4px 0 0;font-size:1.05rem}.tz-card p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.35}
+.tz-card .go{font-weight:900;color:var(--gold);font-size:.85rem}
+.tz-card.wide{grid-column:1/-1}
+.fb-cards.two .fb-card.wide{grid-column:1/-1}
+.tz-sec{display:grid;gap:10px;padding:16px;border-radius:20px;background:var(--panel);border:1px solid var(--line)}
+.tz-sec h3{margin:0;font-size:.78rem;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+.tz-opts{display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.tz-opt{display:grid;justify-items:center;gap:2px;padding:12px 6px;border-radius:16px;cursor:pointer;color:var(--text);font:inherit;background:var(--panel-2);border:2px solid var(--line);transition:border-color .15s,box-shadow .15s,transform .12s}
+.tz-opt b{font-size:1.15rem;font-variant-numeric:tabular-nums}.tz-opt small{color:var(--muted);font-size:.72rem;font-weight:700}
+.tz-opt.on{border-color:var(--gold);background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 18%,var(--panel-2)),var(--panel-2));box-shadow:0 0 16px color-mix(in srgb,var(--gold) 30%,transparent)}
+.tz-opt:active{transform:scale(.96)}
+.tz-opt.diff.easy{--c:#4ADE80}.tz-opt.diff.medium{--c:#FB923C}.tz-opt.diff.hard{--c:#F87171}
+.tz-opt.diff.on{border-color:var(--c)}
+.tz-opt.diff .di{font-size:1.3rem}
+.tz-input{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);font:inherit;font-size:1.3rem;font-weight:900;letter-spacing:6px;text-align:center;text-transform:uppercase}
+.tz-input:focus{outline:2px solid var(--gold);outline-offset:2px}
+.tz-row{display:flex;gap:10px;flex-wrap:wrap}
+.tz-row>*{flex:1 1 0;min-width:0}
+.tz-err{margin:0;padding:10px 12px;border-radius:12px;font-size:.86rem;font-weight:700;text-align:center;color:var(--danger);background:color-mix(in srgb,var(--danger) 14%,var(--panel));border:1px solid color-mix(in srgb,var(--danger) 45%,transparent)}
+.tz-codebox{display:grid;gap:10px;justify-items:center;padding:18px;border-radius:22px;text-align:center;background:linear-gradient(160deg,color-mix(in srgb,#22D3EE 14%,var(--panel)),var(--panel) 70%);border:1px solid color-mix(in srgb,#22D3EE 40%,var(--line));box-shadow:0 0 24px color-mix(in srgb,#22D3EE 14%,transparent)}
+.tz-codebox small{color:var(--muted);font-size:.74rem;font-weight:800;letter-spacing:1.6px;text-transform:uppercase}
+.tz-code{font-size:2.1rem;font-weight:900;letter-spacing:8px;font-variant-numeric:tabular-nums;padding-left:8px;text-shadow:0 0 18px color-mix(in srgb,#22D3EE 45%,transparent)}
+.tz-meta{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tz-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font-size:.76rem;font-weight:800;background:var(--panel-2);border:1px solid var(--line)}
+.tz-count{font-size:1rem;font-weight:900;font-variant-numeric:tabular-nums}
+.tz-status{text-align:center;color:var(--muted);font-size:.9rem;min-height:1.3em}
+.tz-slots{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:640px){.tz-slots{grid-template-columns:1fr 1fr}}
+.tz-pl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;--c:#8b8b92;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--c) 12%,var(--panel)),var(--panel) 72%);border:1px solid color-mix(in srgb,var(--c) 40%,var(--line));animation:tz-in .35s ease both}
+.tz-pl.ready{--c:#4ADE80}.tz-pl.me{box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 55%,transparent)}
+.tz-pl.dc{--c:#F87171}
+.tz-av{position:relative;display:grid;place-items:center;width:50px;height:50px;border-radius:50%;font-size:1.7rem;background:var(--panel-2);border:2px solid color-mix(in srgb,var(--c) 60%,var(--line))}
+.tz-dot{position:absolute;right:-2px;bottom:-2px;width:14px;height:14px;border-radius:50%;background:#8b8b92;border:3px solid var(--panel)}
+.tz-dot.connected{background:#4ADE80}.tz-dot.reconnecting{background:#FBBF24}.tz-dot.disconnected{background:#F87171}
+.tz-info{display:grid;gap:3px;min-width:0}
+.tz-nm{display:flex;align-items:center;gap:6px;min-width:0;font-weight:900;font-size:1rem}
+.tz-nm span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tz-tag{flex:none;padding:2px 7px;border-radius:999px;font-size:.62rem;font-weight:900;letter-spacing:.8px;color:#2a1d00;background:linear-gradient(180deg,#FFE58A,#F5B90B)}
+.tz-tag.you{color:var(--text);background:var(--panel-2);border:1px solid var(--line)}
+.tz-st{font-size:.74rem;font-weight:800;color:var(--muted)}
+.tz-pl.ready .tz-st{color:#4ADE80}
+[data-theme=light] .tz-pl.ready .tz-st{color:#177a3c}
+.tz-pl.dc .tz-st{color:#F87171}
+.tz-empty{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;padding:12px 14px;border-radius:18px;border:2px dashed var(--line);color:var(--muted);animation:tz-in .35s ease both}
+.tz-empty .ph{display:grid;place-items:center;width:50px;height:50px;border-radius:50%;font-size:1.4rem;background:var(--panel-2);border:1px dashed var(--line);opacity:.8}
+.tz-empty b{display:block;font-size:.92rem;color:var(--text)}.tz-empty small{font-size:.76rem}
+.tz-sk{display:grid;gap:10px}.tz-sk i{display:block;height:80px;border-radius:18px;background:linear-gradient(90deg,var(--panel),var(--panel-2),var(--panel));background-size:200% 100%;border:1px solid var(--line);animation:tz-sh 1.3s linear infinite}
+.tz-go{position:relative;width:100%;padding:16px;border:0;border-radius:18px;cursor:pointer;font:inherit;font-size:1.05rem;font-weight:900;color:#0b3a05;letter-spacing:.5px;background:linear-gradient(180deg,#9BF55C,#5ED823);box-shadow:0 6px 0 #2B8512,0 14px 24px rgba(70,210,25,.25),inset 0 2px 0 rgba(255,255,255,.55);transition:transform .1s,filter .2s}
+.tz-go:active:not([disabled]){transform:translateY(4px);box-shadow:0 2px 0 #2B8512}
+.tz-go[disabled]{opacity:.55;cursor:not-allowed}
+.tz-go{white-space:nowrap}
+.tz-codebox .tz-go{padding:12px 8px;font-size:.92rem}
+.tz-go.alt{color:var(--text);background:var(--panel-2);box-shadow:0 4px 0 var(--line),inset 0 1px 0 rgba(255,255,255,.08)}
+.tz-go.alt:active:not([disabled]){box-shadow:0 1px 0 var(--line)}
+.tz-go.warn{color:#fff;background:linear-gradient(180deg,#F87171,#DC2626);box-shadow:0 6px 0 #991B1B}
+.tz-msg{display:grid;gap:10px;justify-items:center;padding:26px 18px;text-align:center;border-radius:22px;background:var(--panel);border:1px dashed var(--line);color:var(--muted);font-size:.9rem;line-height:1.45}
+.tz-msg .ic{font-size:2.4rem}.tz-msg h3{margin:0;color:var(--text);font-size:1.1rem}
+.tz-flash{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:30;max-width:92%}
+@media (min-width:700px){.tz{max-width:720px;margin:0 auto;gap:18px}.tz-code{font-size:2.6rem}.tz-pl{padding:16px 18px}.tz-av{width:60px;height:60px;font-size:2rem}}
+@media (max-width:360px){.tz-opts{gap:6px}.tz-opt b{font-size:1rem}}
+@keyframes tz-in{from{opacity:0;transform:translateY(8px)}}
+@keyframes tz-sh{to{background-position:-200% 0}}
+html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!important;transition:none!important}
 `;
-  if (!document.getElementById("tzg-css")) { const st = document.createElement("style"); st.id = "tzg-css"; st.textContent = CSS; document.head.append(st); }
+  if (!document.getElementById("tz-css")) { const st = document.createElement("style"); st.id = "tz-css"; st.textContent = CSS; document.head.append(st); }
 
+  // ---------- helpers ----------
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const api = () => window.TeamZone && TeamZone.api;
-  const snd = (n, ...a) => { try { if (typeof sfx !== "undefined" && sfx[n]) sfx[n](...a); } catch {} };
-  const quick = () => typeof reduced === "function" && reduced();
-  const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
-  const ordinal = (n) => (n === 1 ? "1st" : n === 2 ? "2nd" : n === 3 ? "3rd" : n + "th");
+  const curScreen = () => (typeof screen === "string" ? screen : "");
+  const say = (t, k, ms) => { if (typeof toast === "function") toast(t, k || "", ms); };
+  const client = () => (window.Auth && Auth.client && Auth.client()) || null;
+  const ERR = {
+    not_found: "No room has that code. Check it and try again.", invalid_code: "Room codes are 6 letters and numbers.",
+    full: "That room is full.", started: "That battle has already started.", finished: "That battle has already finished.",
+    expired: "That room has expired. Ask the host for a new one.", cancelled: "The host cancelled that room.",
+    busy: "You're already in another battle. Finish or leave it first.", busy_friend: "You're in a Friend Zone battle right now. Finish or leave it first.",
+    already_in_room: "You're already in a Team Zone room.", throttled: "Slow down a little, then try again.",
+    bad_size: "Pick 3, 4 or 5 players.", bad_difficulty: "Pick a difficulty.", bad_id: "Couldn't verify your player identity. Reload the app and try again.",
+    forbidden: "You're no longer in this room.", not_in_lobby: "The battle has started. You can't leave the room now.",
+    no_server: "Team Zone needs the online server, which isn't connected in this version.",
+    not_setup: "Team Zone isn't set up on the server yet (run the 009_team_zone.sql script in Supabase).",
+    network: "Can't reach the server. Check your connection and try again.", try_again: "Couldn't create the room. Please try again.", error: "Something went wrong. Please try again."
+  };
+  const errText = (r) => ERR[(r && r.reason) || "error"] || ERR.error;
+  const mmss = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
 
-  let on = false, S = null, rendered = 0, cur = "", busy = false, hintBusy = false, resultShown = false, tmr = 0, lastCd = -1, leaving = false, flipping = false;
-  const me = () => (S && S.players.find((p) => p.is_me)) || null;
-  const room = () => S && S.room;
-  const guesses = () => (S && S.me && S.me.guesses) || [];
-  const rowEl = (i) => $("#board").children[i];
-  const playing = () => !!S && room().status === "playing";
-  const now = () => (api() ? api().srvNow() : Date.now());
-  const started = () => playing() && now() >= room().started_at_ms;
-  const myActive = () => !!me() && me().status === "active" && me().connection !== "left";
-  const canType = () => on && screen === "game" && playing() && started() && myActive() && !busy && !flipping && !resultShown && rendered < ROWS && !document.body.classList.contains("modal-open");
+  // Friend Zone owns the caller identity and the server call wrapper; Team Zone uses the same ones.
+  function call(fn, args, withName) {
+    const fb = window.FriendBattle && FriendBattle.api;
+    if (!fb || !fb.call) return Promise.resolve({ ok: false, reason: "no_server" });
+    return fb.call(fn, args || {}, !!withName);
+  }
+
+  // ---------- state ----------
+  let view = "home", err = "", S = null, roomId = "", busy = false, createSize = 4, createDiff = "medium", joinCode = "", pollT = 0, kickT = 0, chan = null, chanFor = "", lastSig = "", netBad = false;
+  const srvNow = () => (S && S.server_now_ms ? S.server_now_ms + (Date.now() - gotAt) : Date.now());
+  let gotAt = 0;
 
   // ---------- drawing ----------
-  function buildUi() {
-    const g = $("#game"); g.classList.add("team");
-    if (!$("#tzg-top")) {
-      const top = document.createElement("div"); top.id = "tzg-top"; top.className = "tzg-top";
-      top.innerHTML = `<div class="tzg-head"><h2 class="tzg-h">IT'S BATTLE TIME!</h2><div class="tzg-tm" id="tzg-tm" role="timer" aria-label="Time left"><b>--:--</b><small>LEFT</small></div></div><div class="tzg-strip" id="tzg-strip" role="list" aria-label="Players"></div><p class="tzg-note" id="tzg-note" role="status" aria-live="polite"></p>`;
-      g.insertBefore(top, $("#g-title"));
-      const clue = document.createElement("p"); clue.id = "tzg-clue"; clue.className = "tzg-clue hidden"; g.insertBefore(clue, $("#keyboard"));
+  function root() { return $("#tz-root"); }
+  function paint(force) {
+    const el = root(); if (!el || curScreen() !== "team") return;
+    const sig = JSON.stringify([view, err, busy, createSize, createDiff, joinCode, S && S.room, S && S.players, S && S.me, netBad]);
+    if (!force && sig === lastSig) return;
+    lastSig = sig;
+    el.innerHTML = view === "create" ? vCreate() : view === "join" ? vJoin() : S && S.room ? vRoom() : vHome();
+    tickClock();
+  }
+  function vHome() {
+    return `<div class="tz-hero"><h2>Team Zone</h2><p>3 to 5 players, one secret word. First to solve it wins.</p></div>
+      <div class="tz-cards">
+        <button class="tz-card" type="button" data-tz="create" style="--c:#FACC15"><span class="ic" aria-hidden="true">➕</span><h3>Create a Team Room</h3><p>Pick the group size and difficulty, then share the code.</p><span class="go">Create →</span></button>
+        <button class="tz-card" type="button" data-tz="join" style="--c:#22D3EE"><span class="ic" aria-hidden="true">🔑</span><h3>Enter a Room Code</h3><p>Have a code from a friend? Jump into their team.</p><span class="go">Join →</span></button>
+      </div>
+      ${err ? `<p class="tz-err" role="alert">${esc(err)}</p>` : ""}`;
+  }
+  function vCreate() {
+    const size = [3, 4, 5].map((n) => `<button class="tz-opt${createSize === n ? " on" : ""}" type="button" role="radio" aria-checked="${createSize === n}" data-tz="size" data-n="${n}"><b>${n}</b><small>players</small></button>`).join("");
+    const diff = Object.entries(DIFF).map(([k, d]) => `<button class="tz-opt diff ${k}${createDiff === k ? " on" : ""}" type="button" role="radio" aria-checked="${createDiff === k}" data-tz="diff" data-k="${k}"><span class="di" aria-hidden="true">${d.icon}</span><b>${d.name}</b><small>${d.min} min</small></button>`).join("");
+    return `<div class="tz-hero"><h2>Create a Team Room</h2><p>You'll get a code to share. The battle starts when everyone is in and ready.</p></div>
+      <section class="tz-sec"><h3>Maximum players</h3><div class="tz-opts" role="radiogroup" aria-label="Maximum players">${size}</div></section>
+      <section class="tz-sec"><h3>Difficulty</h3><div class="tz-opts" role="radiogroup" aria-label="Difficulty">${diff}</div></section>
+      ${err ? `<p class="tz-err" role="alert">${esc(err)}</p>` : ""}
+      <div class="tz-row"><button class="tz-go alt" type="button" data-tz="back">Back</button><button class="tz-go" type="button" data-tz="create-go"${busy ? " disabled" : ""}>${busy ? "Creating…" : "Create Room"}</button></div>`;
+  }
+  function vJoin() {
+    return `<div class="tz-hero"><h2>Enter a Room Code</h2><p>Type the 6-character code your host shared.</p></div>
+      <section class="tz-sec"><input class="tz-input" id="tz-code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC123" value="${esc(joinCode)}" aria-label="Room code"></section>
+      ${err ? `<p class="tz-err" role="alert">${esc(err)}</p>` : ""}
+      <div class="tz-row"><button class="tz-go alt" type="button" data-tz="back">Back</button><button class="tz-go" type="button" data-tz="join-go" id="tz-join-go"${busy || joinCode.replace(/[^A-Za-z0-9]/g, "").length !== 6 ? " disabled" : ""}>${busy ? "Joining…" : "Join Room"}</button></div>`;
+  }
+  function playerCard(p) {
+    const cls = ["tz-pl", p.ready ? "ready" : "", p.is_me ? "me" : "", p.connection === "disconnected" ? "dc" : ""].join(" ");
+    const st = p.connection === "disconnected" ? "Disconnected" : p.connection === "reconnecting" ? "Reconnecting…" : p.ready ? "Ready" : "Not ready";
+    return `<div class="${cls}" style="--i:${p.seat}">
+      <span class="tz-av" aria-hidden="true">${esc(p.avatar)}<i class="tz-dot ${esc(p.connection)}"></i></span>
+      <div class="tz-info"><span class="tz-nm"><span>${esc(p.username)}</span>${p.is_host ? '<i class="tz-tag">HOST</i>' : ""}${p.is_me ? '<i class="tz-tag you">YOU</i>' : ""}</span><span class="tz-st">${st}</span></div>
+      <span aria-hidden="true">${p.ready ? "✅" : "⏳"}</span></div>`;
+  }
+  function vRoom() {
+    const r = S.room, players = S.players || [], me = S.me || {}, d = DIFF[r.difficulty] || DIFF.medium;
+    if (r.status === "playing") return vStarting();
+    if (r.status !== "waiting") return vClosed(r.status);
+    const slots = [];
+    for (let i = 1; i <= r.max_players; i++) {
+      const p = players.find((x) => x.seat === i);
+      slots.push(p ? playerCard(p) : `<div class="tz-empty"><span class="ph" aria-hidden="true">＋</span><div><b>Open slot</b><small>Waiting for a player</small></div></div>`);
     }
-    $("#g-title").textContent = "Team Battle";
+    const full = players.length >= r.max_players, allReady = full && players.every((p) => p.ready && p.connection !== "disconnected");
+    const mine = players.find((p) => p.is_me);
+    const status = !full ? `Waiting for players… ${players.length}/${r.max_players} joined` : allReady ? "Everyone's ready. Starting…" : "Everyone's in. Press Ready when you're set.";
+    const readyBtn = mine ? `<button class="tz-go${mine.ready ? " alt" : ""}" type="button" data-tz="ready" data-on="${mine.ready ? "0" : "1"}"${busy ? " disabled" : ""}>${mine.ready ? "Not Ready" : "✔ I'm Ready"}</button>` : "";
+    const exit = me.is_host ? `<button class="tz-go warn" type="button" data-tz="leave" data-host="1"${busy ? " disabled" : ""}>Cancel Room</button>` : `<button class="tz-go alt" type="button" data-tz="leave"${busy ? " disabled" : ""}>Leave Room</button>`;
+    return `<div class="tz-hero"><h2>Team Zone Lobby</h2><p>Share the code. Everyone in the room plays the same secret word.</p></div>
+      <div class="tz-codebox"><small>Room code</small><span class="tz-code" aria-label="Room code ${esc(r.code.split("").join(" "))}">${esc(r.code)}</span>
+        <div class="tz-meta"><span class="tz-chip">${d.icon} ${d.name} · ${d.min} min</span><span class="tz-chip">👥 Up to ${r.max_players}</span></div>
+        <div class="tz-row" style="width:100%"><button class="tz-go alt" type="button" data-tz="copy">📋 Copy Code</button><button class="tz-go alt" type="button" data-tz="share">📤 Share</button></div></div>
+      <div class="tz-count" aria-live="polite">${players.length} / ${r.max_players} players</div>
+      <div class="tz-slots">${slots.join("")}</div>
+      <p class="tz-status" role="status">${status}</p>
+      ${err ? `<p class="tz-err" role="alert">${esc(err)}</p>` : ""}
+      ${netBad ? `<p class="tz-status">Connection hiccup. Reconnecting…</p>` : ""}
+      <div class="tz-row">${readyBtn}${exit}</div>`;
   }
-  function drawTile(t, ch, kind) {
-    t.textContent = ch; t.classList.remove("filled", "flip", "correct", "present", "absent"); if (kind) t.classList.add(kind);
-    if (kind) t.setAttribute("aria-label", `${ch}, ${{ correct: "correct position", present: "in the word, wrong position", absent: "not in the word" }[kind]}`); else t.removeAttribute("aria-label");
+  function vStarting() {
+    const r = S.room, left = Number(r.started_at_ms) - srvNow();
+    return `<div class="tz-msg"><span class="ic" aria-hidden="true">⚔️</span><h3>IT'S BATTLE TIME</h3><p>The battle starts in <b id="tz-cd">${mmss(Math.max(0, left))}</b>.</p><p>Get ready, your team battle is about to begin.</p></div>`;
   }
-  function drawGuess(i, g) { [...rowEl(i).children].forEach((t, c) => drawTile(t, g.word[c], KIND[g.pattern[c]])); }
-  function flipRow(i, g, done) {
-    const tiles = [...rowEl(i).children];
-    if (quick()) { drawGuess(i, g); return done(); }
-    flipping = true;
-    tiles.forEach((t, c) => setTimeout(() => { t.classList.add("flip"); snd("flip", c); setTimeout(() => { drawTile(t, g.word[c], KIND[g.pattern[c]]); t.classList.add("flip"); }, 275); }, c * 280));
-    setTimeout(() => { flipping = false; done(); }, COLS * 280 + 300);
+  function vClosed(status) {
+    const msg = status === "cancelled" ? "The host cancelled this room." : status === "expired" ? "This room expired before everyone joined." : status === "finished" ? "This battle has finished." : "This room is no longer available.";
+    return `<div class="tz-msg"><span class="ic" aria-hidden="true">🚪</span><h3>Room closed</h3><p>${esc(msg)}</p><button class="tz-go" type="button" data-tz="done">Back to Team Zone</button></div>`;
   }
-  function paintTyping() {
-    $$(".tile.cursor").forEach((t) => t.classList.remove("cursor"));
-    for (let r = 0; r < ROWS; r++) rowEl(r).classList.toggle("active", r === rendered && playing() && !busy);
-    if (rendered >= ROWS) return;
-    [...rowEl(rendered).children].forEach((t, c) => { t.textContent = cur[c] || ""; t.classList.toggle("filled", !!cur[c]); });
-    if (canType() && cur.length < COLS) rowEl(rendered).children[cur.length].classList.add("cursor");
-    $("#btn-submit").disabled = !canType();
-  }
-  function syncBoard() {                                  // draw any server guesses not on screen yet (refresh / reconnect)
-    if (flipping) return;
-    const gs = guesses();
-    if (rendered > gs.length) { makeBoard(); rendered = 0; }
-    while (rendered < gs.length) { drawGuess(rendered, gs[rendered]); rendered++; }
-    paintTyping();
-  }
-  function makeBoard() { if (typeof window.buildBoard === "function") window.buildBoard(); }
-  function drawKeys() {
-    const rank = { absent: 1, present: 2, correct: 3 }, best = {}, gone = ((S.me.hints_used || []).includes("remove") && S.me.hint_data.remove && S.me.hint_data.remove.letters) || [];
-    guesses().forEach((g) => [...g.word].forEach((ch, i) => { const k = KIND[g.pattern[i]]; if ((rank[k] || 0) > (rank[best[ch]] || 0)) best[ch] = k; }));
-    $$("#keyboard .key").forEach((k) => {
-      const ch = k.dataset.key; k.classList.remove("correct", "present", "absent");
-      if (best[ch]) k.classList.add(best[ch]);
-      k.classList.toggle("disabled", gone.includes(ch));
-    });
-  }
-  function drawHints() {
-    const used = S.me.hints_used || [];
-    ["reveal", "remove", "word"].forEach((t) => {
-      const b = $(`[data-hint="${t}"]`); if (!b) return;
-      const u = used.includes(t);
-      b.disabled = u || !(playing() && started() && myActive()) || resultShown;
-      b.dataset.state = u ? "used" : "";
-      const bd = b.querySelector(".badge"); if (bd) bd.textContent = u ? "Used" : "";
-      b.setAttribute("aria-label", `${HINT[t]}${u ? ", used" : ", one use per player"}`); b.title = `${HINT[t]}${u ? " (used)" : ""}`;
-    });
-    const rv = S.me.hint_data && S.me.hint_data.reveal;
-    for (let r = 0; r < ROWS; r++) [...rowEl(r).children].forEach((t, c) => { if (rv && c === rv.pos && r >= rendered) t.dataset.hint = rv.letter; else delete t.dataset.hint; });
-    const w = S.me.hint_data && S.me.hint_data.word, c = $("#tzg-clue");
-    if (c) { if (w) { c.innerHTML = `<b>💡 Clue:</b> `; c.append(document.createTextNode(w.text)); c.classList.remove("hidden"); } else c.classList.add("hidden"); }
-  }
-  function drawStrip() {
-    const el = $("#tzg-strip"); if (!el || !S) return;
-    el.innerHTML = S.players.map((p) => {
-      const st = p.connection === "left" ? ["Left", "off"] : p.status === "solved" ? ["Solved it! 🎉", "on"]
-               : p.status === "failed" ? ["Out of attempts", "off"]
-               : p.connection === "reconnecting" ? ["Reconnecting…", "re"]
-               : p.connection === "disconnected" ? ["Disconnected", "off"]
-               : [`Playing`, "on"];
-      const used = p.attempts_used || 0, dots = [...Array(6)].map((_, i) => `<i class="${i < used ? (p.status === "failed" ? "bad" : "used") : ""}"></i>`).join("");
-      const cls = ["tzg-pc", p.is_me ? "me" : "", p.status === "solved" ? "solved" : "", p.status === "failed" || p.connection === "left" ? "out" : ""].join(" ");
-      return `<div class="${cls}" role="listitem" aria-label="${esc(p.username)}, ${esc(st[0])}, ${used} of 6 attempts">
-        <span class="tzg-av" aria-hidden="true">${esc(p.avatar)}<i class="${esc(p.connection)}"></i></span>
-        <div style="min-width:0"><b>${esc(p.username)}${p.is_me ? " (you)" : ""}</b><small class="${st[1]}">${esc(st[0])}</small><div class="tzg-dots" aria-hidden="true">${dots}</div></div></div>`;
-    }).join("");
-  }
-  function drawNote() {
-    const n = $("#tzg-note"); if (!n || !S) return;
-    const m = me(), others = S.players.filter((p) => !p.is_me);
-    let t = "", warn = false;
-    if (m && m.status === "failed") t = "You're out of attempts. Others are still playing.";
-    else if (others.some((p) => p.connection === "reconnecting")) { t = "A player lost connection. They can rejoin."; warn = true; }
-    n.textContent = t; n.classList.toggle("warn", warn);
-  }
-  function drawTimer() {
-    if (!S) return; const r = room(), t = now(), el = $("#tzg-tm"); if (!el) return;
-    const left = r.status === "playing" ? (t < r.started_at_ms ? r.duration_seconds * 1000 : r.ends_at_ms - t) : 0;
-    el.querySelector("b").textContent = r.status === "playing" || r.status === "finished" ? mmss(left) : "--:--";
-    el.classList.toggle("low", r.status === "playing" && t >= r.started_at_ms && left <= 30000);
-    const wrap = $(".board-wrap"); let cd = $("#tzg-cd");
-    if (r.status === "playing" && t < r.started_at_ms) {
-      const n = Math.ceil((r.started_at_ms - t) / 1000);
-      if (!cd && wrap) { cd = document.createElement("div"); cd.id = "tzg-cd"; cd.className = "tzg-cd"; cd.setAttribute("role", "status"); wrap.append(cd); }
-      if (cd && n !== lastCd) { lastCd = n; cd.innerHTML = `<b>${n}</b><span>GET READY</span>`; }
-    } else if (cd) { cd.remove(); lastCd = -1; paintTyping(); }
-    if (r.status === "playing" && t >= r.ends_at_ms && Date.now() - (drawTimer.last || 0) > 1000) { drawTimer.last = Date.now(); api() && api().sync(); }
-  }
-  drawTimer.last = 0;
+  function tickClock() { const c = $("#tz-cd"); if (c && S && S.room) c.textContent = mmss(Math.max(0, Number(S.room.started_at_ms) - srvNow())); }
+  setInterval(() => { tickClock(); if (S && S.room && S.room.status === "playing" && srvNow() > Number(S.room.ends_at_ms)) sync(); }, 1000);
 
-  // ---------- input ----------
-  function press(k) {
-    if (!canType()) return;
-    const gone = (S.me.hint_data && S.me.hint_data.remove && S.me.hint_data.remove.letters) || [];
-    if (k === "enter") return submit();
-    if (k === "back") { cur = cur.slice(0, -1); submitMsg(""); snd("key"); }
-    else if (/^[a-z]$/.test(k) && cur.length < COLS && !gone.includes(k)) { cur += k; submitMsg(""); snd("key"); }
-    paintTyping();
+  // ---------- server state ----------
+  const dropped = new Set();                       // rooms I have left: a late reply for them must not bring me back
+  function apply(state, fresh) {
+    if (!state || !state.room) return;
+    if (fresh) dropped.delete(state.room.id); else if (dropped.has(state.room.id)) return;   // a deliberate create / join clears the mark
+    S = state; gotAt = Date.now(); netBad = false; err = ""; view = "room";
+    if (state.room.id !== roomId) { roomId = state.room.id; watch(roomId); }
+    if (!["waiting", "playing", "finished"].includes(state.room.status)) { clearInterval(pollT); pollT = 0; }   // cancelled / expired: stop; a finished battle keeps polling so rematch requests show
+    if (window.TeamGame && ["playing", "finished"].includes(state.room.status) && state.room.started_at_ms) { TeamGame.update(state); return; }
+    paint(true);
   }
-  function submitMsg(msg) { const n = $("#tzg-note"); if (n && msg) { n.textContent = msg; n.classList.add("warn"); } else if (n && !msg) { n.classList.remove("warn"); drawNote(); } }
-  function bad(msg) { submitMsg(msg); snd("bad"); const el = rowEl(rendered); if (!el) return; el.classList.add("shake", "invalid"); setTimeout(() => el.classList.remove("shake", "invalid"), 450); }
-  async function submit() {
-    if (busy || !canType()) return;
-    if (cur.length < COLS) return bad("Not enough letters");
-    if (typeof VALID !== "undefined" && !VALID.has(cur)) return bad("Not a word!");
-    if (guesses().some((g) => g.word === cur)) return bad("Already guessed");
-    const word = cur, row = rendered; busy = true; submitMsg(""); paintTyping();
-    const r = await api().call("tz_guess", { p_room: room().id, p_guess: word });
-    busy = false;
-    if (r.ok) {
-      cur = ""; rendered = row + 1;
-      flipRow(row, { word, pattern: r.pattern }, () => { api().apply(r.state); if (room() && room().status === "finished") renderResult(); else paintTyping(); });
-      return;
-    }
-    if (r.state) api().apply(r.state);
-    const why = { not_a_word: "Not a word!", bad_length: "Not enough letters", already_guessed: "Already guessed", out: "You're out of attempts.", not_started: "Get ready…", not_playing: "The battle has ended." }[r.reason] || "Couldn't send that. Try again.";
-    bad(why); paintTyping();
+  async function sync() {
+    if (!roomId) return;
+    const r = await call("tz_sync", { p_room: roomId });
+    if (r.ok) return apply(r.state);
+    if (r.reason === "network" || r.reason === "error") { netBad = true; paint(true); return; }
+    leaveLocal(r.reason === "forbidden" ? "You're no longer in this room." : errText(r));
   }
-  async function useHint(type) {
-    if (hintBusy || !playing() || !started() || !myActive() || resultShown) return;
-    hintBusy = true;
-    const r = await api().call("tz_hint", { p_room: room().id, p_type: type });
-    hintBusy = false;
-    if (r.state) api().apply(r.state);
-    if (!r.ok) return submitMsg({ already_used: "Already used.", nothing_to_reveal: "Nothing left to reveal.", nothing_to_remove: "Nothing to remove.", no_clue: "No clue for this word.", not_playing: "Hints are closed now." }[r.reason] || "Couldn't use that hint.");
-    snd("coin");
-    submitMsg("");
-    update(S);
+  function leaveLocal(message) {
+    if (roomId) dropped.add(roomId);
+    unwatch(); clearInterval(pollT); pollT = 0; roomId = ""; S = null; view = "home"; err = message || ""; busy = false;
+    if (window.TeamGame && TeamGame.isOn()) TeamGame.exit();
+    paint(true);
   }
 
-  // ---------- result: ranked list, rewards, Add Friend, rematch ----------
-  let resRoom = "", claimedFor = "", friendOverride = {}, rmHop = "", lastRm = "", curRoom = "", lastResHtml = "";
-  const medal = (n) => (n === 1 ? { cls: "gold", ic: "👑" } : n === 2 ? { cls: "silver", ic: "🥈" } : n === 3 ? { cls: "bronze", ic: "🥉" } : { cls: "", ic: "" });
-  const RM_ERR = { busy: "Someone is already in another battle.", no_request: "That rematch request is no longer open.", host_left: "The host left, so there's no rematch.",
-                   no_opponents: "Nobody is left to play again with.", left: "You left this battle.", already_started: "The rematch has already started.", forbidden: "You're no longer in this battle.",
-                   not_found: "That player isn't in this battle.", self: "That's you!", friend_limit: "Your friends list is full.", throttled: "Slow down a little, then try again.", error: "Something went wrong. Try again." };
-  const FR_TXT = { friends: "Friends", sent: "Request sent", incoming: "Accept request", accepted: "Friends" };
+  function watch(id) {
+    unwatch();
+    const c = client(); clearInterval(pollT);
+    if (c && c.channel) { try { chan = c.channel("team:" + id).on("broadcast", { event: "tick" }, () => { clearTimeout(kickT); kickT = setTimeout(sync, 150); }).subscribe(); chanFor = id; } catch { chan = null; } }
+    pollT = setInterval(() => { if (!document.hidden) sync(); }, POLL_MS);
+  }
+  function unwatch() { const c = client(); if (chan && c) { try { c.removeChannel(chan); } catch {} } chan = null; chanFor = ""; }
 
-  // Collect my reward once per battle. Player.rewardBattle writes each room only once, so a refresh can never pay twice.
-  function claimOnce() {
-    const rid = room().id; if (claimedFor === rid) return; claimedFor = rid;
-    api().call("tz_claim_reward", { p_room: rid }).then((r) => {
-      if (!r || !r.ok) { claimedFor = ""; return; }
-      if (r.granted && r.outcome && typeof Player !== "undefined" && Player && typeof Player.rewardBattle === "function") {
-        const mm = (S && S.room && S.room.id === rid && S.players.find((x) => x.is_me)) || null;   // Profile keeps: final place, number of players, attempts, final status
-        Player.rewardBattle(rid, r.outcome, Number(r.coins) || 0, Number(r.xp) || 0, { type: "team", tries: mm ? mm.attempts_used : null, status: mm ? mm.status : "", ms: mm ? mm.completion_ms : null, place: mm ? mm.finish_place : null, size: S && S.players ? S.players.length : null });
-        if (typeof refreshCoins === "function") refreshCoins();
-        if (typeof toast === "function" && (Number(r.coins) || Number(r.xp))) toast(`+${r.coins} coins · +${r.xp} XP`, "success", 3000);
-      }
-      renderResult();
-    });
+  // ---------- actions ----------
+  async function run(fn) {
+    if (busy) return; busy = true; err = ""; paint(true);
+    try { await fn(); } finally { busy = false; paint(true); }
   }
-  function friendBtn(p) {
-    const st = friendOverride[p.id] || p.friend_state;
-    if (!st || st === "self") return "";
-    if (st === "friends" || st === "accepted") return `<span class="tzg-fr ok">✓ Friends</span>`;
-    if (st === "sent") return `<span class="tzg-fr">Request sent</span>`;
-    if (st === "incoming") return `<button class="tzg-add" type="button" data-tzg="friend" data-id="${esc(p.id)}" aria-label="Accept ${esc(p.username)}'s friend request">${FR_TXT.incoming}</button>`;
-    return `<button class="tzg-add" type="button" data-tzg="friend" data-id="${esc(p.id)}" aria-label="Add ${esc(p.username)} as a friend">＋ Add Friend</button>`;
-  }
-  function rematchBlock() {
-    const rm = S.rematch || {}, others = S.players.filter((p) => !p.is_me && p.connection !== "left");
-    const me = S.players.find((p) => p.is_me);
-    const secs = Math.ceil((rm.expires_in_ms || 0) / 1000);
-    if (rm.state === "started") return `<p class="tzg-ans">Rematch starting… same team, new word.</p>`;
-    if (rm.state === "open" && rm.by_me) return `<p class="tzg-ans">Waiting for the others to accept (${rm.votes}/${rm.needed}) · ${secs}s</p>`;
-    if (rm.state === "open" && rm.voted) return `<p class="tzg-ans">Waiting for the others (${rm.votes}/${rm.needed}) · ${secs}s</p>`;
-    if (rm.state === "open") {
-      const asker = S.players.find((p) => p.id === rm.requested_by);
-      return `<p class="tzg-ask">${esc(asker ? asker.username : "A player")} wants a rematch with the same team.</p>
-        <div class="tzg-row"><button class="tzg-go" type="button" data-tzg="rm-yes">Accept · ${secs}s</button><button class="tzg-go alt" type="button" data-tzg="rm-no">Decline</button></div>`;
-    }
-    if (!me || me.connection === "left" || others.length === 0) return "";
-    return `<button class="tzg-go" type="button" data-tzg="rm-ask">⚔️ Rematch with the team</button>`;
-  }
-  function renderResult() {
-    if (!S || !room() || room().status !== "finished") return;
-    const rid = room().id; resultShown = true;
-    if (resRoom !== rid) { resRoom = rid; friendOverride = {}; }
-    let el = $("#tzg-res");
-    if (!el) {
-      el = document.createElement("div"); el.id = "tzg-res"; el.className = "tzg-res"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true");
-      document.body.append(el); lockModal(true);
-    }
-    const placed = S.players.slice().sort((a, b) => (a.finish_place || 99) - (b.finish_place || 99) || a.seat - b.seat);
-    const me = placed.find((p) => p.is_me);
-    const won = me && me.finish_place === 1;
-    const title = won ? "You solved it!" : me && me.finish_place ? `You finished ${ordinal(me.finish_place)}` : "Battle over";
-    const solver = placed.find((p) => p.finish_place === 1);
-    const reason = room().end_reason === "solved" ? (solver && solver.is_me ? "You got it first, so the battle ended." : `${solver ? esc(solver.username) : "A player"} solved it first, so the battle ended.`)
-                 : room().end_reason === "timeout" ? "Time ran out." : "Nobody could solve it.";
-    const answer = S.answer ? `<p class="tzg-ans">The word was <b>${esc(S.answer.toUpperCase())}</b></p>` : "";
-    const rows = placed.map((p) => {
-      const m = medal(p.finish_place);
-      const sub = p.status === "solved" ? `Solved in ${(p.completion_ms / 1000).toFixed(1)}s`
-                : p.status === "failed" || p.connection === "left" ? `Out after ${p.attempts_used}/6`
-                : `${p.best_exact || 0} right place · ${p.best_present || 0} wrong place`;
-      const coins = p.reward ? p.reward.coins : 0, xp = p.reward ? p.reward.xp : 0;
-      return `<li class="tzg-rc ${m.cls}${p.is_me ? " me" : ""}">
-        <span class="tzg-pos" aria-label="${esc(ordinal(p.finish_place || 0))} place">${m.ic ? `<i aria-hidden="true">${m.ic}</i>` : ""}<b>${p.finish_place ? ordinal(p.finish_place) : "–"}</b></span>
-        <span class="tzg-av" aria-hidden="true">${esc(p.avatar)}</span>
-        <span class="tzg-who"><b>${esc(p.username)}${p.is_me ? " (you)" : ""}</b><small>${esc(sub)}</small></span>
-        <span class="tzg-earn"><span class="tzg-coin">+${coins} 🪙</span><span class="tzg-xp">+${xp} XP</span>${p.is_me ? "" : friendBtn(p)}</span></li>`;
-    }).join("");
-    const rm = S.rematch || {};
-    if (lastRm === "open" && rm.state === "none" && !rm.new_room_id) { if (typeof toast === "function") toast("Rematch was declined or expired.", "", 4500); }
-    lastRm = rm.state || "none";
-    const html = `<div class="tzg-card ${won ? "win" : me && me.finish_place ? "loss" : "draw"}"><h2>${esc(title)}</h2><p>${esc(reason)}</p>${answer}
-      <ul class="tzg-rank">${rows}</ul><div class="tzg-rmbox">${rematchBlock()}</div>
-      <button class="primary" type="button" id="tzg-done">Back to Team Zone</button></div>`;
-    if (html !== lastResHtml || el.dataset.room !== rid) {                 // redraw only when something changed, so a tap is never lost mid-redraw
-      lastResHtml = html; el.dataset.room = rid; el.innerHTML = html;
-      $("#tzg-done").addEventListener("click", finishAndLeave);
-    }
-    claimOnce();
-    // a rematch was started by the others: move everyone into the new battle
-    if (rm.state === "started" && rm.new_room_id && rmHop !== rm.new_room_id) {
-      rmHop = rm.new_room_id;
-      api().call("tz_sync", { p_room: rm.new_room_id }).then((r) => { if (r && r.ok) api().apply(r.state); else rmHop = ""; });
-    }
-  }
-  function finishAndLeave() {
-    const r = $("#tzg-res"); if (r) r.remove(); lockModal(false);
-    exit(); if (api()) api().finish();
-  }
-  document.addEventListener("click", async (e) => {
-    const b = e.target.closest && e.target.closest("#tzg-res [data-tzg]"); if (!b || b.disabled || !room()) return;
-    e.preventDefault();
-    const a = b.dataset.tzg, rid = room().id;
-    const fail = (r) => { if (typeof toast === "function") toast(RM_ERR[r.reason] || RM_ERR.error, "error", 3200); };
-    if (a === "friend") {
-      b.disabled = true;
-      const r = await api().call("tz_add_friend", { p_room: rid, p_target: b.dataset.id });
-      if (r.ok) { friendOverride[b.dataset.id] = r.status; if (typeof toast === "function") toast(r.status === "friends" ? "You're now friends! 🎉" : "Friend request sent!", "success", 2600); renderResult(); }
-      else { b.disabled = false; fail(r); }
-      return;
-    }
-    if (a === "rm-ask" || a === "rm-yes" || a === "rm-no") {
-      b.disabled = true;
-      const r = a === "rm-ask" ? await api().call("tz_rematch_request", { p_room: rid })
-                : await api().call("tz_rematch_respond", { p_room: rid, p_accept: a === "rm-yes" });
-      if (r.state) api().apply(r.state);
-      if (!r.ok && r.reason !== "left") fail(r);
-      return;
-    }
+  const createRoom = () => run(async () => {
+    const r = await call("tz_create", { p_difficulty: createDiff, p_max: createSize }, true);
+    if (r.ok) { view = "room"; apply(r.state, true); return; }
+    if (r.reason === "already_in_room" && r.room_id) { const s = await call("tz_sync", { p_room: r.room_id }); if (s.ok) { view = "room"; return apply(s.state); } }
+    err = errText(r); view = "create";
   });
-
-  // ---------- lifecycle ----------
-  function update(st) {
-    if (leaving) return; if (st) S = st; if (!S) return;
-    const s = room().status;
-    if (s !== "playing" && s !== "finished") return;
-    if (on && curRoom && room().id !== curRoom) resetForNewRoom();
-    if (!on) enter();
-    drawStrip(); drawNote(); drawKeys(); drawHints(); drawTimer();
-    if (!busy && !flipping) syncBoard();
-    if (s === "finished" && !busy && !flipping) renderResult();
+  const joinRoom = () => run(async () => {
+    const code = joinCode.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    const r = await call("tz_join", { p_code: code }, true);
+    if (r.ok) { view = "room"; joinCode = ""; apply(r.state, true); return; }
+    err = errText(r); view = "join";
+  });
+  const setReady = (on) => run(async () => {
+    const r = await call("tz_ready", { p_room: roomId, p_ready: on });
+    if (r.state) apply(r.state); else { err = errText(r); }
+  });
+  const leaveRoom = async () => {
+    if (busy) return;
+    const host = S && S.me && S.me.is_host;
+    if (host) {
+      const ok = typeof confirmBox === "function" ? await confirmBox("Cancel this room?", "Everyone in the room will be sent out and the code will stop working.", "Cancel Room") : true;
+      if (!ok) return;
+    }
+    run(async () => {
+      const r = await call("tz_leave", { p_room: roomId });
+      if (r.ok) { say(host ? "Room cancelled" : "You left the room"); leaveLocal(""); } else { err = errText(r); await sync(); }
+    });
+  };
+  function copyCode() {
+    const code = S && S.room ? S.room.code : ""; if (!code) return;
+    const done = () => say("Room code copied!", "success", 2400);
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, () => say("Code: " + code, "", 4000));
+    else say("Code: " + code, "", 4000);
   }
-  function resetForNewRoom() {                          // a rematch started: same screen, fresh board
-    const r = $("#tzg-res"); if (r) r.remove(); lockModal(false);
-    cur = ""; rendered = 0; busy = false; flipping = false; resultShown = false; lastCd = -1;
-    makeBoard(); curRoom = room().id;
-  }
-  function enter() {
-    curRoom = room() ? room().id : "";
-    on = true; resultShown = false; cur = ""; rendered = 0; busy = false; flipping = false; lastCd = -1; leaving = false;
-    buildUi(); makeBoard(); show("game");
-    clearInterval(tmr); tmr = setInterval(() => { if (!S) return; drawTimer(); drawStrip(); drawNote(); }, 250);
-  }
-  function exit() {
-    clearInterval(tmr); tmr = 0; on = false; leaving = true;
-    const r = $("#tzg-res"); if (r) r.remove(); lockModal(false);
-    curRoom = ""; const cd = $("#tzg-cd"); if (cd) cd.remove();
-    const g = $("#game"); if (g) g.classList.remove("team");
-    ["tzg-top", "tzg-clue"].forEach((id) => { const e = document.getElementById(id); if (e) e.remove(); });
-    $$(".hint").forEach((b) => { delete b.dataset.state; b.title = ""; const bd = b.querySelector(".badge"); if (bd) bd.textContent = ""; });
-    $$("#keyboard .key").forEach((k) => k.classList.remove("correct", "present", "absent", "disabled"));
-    S = null; rendered = 0; cur = ""; busy = false; resultShown = false;
-    leaving = false;
-  }
-  async function leavePrompt() {
-    if (resultShown) return finishAndLeave();
-    if (!playing()) return finishAndLeave();
-    if (!(typeof confirmBox === "function" && await confirmBox("Leave the battle?", "Leaving counts as a forfeit. Your score stays on the board and the others keep playing.", "Leave"))) return;
-    const id = room() && room().id;
-    exit();
-    if (api()) await api().leave(id);
+  async function shareCode() {
+    const code = S && S.room ? S.room.code : ""; if (!code) return;
+    const text = `Join my Team Zone room in Wordle Battle with code ${code}`;
+    if (navigator.share) { try { await navigator.share({ title: "Wordle Battle Team Zone", text }); return; } catch { return; } }
+    copyCode();
   }
 
-  // ---------- take over the solo handlers while a team battle is on ----------
-  document.addEventListener("click", (e) => {
-    if (!on || screen !== "game") return;
-    const t = e.target;
-    const key = t.closest && t.closest("#keyboard .key");
-    if (key) { e.stopPropagation(); e.preventDefault(); press(key.dataset.key); key.blur(); return; }
-    if (t.closest("#btn-submit")) { e.stopPropagation(); e.preventDefault(); submit(); return; }
-    const h = t.closest(".hint[data-hint]"); if (h) { e.stopPropagation(); e.preventDefault(); useHint(h.dataset.hint); return; }
-    if (t.closest("#g-back")) { e.stopPropagation(); e.preventDefault(); leavePrompt(); return; }
-    if (t.closest("#btn-skip")) { e.stopPropagation(); e.preventDefault(); return; }
-    if (t.closest("#game [data-go],#game [data-free-coins]")) { e.stopPropagation(); e.preventDefault(); if (typeof toast === "function") toast("Finish your battle first.", ""); }
-  }, true);
-  window.addEventListener("keydown", (e) => {
-    if (!on || screen !== "game") return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    const k = e.key.toLowerCase();
-    if (k === "escape") return;
-    if (e.target.closest && e.target.closest("input,textarea,select")) return;
-    e.stopImmediatePropagation();
-    if (k === "enter") { e.preventDefault(); if (!e.repeat) press("enter"); } else if (k === "backspace") press("back"); else if (/^[a-z]$/.test(k)) press(k);
-  }, true);
-  window.addEventListener("beforeunload", (e) => { if (on && playing() && !resultShown) { e.preventDefault(); e.returnValue = ""; } });
+  // ---------- taps and typing ----------
+  function onClick(e) {
+    const b = e.target.closest("[data-tz]"); if (!b || b.disabled) return;
+    const a = b.dataset.tz;
+    if (a === "create") { view = "create"; err = ""; paint(true); }
+    else if (a === "join") { view = "join"; err = ""; paint(true); }
+    else if (a === "back" || a === "done") { view = "home"; err = ""; if (a === "done") leaveLocal(""); paint(true); }
+    else if (a === "size") { createSize = Number(b.dataset.n); paint(true); }
+    else if (a === "diff") { createDiff = b.dataset.k; paint(true); }
+    else if (a === "create-go") createRoom();
+    else if (a === "join-go") joinRoom();
+    else if (a === "ready") setReady(b.dataset.on === "1");
+    else if (a === "leave") leaveRoom();
+    else if (a === "copy") copyCode();
+    else if (a === "share") shareCode();
+  }
+  function onInput(e) {
+    if (e.target && e.target.id === "tz-code") {
+      joinCode = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+      e.target.value = joinCode;
+      const go = $("#tz-join-go"); if (go) go.disabled = busy || joinCode.length !== 6;
+    }
+  }
+  function onKey(e) { if (e.key === "Enter" && e.target && e.target.id === "tz-code" && joinCode.length === 6) { e.preventDefault(); joinRoom(); } }
 
-  window.TeamGame = { update, exit, isOn: () => on };
+  // ---------- screen lifecycle ----------
+  let wired = false;
+  function wire() {
+    if (wired) return; wired = true;
+    const el = root(); if (!el) return;
+    el.addEventListener("click", onClick); el.addEventListener("input", onInput); el.addEventListener("keydown", onKey);
+    // Back on Team Zone returns to the Battle hub, like Friend Zone (every other Back goes to the dashboard)
+    document.addEventListener("click", (e) => {
+      if (curScreen() !== "team" || !e.target.closest("#team [data-back]")) return;
+      e.stopPropagation(); e.preventDefault(); if (view !== "home" && !S) { view = "home"; paint(true); return; }
+      if (typeof show === "function") show("battle");
+    }, true);
+  }
+
+  async function open() {
+    wire();
+    paint(true);                                               // draw the landing screen straight away, so the page is never blank while the server answers
+    if (S) return;
+    const slow = new Promise((res) => setTimeout(() => res({ ok: false, reason: "network" }), 6000));
+    const g = await Promise.race([call("tz_get_active", {}), slow]);   // resume a room I am still in, or a finished one whose reward I have not collected
+    const id = g.ok ? (g.active && g.active.room_id) || g.unclaimed_room_id : "";
+    if (id) { const s = await call("tz_sync", { p_room: id }); if (s.ok) return apply(s.state); }
+    paint(true);
+  }
+
+  function screenChanged(name) {
+    if (name === "team") { open(); return; }
+  }
+
+  // After a refresh or a reopened app: jump back into a battle in progress, or a finished one whose reward is not collected yet.
+  async function autoReturn(n) {
+    if (typeof screen !== "undefined" && screen !== "dashboard") { if (n < 4) setTimeout(() => autoReturn(n + 1), 1500); return; }
+    if (!client()) { if (n < 4) setTimeout(() => autoReturn(n + 1), 1500); return; }   // connection not ready yet: try again shortly
+    if (S) return;
+    const g = await call("tz_get_active", {});
+    if (!g.ok || S || (!(g.active && g.active.room_id) && !g.unclaimed_room_id)) return;
+    if (typeof screen !== "undefined" && screen !== "dashboard") return;
+    if (typeof show === "function") show("team");                    // open() resumes the room or the result
+  }
+  setTimeout(() => autoReturn(0), 3200);
+
+  // Wire up once the screen exists (index.html has #team with #tz-root).
+  function boot() { if (root()) { wire(); paint(true); } }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+
+  // Used by the battle screen (js/team-game.js)
+  const api = {
+    call: (fn, args) => call(fn, args, false),
+    srvNow: () => (S && S.server_now_ms ? S.server_now_ms + (Date.now() - gotAt) : Date.now()),
+    apply, sync,
+    async leave(id) {                             // send the leave first, so "my room" can no longer find it
+      if (id) dropped.add(id);
+      unwatch(); clearInterval(pollT); pollT = 0;
+      const r = await call("tz_leave", { p_room: id }, false);
+      roomId = ""; S = null; view = "home"; err = ""; busy = false; paint(true);
+      if (typeof show === "function") show("team");
+      return r;
+    },
+    finish() { if (roomId) dropped.add(roomId); unwatch(); clearInterval(pollT); pollT = 0; roomId = ""; S = null; view = "home"; err = ""; busy = false; paint(true); if (typeof show === "function") show("team"); }
+  };
+  window.TeamZone = { screenChanged, open, state: () => S, api };
 })();
