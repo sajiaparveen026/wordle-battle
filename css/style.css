@@ -965,7 +965,9 @@ html[data-motion=reduced] #update-bar,html[data-motion=reduced] #update-bar .ic-
   #battle .fb,#team .tz,#friends #fr-root{max-width:780px;margin-left:auto;margin-right:auto}
   #battle .fb-view,#team .tz{gap:20px}
   #game.battle main,#game.team main{max-width:720px}
-  #game.battle #board,#game.team #board{width:min(100%,400px,max(170px,calc((100dvh - 460px)*5/6)))}
+  #game.battle #board{width:min(100%,400px,max(170px,calc((100dvh - 560px)*5/6)))}
+  #game.team #board{width:min(100%,400px,max(170px,calc((100dvh - 460px)*5/6)))}
+  @supports (height:1cqh){#game.battle #board,#game.team #board{width:min(100%,400px,max(120px,calc((100cqh - 2px)*5/6)))}}
   #game.battle .bt-top,#game.team .tzg-top{max-width:720px;margin:0 auto;width:100%}
 }
 @media (min-width:1280px){#battle.screen,#team.screen,#friends.screen{max-width:900px}#battle .fb,#team .tz{max-width:860px}}
