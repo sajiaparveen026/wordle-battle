@@ -184,7 +184,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     </div>`;
   }
   function vFriend() {
-    return `<div class="fb-hero"><h2>Friend Zone</h2><p>Battle a friend in a private room.</p></div>
+    return `<div class="fb-hero"><h2 class="sr-only">Friend Zone</h2><p>Challenge a friend in a private room.</p></div>
     <div class="fb-cards two">
       <button class="fb-card create" type="button" data-fb="create"><span class="fb-ico" aria-hidden="true">➕</span><h3>Create a Room</h3><p>Pick a difficulty and get a code to share.</p><span class="fb-go">Create →</span></button>
       <button class="fb-card join" type="button" data-fb="join"><span class="fb-ico" aria-hidden="true">🔑</span><h3>Enter a Room</h3><p>Have a code? Jump into your friend's battle.</p><span class="fb-go">Join →</span></button>

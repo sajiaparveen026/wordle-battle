@@ -129,7 +129,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     if (window.RoomInvite) RoomInvite.sync("team", S && S.room ? S.room.id : "", !!(S && S.room && S.room.status === "waiting" && S.me && S.me.is_host && (S.players || []).length < S.room.max_players));   // Invite Friends: only the host, only while there is a free seat
   }
   function vHome() {
-    return `<div class="tz-hero"><h2>Team Zone</h2><p>3 to 5 players, one secret word. First to solve it wins.</p></div>
+    return `<div class="tz-hero"><h2 class="sr-only">Team Zone</h2><p>Compete with friends. One secret word. Only one winner!</p></div>
       <div class="fb-cards two">
         <button class="fb-card create" type="button" data-tz="create"><span class="fb-ico" aria-hidden="true">➕</span><h3>Create a Team Room</h3><p>Pick the group size and difficulty, then share the code.</p><span class="fb-go">Create →</span></button>
         <button class="fb-card join" type="button" data-tz="join"><span class="fb-ico" aria-hidden="true">🔑</span><h3>Enter a Room Code</h3><p>Have a code from a friend? Jump into their team.</p><span class="fb-go">Join →</span></button>

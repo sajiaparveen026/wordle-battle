@@ -128,6 +128,10 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
   const dailyBest = () => (typeof stats === "object" && stats ? stats.best || 0 : 0);        // best Daily Challenge streak (days)
   const dailyDone = (p) => Math.max(typeof stats === "object" && stats ? stats.played || 0 : 0, p.history.filter((h) => h.mode === "daily").length);
 
+  // Counters added with the second set of 25 (js/store.js keeps them; older saves are seeded safely there)
+  const fbWon = (p) => (p.fb ? p.fb.won : 0), tbWon = (p) => (p.tb ? p.tb.won : 0), tbPlayed = (p) => (p.tb ? p.tb.played : 0);
+  const fast = (k) => (p) => (p.fast ? p.fast[k] : 0);
+  const friends = (p) => p.friendsMax || 0;
   // id, name, description, tier, requirement text, value(p) and target (target 1 = a one-off goal, no progress bar)
   const LIST = [
     ["first-victory", "First Victory", "Win your first game.", "bronze", "Win 1 game.", (p) => p.wins, 1],
@@ -156,7 +160,36 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
     ["legendary-status", "Legendary Status", "Reach Level 50.", "gold", "Reach Level 50.", lvl, 50],
     ["first-try-best-try", "First Try, Best Try", "Guess the correct word on your first attempt.", "gold", "Win a game with the first guess.", (p) => (p.dist && p.dist[0] > 0 ? 1 : 0), 1],
     ["battle-legend", "Battle Legend", "Win 100 online battles.", "gold", "Win 100 online battles cumulatively.", (p) => p.battles.won, 100],
-    ["wordle-legend", "Wordle Legend", "Win 500 games in Wordle Battle.", "gold", "Win 500 games cumulatively.", (p) => p.wins, 500]
+    ["wordle-legend", "Wordle Legend", "Win 500 games in Wordle Battle.", "gold", "Win 500 games cumulatively.", (p) => p.wins, 500],
+
+    // ---- the second 25 (never changes the first 25 above) ----
+    ["comeback-kid", "Comeback Kid", "Win a game with your final attempt.", "bronze", "Win 1 game on your 6th and last guess.", (p) => (p.dist && p.dist[5] > 0 ? 1 : 0), 1],
+    ["battle-rookie", "Battle Rookie", "Complete your first Team Battle.", "bronze", "Finish 1 Team Battle.", tbPlayed, 1],
+    ["friendly-rival", "Friendly Rival", "Win 3 Friend Battles.", "bronze", "Win 3 Friend Battles.", fbWon, 3],
+    ["daily-dedication", "Daily Dedication", "Complete 3 Daily Challenges in a row.", "bronze", "Maintain a 3-day Daily Challenge streak.", dailyBest, 3],
+    ["quick-thinker", "Quick Thinker", "Win a game within 2 minutes.", "bronze", "Win 1 game in 2 minutes or less.", fast("s120"), 1],
+    ["social-player", "Social Player", "Add 5 friends.", "bronze", "Have 5 friends.", friends, 5],
+    ["power-saver", "Power Saver", "Win 5 games without using power-ups.", "bronze", "Win 5 games with no hints and no skips.", (p) => p.noPower, 5],
+    ["coin-enthusiast", "Coin Enthusiast", "Earn 500 coins in total.", "bronze", "Earn 500 coins cumulatively.", (p) => p.earned, 500],
+
+    ["battle-specialist", "Battle Specialist", "Win 15 Friend Battles.", "silver", "Win 15 Friend Battles.", fbWon, 15],
+    ["team-commander", "Team Commander", "Finish first in 10 Team Battles.", "silver", "Finish 1st in 10 Team Battles.", tbWon, 10],
+    ["daily-devotion", "Daily Devotion", "Complete 14 Daily Challenges in a row.", "silver", "Maintain a 14-day Daily Challenge streak.", dailyBest, 14],
+    ["speed-demon", "Speed Demon", "Win 10 games within 60 seconds each.", "silver", "Win 10 separate games in 60 seconds or less.", fast("s60"), 10],
+    ["flawless-solver", "Flawless Solver", "Win 25 games without using clues.", "silver", "Win 25 separate games without using clues.", (p) => p.noHintWins, 25],
+    ["social-butterfly", "Social Butterfly", "Have 15 friends.", "silver", "Have 15 friends.", friends, 15],
+    ["coin-tycoon", "Coin Tycoon", "Earn 5,000 coins in total.", "silver", "Earn 5,000 coins cumulatively.", (p) => p.earned, 5000],
+    ["persistent-mind", "Persistent Mind", "Play 100 games.", "silver", "Complete 100 games.", games, 100],
+
+    ["battle-emperor", "Battle Emperor", "Win 50 Friend Battles.", "gold", "Win 50 Friend Battles.", fbWon, 50],
+    ["team-overlord", "Team Overlord", "Win 50 Team Battles.", "gold", "Win 50 Team Battles (finish 1st).", tbWon, 50],
+    ["daily-immortal", "Daily Immortal", "Complete 60 Daily Challenges in a row.", "gold", "Maintain a 60-day Daily Challenge streak.", dailyBest, 60],
+    ["word-genius", "Word Genius", "Win 250 games.", "gold", "Win 250 games cumulatively.", (p) => p.wins, 250],
+    ["speed-legend", "Speed Legend", "Win 25 games within 45 seconds each.", "gold", "Win 25 separate games in 45 seconds or less.", fast("s45"), 25],
+    ["untouchable", "Untouchable", "Win 50 games without using any power-ups.", "gold", "Win 50 games with no hints and no skips.", (p) => p.noPower, 50],
+    ["social-legend", "Social Legend", "Have 25 friends.", "gold", "Have 25 friends.", friends, 25],
+    ["coin-emperor", "Coin Emperor", "Earn 25,000 coins in total.", "gold", "Earn 25,000 coins cumulatively.", (p) => p.earned, 25000],
+    ["ultimate-wordle-legend", "Ultimate Wordle Legend", "Win 1,000 games.", "gold", "Win 1,000 games cumulatively.", (p) => p.wins, 1000]
   ].map(([id, name, desc, tier, req, value, target], i) => ({ id, name, desc, tier, req, value, target, n: i + 1 }));
   const TIER = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
 
@@ -186,7 +219,32 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
     "legendary-status": '<path d="M4 17.5L3 8l5 4 4-7 4 7 5-4-1 9.5zM5 20.5h14"/>',
     "first-try-best-try": '<circle cx="11" cy="13" r="7.5"/><circle cx="11" cy="13" r="3.6"/><path d="M12.8 11.2L19.5 4.5M16 4.5h3.5V8"/>',
     "battle-legend": '<path d="M12 3l7 2.8v5.6c0 4.4-2.8 7.6-7 9.6-4.2-2-7-5.2-7-9.6V5.8z"/><path d="M9 9l6 6M15 9l-6 6"/>',
-    "wordle-legend": '<path d="M5.5 10l2.3 8L12 12l4.2 6 2.3-8"/><path d="M12 3l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1L9 5.2l2.1-.3z"/>'
+    "wordle-legend": '<path d="M5.5 10l2.3 8L12 12l4.2 6 2.3-8"/><path d="M12 3l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1L9 5.2l2.1-.3z"/>',
+    "comeback-kid": '<path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5"/><path d="M4 4v4.8h4.8"/><path d="M9.5 12.2l2 2 3.5-3.8"/>',
+    "battle-rookie": '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3.5 19c0-3.2 2.4-5 5.5-5s5.5 1.8 5.5 5M15 14.2c3 0 5.5 1.4 5.5 4.3"/>',
+    "friendly-rival": '<circle cx="6.5" cy="8.5" r="2.6"/><circle cx="17.5" cy="8.5" r="2.6"/><path d="M2.5 19c0-3 1.8-4.8 4-4.8s4 1.8 4 4.8M13.5 19c0-3 1.8-4.8 4-4.8s4 1.8 4 4.8M12.8 5.5l-1.6 3.2h1.6l-1.6 3.2"/>',
+    "daily-dedication": '<path d="M5 6h14v13H5zM5 10h14M8 4v3M16 4v3M8.5 14.5v.01M12 14.5v.01M15.5 14.5v.01"/>',
+    "quick-thinker": '<circle cx="12" cy="13.5" r="7"/><path d="M12 13.5V9.8M9.5 3h5M12 3v3.5M18.5 6.5l1.2-1.2"/>',
+    "social-player": '<circle cx="10" cy="8.5" r="3.5"/><path d="M3.5 19.5c0-3.4 2.9-5.5 6.5-5.5s6.5 2.1 6.5 5.5M19 8v6M16 11h6"/>',
+    "power-saver": '<rect x="3.5" y="8" width="15" height="9" rx="2"/><path d="M21 11v3M7.5 11v3M11 11v3"/>',
+    "coin-enthusiast": '<circle cx="12" cy="12" r="8"/><path d="M14.8 9.4a3.6 3.6 0 1 0 0 5.2"/>',
+    "battle-specialist": '<path d="M12 3v13M8.5 16h7M12 16v4.5M9.5 20.5h5"/><path d="M10.2 6.5L12 3l1.8 3.5"/>',
+    "team-commander": '<circle cx="12" cy="9" r="5"/><path d="M9 13.5L7.5 21l4.5-2.4 4.5 2.4L15 13.5M12 6.8v4.4"/>',
+    "daily-devotion": '<path d="M5 6h14v13H5zM5 10h14M8 4v3M16 4v3"/><path d="M12 17.4s-3-1.8-3-3.9a1.6 1.6 0 0 1 3-.8 1.6 1.6 0 0 1 3 .8c0 2.1-3 3.9-3 3.9z"/>',
+    "speed-demon": '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5M7 17h.01M12 9v.01M17 17h.01"/>',
+    "flawless-solver": '<circle cx="12" cy="12" r="8.5"/><path d="M8 12.3l2.8 2.8L16.5 9"/>',
+    "social-butterfly": '<path d="M12 8v10"/><path d="M12 9.5C11 5 6 4 4.5 5.5 3.5 8 5.5 11.5 9 12c-3 .8-3.5 4-1.5 5.5 2 1.2 4-.3 4.5-2.8"/><path d="M12 9.5C13 5 18 4 19.5 5.5c1 2.5-1 6-4.5 6.5 3 .8 3.5 4 1.5 5.5-2 1.2-4-.3-4.5-2.8"/>',
+    "coin-tycoon": '<path d="M9 4h6l-1.4 3.2h-3.2z"/><path d="M8.6 7.2C5.5 9.4 4 12 4 15c0 3.2 2.7 5 8 5s8-1.8 8-5c0-3-1.5-5.6-4.6-7.8"/><path d="M12 11.5v6M14 13c-.4-.6-1.1-.9-2-.9-1.1 0-1.9.5-1.9 1.3 0 1.8 4 .9 4 2.7 0 .8-.8 1.3-2.1 1.3-.9 0-1.6-.3-2-.9"/>',
+    "persistent-mind": '<path d="M9 4.5a3 3 0 0 0-3 3v.3A3.2 3.2 0 0 0 4.5 11c0 1 .5 1.9 1.3 2.5A3 3 0 0 0 6.5 18 3 3 0 0 0 12 19V5.5A2.5 2.5 0 0 0 9 4.5z"/><path d="M15 4.5a3 3 0 0 1 3 3v.3a3.2 3.2 0 0 1 1.5 3.2c0 1-.5 1.9-1.3 2.5A3 3 0 0 1 17.5 18 3 3 0 0 1 12 19"/>',
+    "battle-emperor": '<path d="M5 20V9l2-1V5h2v2h2V5h2v2h2V5h2v3l2 1v11zM10 20v-5h4v5"/>',
+    "team-overlord": '<circle cx="12" cy="7.5" r="2.8"/><circle cx="5.5" cy="10.5" r="2.2"/><circle cx="18.5" cy="10.5" r="2.2"/><path d="M7.5 20c0-3.4 2-5.6 4.5-5.6s4.5 2.2 4.5 5.6M2.5 18.5c0-2.4 1.4-4 3-4M21.5 18.5c0-2.4-1.4-4-3-4"/>',
+    "daily-immortal": '<path d="M12 12c-2-2.7-3.6-4-5.5-4a4 4 0 0 0 0 8c1.9 0 3.5-1.3 5.5-4s3.6-4 5.5-4a4 4 0 0 1 0 8c-1.9 0-3.5-1.3-5.5-4z"/>',
+    "word-genius": '<circle cx="12" cy="12" r="1.8"/><ellipse cx="12" cy="12" rx="9" ry="3.6"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.6" transform="rotate(120 12 12)"/>',
+    "speed-legend": '<path d="M12 3c3 2.5 4.5 6 4 10l-4 3-4-3c-.5-4 1-7.5 4-10z"/><circle cx="12" cy="9.5" r="1.6"/><path d="M8 14l-3 2.5 1 3.5 3-2M16 14l3 2.5-1 3.5-3-2M12 16.5v4.5"/>',
+    "untouchable": '<path d="M6 20V11a6 6 0 0 1 12 0v9l-2.4-1.8L13.2 20 12 18.8 10.8 20 8.4 18.2z"/><path d="M9.8 11v.01M14.2 11v.01"/>',
+    "social-legend": '<path d="M12 20s-7.5-4.5-7.5-10A4.3 4.3 0 0 1 12 7.7 4.3 4.3 0 0 1 19.5 10c0 5.5-7.5 10-7.5 10z"/><path d="M9.5 11h5M12 8.5v5"/>',
+    "coin-emperor": '<path d="M6.5 8l2.3 2.4L12 4.5l3.2 5.9L17.5 8l-.9 3.5H7.4z"/><circle cx="12" cy="17" r="3.6"/>',
+    "ultimate-wordle-legend": '<path d="M12 20c-4.5 0-7.5-3-7.5-7.5 0-2 .8-3.8 2-5M12 20c4.5 0 7.5-3 7.5-7.5 0-2-.8-3.8-2-5"/><path d="M12 6.5l1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z"/>'
   };
 
   // ---------- engine ----------
@@ -240,7 +298,7 @@ html[data-motion=reduced] .ach-medal::after{animation:none!important;display:non
   }
   const emptyHTML = (tag, cls) => `<${tag} class="${cls}"><span class="ico" aria-hidden="true">🏅</span><b>No achievements yet</b><small>Play a game to unlock your first badge. They'll show up here.</small><button type="button" class="ach-play" data-go="practice">Play now</button></${tag}>`;
 
-  // ---------- Achievements page (all 25, filtered All / Unlocked / Locked) ----------
+  // ---------- Achievements page (every achievement, filtered All / Unlocked / Locked) ----------
   let filter = "all";
   const pageOn = () => { const s = $("#achievements"); return !!s && !s.classList.contains("hidden"); };
   function renderPage() {

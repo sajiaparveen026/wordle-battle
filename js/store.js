@@ -32,7 +32,10 @@ const Player = (() => {
     // Achievements (js/achievements.js): lifetime counters + the unlock record { id: ISO date }, each achievement is stored once and never removed
     earned: 0, noHintWins: 0, sessionsPlayed: 0, lastSession: "", lastGameAt: 0, battles: { played: 0, won: 0 }, ach: {},
     // Battle profile stats (separate from Solo): bstats = completed Friend + Team battles, bhist = the last 50 of them (Recent Plays > Battle)
-    bstats: null, bhist: []
+    bstats: null, bhist: [],
+    // More achievement counters (js/achievements.js): fb / tb = completed Friend / Team battles (tb.won = finished first), fast = wins within 2 min / 60 s / 45 s,
+    // noPower = wins that used no hint and no skip, friendsMax = most friends you have had at once. skipGame = the game id that came from a Skip (not synced).
+    fb: null, tb: null, fast: null, noPower: 0, friendsMax: 0, skipGame: ""
   });
   let p;
   let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY)); } catch {}
@@ -64,6 +67,15 @@ const Player = (() => {
   const cleanB = (b) => { const o = { played: cnt(b.played), won: cnt(b.won), lost: cnt(b.lost), draw: cnt(b.draw), streak: cnt(b.streak), best: cnt(b.best) }; o.best = Math.max(o.best, o.streak); return o; };
   p.bstats = p.bstats && typeof p.bstats === "object" ? cleanB(p.bstats) : seedB();
   if (!Array.isArray(p.bhist)) p.bhist = [];
+  // Friend / Team battle counters. Older saves are seeded once from the battle history they still have (last 50): only entries that are clearly
+  // a Friend battle (has an opponent) or a Team battle (typed "team") are counted, so nothing is ever over-counted.
+  const cleanC = (o) => { const pl = cnt(o.played); return { played: pl, won: Math.min(cnt(o.won), pl) }; };
+  const seedC = (test) => { const h = p.bhist.filter((x) => x && test(x)); return { played: h.length, won: h.filter((x) => x.result === "win").length }; };
+  p.fb = p.fb && typeof p.fb === "object" ? cleanC(p.fb) : seedC((x) => x.type === "friend" && x.opp);
+  p.tb = p.tb && typeof p.tb === "object" ? cleanC(p.tb) : seedC((x) => x.type === "team");
+  p.fast = p.fast && typeof p.fast === "object" ? { s120: cnt(p.fast.s120), s60: cnt(p.fast.s60), s45: cnt(p.fast.s45) } : { s120: 0, s60: 0, s45: 0 };
+  p.noPower = cnt(p.noPower); p.friendsMax = cnt(p.friendsMax); p.skipGame = typeof p.skipGame === "string" ? p.skipGame.slice(0, 60) : "";
+  const fastWin = (ms) => { if (!Number.isFinite(ms) || ms < 1000) return; if (ms <= 120000) p.fast.s120++; if (ms <= 60000) p.fast.s60++; if (ms <= 45000) p.fast.s45++; };   // under 1 s is not a real time
   // A "session" = one app visit. A game finished in a new visit (or 30+ minutes after the last game) counts as a new session.
   const sid = () => { try { let s = sessionStorage.getItem("wb_sid"); if (!s) { s = Math.random().toString(36).slice(2); sessionStorage.setItem("wb_sid", s); } return s; } catch { return "x"; } };
   function countSession() { const now = Date.now(), s = sid(); if (p.lastSession !== s || now - p.lastGameAt > 30 * 60 * 1000) p.sessionsPlayed++; p.lastSession = s; p.lastGameAt = now; }
@@ -107,12 +119,13 @@ const Player = (() => {
       p.history = p.history.slice(-50); save();
     },
     // Each game id can be rewarded or counted only once.
-    reward(gameId, kind, tries, hintsUsed) {
+    reward(gameId, kind, tries, hintsUsed, extra) {   // extra (optional): { ms: play time of this game, power: true if a hint or a skip was used }
       if (p.rewarded.includes("W:" + gameId) || p.rewarded.includes("L:" + gameId)) return null;
       const r = REWARDS[kind], before = this.levelInfo().level;
       p.coins += r.coins; p.earned += r.coins; p.xp += r.xp; p.wins++; if (!hintsUsed) p.noHintWins++; countSession();
       if (tries >= 1 && tries <= 6) { p.dist[tries - 1]++; p.bestGuesses = p.bestGuesses ? Math.min(p.bestGuesses, tries) : tries; }
       p.streak++; p.bestStreak = Math.max(p.bestStreak, p.streak);
+      if (extra && typeof extra === "object") { fastWin(extra.ms); if (extra.power === false) p.noPower++; }
       p.rewarded.push("W:" + gameId); p.recent = [...p.recent, "W"].slice(-5);
       p.rewarded = p.rewarded.slice(-300); save();
       return { ...r, levelUp: this.levelInfo().level > before };
@@ -133,11 +146,16 @@ const Player = (() => {
       p.bhist.push({ id: String(roomId).slice(0, 60), type: m.type === "team" ? "team" : "friend", result: outcome, tries: ok(m.tries, 0, 6), status: ["solved", "failed"].includes(m.status) ? m.status : "", ms: Number.isFinite(m.ms) && m.ms >= 0 ? Math.round(m.ms) : null,
         opp: m.opp && typeof m.opp.name === "string" ? { name: m.opp.name.slice(0, 16), avatar: String(m.opp.avatar || "").slice(0, 8) } : null, place: ok(m.place, 1, 5), size: ok(m.size, 2, 5), coins, xp, at: new Date().toISOString() });
       p.bhist = p.bhist.slice(-50);
+      const side = m.type === "team" ? p.tb : p.fb; side.played++; if (outcome === "win") side.won++;      // Friend and Team battles are counted apart (tb.won = finished first)
+      if (outcome === "win" && m.status === "solved") { fastWin(m.ms); if (m.hints === 0) p.noPower++; }      // a battle win only counts for speed / no-power-up when you really solved the word
       countSession(); p.rewarded.push(key); p.rewarded = p.rewarded.slice(-300); save();
       return { coins, xp, outcome, levelUp: this.levelInfo().level > before };
     },
     // Solo numbers for the Profile: battle wins/losses are also added to wins/losses (achievements use those), so they are taken out here to keep Solo and Battle separate.
     soloCounts() { const w = Math.max(0, p.wins - p.bstats.won), l = Math.max(0, p.losses - p.bstats.lost); return { won: w, played: w + l }; },
+    // Skip bookkeeping + friend count for the achievements. markSkip: the word that replaced a skipped one is not a "no power-up" win.
+    markSkip(gameId) { p.skipGame = String(gameId || "").slice(0, 60); save(true); },
+    noteFriends(n) { n = cnt(n); if (n > p.friendsMax) { p.friendsMax = n; save(); } return p.friendsMax; },
     recordBattle(won) { p.battles.played++; if (won) p.battles.won++; save(); },
     recordLoss(gameId) {
       if (p.rewarded.includes("W:" + gameId) || p.rewarded.includes("L:" + gameId)) return;

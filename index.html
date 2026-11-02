@@ -67,6 +67,13 @@
     <symbol id="p-edit" viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></symbol>
     <symbol id="p-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
     <symbol id="p-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V19a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H5a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1A2 2 0 1 1 9 4.4l.1.1a1.6 1.6 0 0 0 1.8.3h.1a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1A2 2 0 1 1 20 7.4l-.1.1a1.6 1.6 0 0 0-.3 1.8v.1a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></symbol>
+  <symbol id="wb-w" viewBox="2 5 60 55"><defs><linearGradient id="wbS" x1="0" y1="8" x2="0" y2="54" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color:var(--wb-s1)"/><stop offset=".32" style="stop-color:var(--wb-s2)"/><stop offset=".5" style="stop-color:var(--wb-s3)"/><stop offset=".54" style="stop-color:var(--wb-s4)"/><stop offset="1" style="stop-color:var(--wb-s2)"/></linearGradient>
+<linearGradient id="wbG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--wb-g1)"/><stop offset=".55" style="stop-color:var(--wb-g2)"/><stop offset="1" style="stop-color:var(--wb-g3)"/></linearGradient>
+<linearGradient id="wbH" x1="0" y1="8" x2="0" y2="54" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".45" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#fff" stop-opacity=".35"/></linearGradient>
+<clipPath id="wbC"><polygon points="4,12.5 8.5,8 16,8 24.9,35.2 29,22 35,22 39.1,35.2 48,8 55.5,8 60,12.5 45,54 39,54 32,31.6 25,54 19,54"/></clipPath></defs><polygon points="4,12.5 8.5,8 16,8 24.9,35.2 29,22 35,22 39.1,35.2 48,8 55.5,8 60,12.5 45,54 39,54 32,31.6 25,54 19,54" transform="translate(0 3)" style="fill:var(--wb-ext)"/>
+<polygon points="4,12.5 8.5,8 16,8 24.9,35.2 29,22 35,22 39.1,35.2 48,8 55.5,8 60,12.5 45,54 39,54 32,31.6 25,54 19,54" fill="url(#wbS)"/>
+<g clip-path="url(#wbC)"><rect x="0" y="8" width="64" height="4.6" fill="url(#wbG)"/><rect x="27" y="22" width="10" height="3.6" fill="url(#wbG)"/><rect x="0" y="50.6" width="64" height="3.4" fill="url(#wbG)" opacity=".9"/></g>
+<polygon points="4,12.5 8.5,8 16,8 24.9,35.2 29,22 35,22 39.1,35.2 48,8 55.5,8 60,12.5 45,54 39,54 32,31.6 25,54 19,54" fill="none" stroke="url(#wbH)" stroke-width=".9" stroke-linejoin="round"/></symbol>
   </defs>
 </svg>
 
@@ -183,7 +190,7 @@
 
 <div id="splash">
   <div class="orb o1"></div><div class="orb o2"></div>
-  <div class="logo">Wordle <span>Battle</span></div>
+  <div class="logo" role="img" aria-label="Wordle Battle"><svg class="wlogo" viewBox="2 5 60 55" aria-hidden="true" focusable="false"><use href="#wb-w"/></svg><span class="lt" aria-hidden="true"><i class="lw">Wordle</i><i class="lb">Battle</i></span></div>
   <div class="loader"><i></i><i></i><i></i><i></i><i></i></div>
   <p>Loading your next challenge...</p>
 </div>
@@ -191,7 +198,7 @@
 <!-- DASHBOARD -->
 <section id="dashboard" class="screen hidden">
   <header class="dash-head">
-    <div class="logo sm">Wordle <span>Battle</span></div>
+    <div class="logo sm" role="img" aria-label="Wordle Battle"><svg class="wlogo" viewBox="2 5 60 55" aria-hidden="true" focusable="false"><use href="#wb-w"/></svg><span class="lt" aria-hidden="true"><i class="lw">Wordle</i><i class="lb">Battle</i></span></div>
     <div class="head-right">
       <button class="streak" data-go="profile" aria-label="Daily streak, open profile"><span>🔥</span><b class="streak-val"></b></button>
       <div class="coins"><button class="coins-main" type="button" data-go="shop" aria-label="Coins, open shop">🪙 <b class="coin-val"></b></button><button class="plus" type="button" data-free-coins aria-label="Claim free coins">+</button></div>
@@ -230,13 +237,13 @@
   <div id="wh-root" class="wh"></div>
 </section>
 
-<!-- ACHIEVEMENTS (all 25 badges: opened from "See All" on the Profile) -->
+<!-- ACHIEVEMENTS (all badges: opened from "See All" on the Profile) -->
 <section id="achievements" class="screen hidden" aria-labelledby="ach-page-t">
   <header class="top pf-top"><button class="ibtn" id="ach-back" aria-label="Back to Profile" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b id="ach-page-t">Achievements</b><span aria-hidden="true"></span></header>
   <div class="ach-filters" id="ach-filters" role="group" aria-label="Filter achievements">
-    <button type="button" class="ach-f on" data-f="all" aria-pressed="true">All<i id="ach-n-all">25</i></button>
+    <button type="button" class="ach-f on" data-f="all" aria-pressed="true">All<i id="ach-n-all">50</i></button>
     <button type="button" class="ach-f" data-f="unlocked" aria-pressed="false">Unlocked<i id="ach-n-unlocked">0</i></button>
-    <button type="button" class="ach-f" data-f="locked" aria-pressed="false">Locked<i id="ach-n-locked">25</i></button>
+    <button type="button" class="ach-f" data-f="locked" aria-pressed="false">Locked<i id="ach-n-locked">50</i></button>
   </div>
   <ul class="ach-grid" id="ach-grid"></ul>
 </section>
@@ -303,7 +310,7 @@
 <!-- AUTH SCREENS -->
 <section id="welcome" class="screen auth hidden">
   <div class="installcard hidden" data-install-card role="region" aria-label="Install the app"><span class="ic-ico" aria-hidden="true">📲</span><div class="ic-txt"><b>Install Wordle Battle</b><small>Opens like a real app, faster and fullscreen</small></div><button class="ic-btn" type="button" data-install>📲 Install App</button><button class="ic-x" type="button" data-install-x aria-label="Dismiss install prompt">✕</button></div>
-  <div class="auth-hero"><div class="logo">Wordle <span>Battle</span></div>
+  <div class="auth-hero"><div class="logo" role="img" aria-label="Wordle Battle"><svg class="wlogo" viewBox="2 5 60 55" aria-hidden="true" focusable="false"><use href="#wb-w"/></svg><span class="lt" aria-hidden="true"><i class="lw">Wordle</i><i class="lb">Battle</i></span></div>
     <div class="preview" aria-hidden="true"><span class="pt gold" style="--i:0">C</span><span class="pt" style="--i:1">R</span><span class="pt dim" style="--i:2">O</span><span class="pt" style="--i:3">W</span><span class="pt gold" style="--i:4">N</span></div>
     <h1>Ready to Battle?</h1><p class="tagline">Challenge your mind. Beat your rivals. Claim the crown.</p></div>
   <div class="authcard">
@@ -320,7 +327,7 @@
 
 <section id="signup" class="screen auth hidden">
   <div class="installcard hidden" data-install-card role="region" aria-label="Install the app"><span class="ic-ico" aria-hidden="true">📲</span><div class="ic-txt"><b>Install Wordle Battle</b><small>Opens like a real app, faster and fullscreen</small></div><button class="ic-btn" type="button" data-install>📲 Install App</button><button class="ic-x" type="button" data-install-x aria-label="Dismiss install prompt">✕</button></div>
-  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Create your account</h2></div>
+  <div class="auth-hero sm"><div class="logo sm" role="img" aria-label="Wordle Battle"><svg class="wlogo" viewBox="2 5 60 55" aria-hidden="true" focusable="false"><use href="#wb-w"/></svg><span class="lt" aria-hidden="true"><i class="lw">Wordle</i><i class="lb">Battle</i></span></div><h2>Create your account</h2></div>
   <div class="authcard">
     <form id="signup-form" method="post" action="#" novalidate>
       <label class="field"><span aria-hidden="true">📧</span><input id="su-email" type="email" autocomplete="email" placeholder="Email" ></label>
@@ -340,7 +347,7 @@
 
 <section id="login" class="screen auth hidden">
   <div class="installcard hidden" data-install-card role="region" aria-label="Install the app"><span class="ic-ico" aria-hidden="true">📲</span><div class="ic-txt"><b>Install Wordle Battle</b><small>Opens like a real app, faster and fullscreen</small></div><button class="ic-btn" type="button" data-install>📲 Install App</button><button class="ic-x" type="button" data-install-x aria-label="Dismiss install prompt">✕</button></div>
-  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Welcome back</h2></div>
+  <div class="auth-hero sm"><div class="logo sm" role="img" aria-label="Wordle Battle"><svg class="wlogo" viewBox="2 5 60 55" aria-hidden="true" focusable="false"><use href="#wb-w"/></svg><span class="lt" aria-hidden="true"><i class="lw">Wordle</i><i class="lb">Battle</i></span></div><h2>Welcome back</h2></div>
   <div class="authcard">
     <p id="li-notice" class="authmsg ok" role="status"></p>
     <form id="login-form" method="post" action="#" novalidate>
@@ -357,7 +364,7 @@
 </section>
 
 <section id="forgot" class="screen auth hidden">
-  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Reset your password</h2></div>
+  <div class="auth-hero sm"><div class="logo sm" role="img" aria-label="Wordle Battle"><svg class="wlogo" viewBox="2 5 60 55" aria-hidden="true" focusable="false"><use href="#wb-w"/></svg><span class="lt" aria-hidden="true"><i class="lw">Wordle</i><i class="lb">Battle</i></span></div><h2>Reset your password</h2></div>
   <div class="authcard">
     <p class="fine">Enter your email and we'll send a reset link if an account exists for it.</p>
     <form id="forgot-form" method="post" action="#" novalidate>
@@ -370,7 +377,7 @@
 </section>
 
 <section id="reset" class="screen auth hidden">
-  <div class="auth-hero sm"><div class="logo sm">Wordle <span>Battle</span></div><h2>Choose a new password</h2></div>
+  <div class="auth-hero sm"><div class="logo sm" role="img" aria-label="Wordle Battle"><svg class="wlogo" viewBox="2 5 60 55" aria-hidden="true" focusable="false"><use href="#wb-w"/></svg><span class="lt" aria-hidden="true"><i class="lw">Wordle</i><i class="lb">Battle</i></span></div><h2>Choose a new password</h2></div>
   <div class="authcard">
     <form id="reset-form" method="post" action="#" novalidate>
       <label class="field"><span aria-hidden="true">🔒</span><input id="rp-pass" type="password" autocomplete="new-password" placeholder="New password" ><button type="button" class="eye" data-eye="rp-pass" aria-label="Show password">👁</button></label>
@@ -427,7 +434,7 @@
   </button>
 
   <section class="pf-card pf-ach" aria-labelledby="pf-ach-t">
-    <div class="pf-sechead"><span class="pf-tile c-gold"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-medal"/></svg></span><b id="pf-ach-t">Achievements</b><span class="ach-count" id="ach-count" aria-live="polite" title="Unlocked achievements">0/25</span><button class="ach-all" id="ach-all" type="button" aria-label="See all achievements">See All<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button></div>
+    <div class="pf-sechead"><span class="pf-tile c-gold"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-medal"/></svg></span><b id="pf-ach-t">Achievements</b><span class="ach-count" id="ach-count" aria-live="polite" title="Unlocked achievements">0/50</span><button class="ach-all" id="ach-all" type="button" aria-label="See all achievements">See All<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button></div>
     <div class="ach-wrap">
       <button class="ach-nav prev" id="ach-prev" type="button" aria-label="Scroll achievements left"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button>
       <ul class="ach-track" id="ach-track" tabindex="0" aria-label="Achievements. Swipe or scroll sideways to see more."></ul>
@@ -558,7 +565,7 @@
         <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-about" tabindex="-1">About</h3></div>
         <div class="installcard hidden" data-update-card id="s-update-card" role="region" aria-label="App update"><span class="ic-ico" aria-hidden="true">⬆️</span><div class="ic-txt"><b>New version ready</b><small>Latest features and fixes</small></div><button class="ic-btn" type="button" id="s-update-btn" data-update-now>Update App</button></div>
         <div class="sp-card sp-static sp-about">
-          <div class="logo sm">Wordle <span>Battle</span></div>
+          <div class="logo sm" role="img" aria-label="Wordle Battle"><svg class="wlogo" viewBox="2 5 60 55" aria-hidden="true" focusable="false"><use href="#wb-w"/></svg><span class="lt" aria-hidden="true"><i class="lw">Wordle</i><i class="lb">Battle</i></span></div>
           <div class="about"><b id="s-version"></b><small id="s-update-note"></small></div>
           <div class="actions"><button class="primary alt" id="s-check-btn" type="button">Check for updates</button></div>
           <div class="actions hidden" data-install-wrap><button class="primary ic-btn hot" type="button" data-install>📲 Install App</button></div>
@@ -685,7 +692,6 @@
         <button id="btn-home" class="r-icon" type="button" aria-label="Home"><span aria-hidden="true">🏠</span><small>Home</small></button>
         <button id="btn-shop" class="r-icon" type="button" aria-label="Shop"><span aria-hidden="true">🛍️</span><small>Shop</small></button>
       </div>
-      <button id="btn-share" class="share-link" type="button">Share result</button>
     </div>
   </div>
 </div>

@@ -257,7 +257,9 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
     api().call("tz_claim_reward", { p_room: rid }).then((r) => {
       if (!r || !r.ok) { claimedFor = ""; return; }
       if (r.granted && r.outcome && typeof Player !== "undefined" && Player && typeof Player.rewardBattle === "function") {
-        Player.rewardBattle(rid, r.outcome, Number(r.coins) || 0, Number(r.xp) || 0);
+        const m = me(), meta = { type: "team", place: Number(r.place) || null, size: S && S.players ? S.players.length : null, tries: m ? m.attempts_used : null, status: m ? m.status : "",
+          ms: m && m.status === "solved" ? m.completion_ms : null, hints: S && S.me && Array.isArray(S.me.hints_used) ? S.me.hints_used.length : null };   // tells the Profile and the achievements this was a TEAM battle
+        Player.rewardBattle(rid, r.outcome, Number(r.coins) || 0, Number(r.xp) || 0, meta);
         if (typeof refreshCoins === "function") refreshCoins();
         if (typeof toast === "function" && (Number(r.coins) || Number(r.xp))) toast(`+${r.coins} coins · +${r.xp} XP`, "success", 3000);
       }

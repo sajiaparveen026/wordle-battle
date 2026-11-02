@@ -238,7 +238,7 @@
   const metaKey = () => "wb_sync_" + user.id;
   const loadMeta = () => { try { return JSON.parse(localStorage.getItem("wb_sync_" + window.WB_NS)) || { rev: 0, dirty: false }; } catch { return { rev: 0, dirty: false }; } };
   const saveMeta = () => localStorage.setItem(metaKey(), JSON.stringify(meta));
-  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt", "earned", "noHintWins", "sessionsPlayed", "lastSession", "lastGameAt", "battles", "ach", "bstats", "bhist"];
+  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt", "earned", "noHintWins", "sessionsPlayed", "lastSession", "lastGameAt", "battles", "ach", "bstats", "bhist", "fb", "tb", "fast", "noPower", "friendsMax"];
   const snapshot = () => { const P = Player.data, player = {}; KEYS.forEach((k) => (player[k] = P[k])); return { v: 1, player, stats: window.WBApp.getStats() }; };
   function applySnapshot(s) { // sanitise before trusting remote/guest data in the local store
     if (!s || typeof s.player !== "object") return;
@@ -266,6 +266,12 @@
     if (Array.isArray(r.bhist)) P.bhist = r.bhist.filter((h) => h && typeof h.id === "string" && ["friend", "team"].includes(h.type) && ["win", "loss", "draw"].includes(h.result) && typeof h.at === "string" && !isNaN(Date.parse(h.at)))
       .map((h) => ({ id: h.id.slice(0, 60), type: h.type, result: h.result, tries: Number.isInteger(h.tries) && h.tries >= 0 && h.tries <= 6 ? h.tries : null, status: h.status === "solved" || h.status === "failed" ? h.status : "", ms: Number.isFinite(h.ms) && h.ms >= 0 ? h.ms : null,
         opp: h.opp && typeof h.opp.name === "string" ? { name: h.opp.name.slice(0, 16), avatar: String(h.opp.avatar || "").slice(0, 8) } : null, place: Number.isInteger(h.place) && h.place >= 1 && h.place <= 5 ? h.place : null, size: Number.isInteger(h.size) && h.size >= 2 && h.size <= 5 ? h.size : null, coins: n(h.coins, 0), xp: n(h.xp, 0), at: h.at })).slice(-50);
+    // newer achievement counters: older cloud saves have none (keep local); otherwise the higher value wins, so a stale device can never lower them
+    const hi = (cloud, local) => Math.max(n(cloud, 0), local || 0);
+    const side = (c, l) => { if (!c || typeof c !== "object") return l; const pl = Math.max(n(c.played, 0), l.played); return { played: pl, won: Math.min(Math.max(n(c.won, 0), l.won), pl) }; };
+    P.fb = side(r.fb, P.fb); P.tb = side(r.tb, P.tb);
+    if (r.fast && typeof r.fast === "object") P.fast = { s120: hi(r.fast.s120, P.fast.s120), s60: hi(r.fast.s60, P.fast.s60), s45: hi(r.fast.s45, P.fast.s45) };
+    P.noPower = hi(r.noPower, P.noPower); P.friendsMax = hi(r.friendsMax, P.friendsMax);
     if (r.ach && typeof r.ach === "object" && !Array.isArray(r.ach)) Object.keys(r.ach).forEach((id) => { const d = r.ach[id]; if (/^[a-z0-9-]{1,40}$/.test(id) && typeof d === "string" && !isNaN(Date.parse(d)) && (!P.ach[id] || Date.parse(d) < Date.parse(P.ach[id]))) P.ach[id] = d; });
     Player.save(true);
     if (s.stats && typeof s.stats === "object") window.WBApp.applyStats(s.stats);

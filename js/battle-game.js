@@ -270,7 +270,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
   const gfx = (n, ...a) => { try { if (typeof window[n] === "function") return window[n](...a); } catch {} };   // app.js helpers (confetti, countUp, ...)
   const quick = () => typeof reduced === "function" && reduced();
   // What the Profile keeps about a finished battle (no word, no answer): opponent, attempts, final status.
-  const histMeta = (rid) => { const r = room(), m = me(), o = opp(); if (!r || r.id !== rid || !m) return { type: "friend" }; return { type: "friend", tries: m.attempts_used, status: m.status, ms: m.completion_ms, opp: o ? { name: o.username, avatar: o.avatar } : null }; };
+  const histMeta = (rid) => { const r = room(), m = me(), o = opp(); if (!r || r.id !== rid || !m) return { type: "friend" }; return { type: "friend", tries: m.attempts_used, status: m.status, ms: m.completion_ms, hints: S && S.me && Array.isArray(S.me.hints_used) ? S.me.hints_used.length : null, opp: o ? { name: o.username, avatar: o.avatar } : null }; };
   const canPay = () => typeof Player !== "undefined" && Player && typeof Player.rewardBattle === "function";
   const paidOutcome = () => { const m = me(); return !!m && (m.outcome === "win" || m.outcome === "loss" || m.outcome === "draw"); };
 

@@ -123,6 +123,7 @@ function syncHistory(name) {
   } catch {}
 }
 function show(name, fromHistory) {
+  if (name !== "game" && playOn) { pausePlay(true); if (status === "playing") saveProgress(); }   // leaving the Solo / Daily game stops its clock
   if (!fromHistory) syncHistory(name);
   if (name !== screen) prevScreen = screen;
   screen = name;
@@ -464,7 +465,7 @@ async function skipWord() {
     }
     if (status !== "playing" || gameId !== gid || mode !== "practice") return; // the game changed while the dialog was open
     if (free) { if (!Player.consumeSkip()) return; } else if (!Player.spend(SKIP.cost)) return;
-    startGame(true); sfx.coin();
+    startGame(true); Player.markSkip(gameId); sfx.coin();   // the new word came from a Skip: not a "no power-up" win
     const left = skipsLeft(); toast(free ? `Word skipped. ${left} skip${left === 1 ? "" : "s"} left.` : `Word skipped for ${SKIP.cost} coins.`, "success");
   } finally { spendLock = false; }
 }
@@ -569,7 +570,18 @@ $("#clue-x").onclick = closeClue;
 $("#clue").addEventListener("click", (e) => { if (e.target.id === "clue") closeClue(); });
 
 // ---------- Game flow ----------
-function saveProgress() { save("game_" + mode, { date: today(), id: gameId, answer, guesses, status, hintState }); }
+// Play time of the current Solo / Daily game (for the speed achievements). Only time on the game screen with the app visible counts, and it survives a reload.
+let playMs = 0, playSince = 0, playOn = false;
+const playElapsed = () => playMs + (playSince ? Date.now() - playSince : 0);
+function pausePlay(stop) { if (playSince) { playMs += Date.now() - playSince; playSince = 0; } if (stop) playOn = false; }
+function saveProgress() { save("game_" + mode, { date: today(), id: gameId, answer, guesses, status, hintState, playMs: Math.round(playElapsed()) }); }
+document.addEventListener("visibilitychange", () => {
+  if (!playOn) return;
+  if (document.hidden) { pausePlay(); if (status === "playing") saveProgress(); }
+  else if (screen === "game" && status === "playing" && !playSince) playSince = Date.now();
+});
+addEventListener("pagehide", () => { if (playOn && status === "playing") { pausePlay(); saveProgress(); } });
+setInterval(() => { if (playOn && status === "playing" && playSince) saveProgress(); }, 5000);
 
 function openGame(m, forceNew = false) {
   if (m === "daily") { const done = dailyRecord(); if (done) return showDailyDone(done); } // already completed today: show the result, never replay
@@ -618,18 +630,20 @@ function showDailyDone(r) {
 }
 function startGame(newPractice = false) {
   buildBoard(); current = ""; busy = false;
-  const saved = load("game_" + mode, null);
+  const saved = load("game_" + mode, null); let cont = false;   // cont = this is the same game coming back (reload / re-open), so its play time carries on
   if (mode === "daily") {
     answer = dailyWord(); gameId = "daily-" + today();
-    if (saved && saved.date === today()) { guesses = saved.guesses; status = saved.status; hintState = loadHint(saved.hintState); }
+    if (saved && saved.date === today()) { guesses = saved.guesses; status = saved.status; hintState = loadHint(saved.hintState); cont = true; }
     else { guesses = []; status = "playing"; hintState = newHint(); }
   } else if (!newPractice && saved && saved.status === "playing" && saved.guesses.length < ROWS) {
     ({ answer, id: gameId, guesses } = saved); status = "playing"; hintState = loadHint(saved.hintState);
-    gameId = gameId || "p-" + Date.now();
+    gameId = gameId || "p-" + Date.now(); cont = true;
   } else { answer = randomWord(); gameId = "p-" + Date.now() + Math.random().toString(36).slice(2, 6); guesses = []; status = "playing"; hintState = newHint(); }
   $("#g-title").textContent = mode === "daily" ? "Daily Challenge" : "Solo Practice";
   const ws = $("#game .winscore"); ws.classList.toggle("is-date", mode === "daily"); $("#g-date").textContent = longDate();   // Daily: today's date takes the place of the score
   ws.setAttribute("aria-label", mode === "daily" ? "Today's date" : "Wins"); ws.title = mode === "daily" ? "Today's Daily Challenge" : "Total wins";
+  playMs = cont && saved && Number.isFinite(saved.playMs) ? Math.min(Math.max(0, saved.playMs), 36e5) : 0;
+  playOn = status === "playing"; playSince = playOn ? Date.now() : 0;
   guesses.forEach((g, i) => reveal(i, g, false));
   colorKeys(); renderHintTiles(); updateAttempts(); updateHintButtons(); saveProgress();
   if (status !== "playing") setTimeout(showResult, 300);
@@ -664,7 +678,8 @@ let lastReward = null, rewardFxFor = null;
 function finishGame() { // each game id can only pay out once (see Player.reward)
   lastReward = null;
   const usedHint = Object.keys(hintState.reveals).length > 0 || hintState.disabled.length > 0 || hintState.clues.length > 0;   // any Reveal / Remove / Word hint in this game (Skip is not a hint)
-  if (status === "won") { lastReward = Player.reward(gameId, mode, guesses.length, usedHint); }
+  const ms = playOn ? Math.round(playElapsed()) : null; pausePlay(true);
+  if (status === "won") { lastReward = Player.reward(gameId, mode, guesses.length, usedHint, { ms, power: usedHint || Player.data.skipGame === gameId }); }
   else Player.recordLoss(gameId);
   Player.logGame(gameId, mode, status === "won", guesses.length);   // shown under Recent Games on the Profile (once per game)
   if (mode === "daily") { const g = load("game_daily", null); if (g && g.date === today()) { g.reward = lastReward ? { coins: lastReward.coins, xp: lastReward.xp } : { coins: 0, xp: 0 }; save("game_daily", g); } } // remember what this game earned
@@ -717,7 +732,7 @@ function showResult() {
     confetti(); setTimeout(sfx.coin, 400);
   }
   renderStats(won ? n : 0);
-  $("#r-daily").textContent = stats.played ? `Daily challenges completed: ${stats.played} · Daily streak: ${stats.streak}` : "";
+  $("#r-daily").textContent = "";   // the "Daily challenges completed / Daily streak" line was removed from the result card
   $("#btn-again").textContent = mode === "daily" ? "Play solo" : won ? "Play again" : "Try again";
   m.classList.remove("hidden"); lockModal(true); $("#btn-again").focus();
 }
@@ -779,7 +794,6 @@ $("#dd-ok").onclick = closeDailyDone;
 $("#btn-home").onclick = () => { closeModal(); show("dashboard"); };
 $("#btn-shop").onclick = () => { closeModal(); go("shop"); };
 $("#btn-again").onclick = () => { closeModal(); openGame("practice", true); };
-$("#btn-share").onclick = async () => ((await copyText(shareText())) ? toast("Result copied to clipboard", "success") : toast("Couldn't copy result", "error"));
 document.addEventListener("keydown", (e) => {
   if (e.target.closest && e.target.closest("input,textarea,select")) return; // typing in a form: leave Enter/letters alone
   if (e.ctrlKey || e.metaKey || e.altKey || document.body.classList.contains("sp-lock") || !$("#modal").classList.contains("hidden") || !$("#dialog").classList.contains("hidden") || !$("#tutorial").classList.contains("hidden") || !$("#daily-done").classList.contains("hidden") || !$("#info").classList.contains("hidden") || !$("#clue").classList.contains("hidden") || !$("#free").classList.contains("hidden")) return;

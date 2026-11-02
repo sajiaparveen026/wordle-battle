@@ -231,6 +231,7 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
   function onData() {
     if (D.me && D.me !== myId) { myId = D.me; loadSeen(); subscribe(); }
     handleNotifs(); markReadSoon();
+    if (typeof Player !== "undefined" && Player.noteFriends && Array.isArray(D.friends)) Player.noteFriends(D.friends.length);   // Social achievements (saving fires the usual achievement check)
     try { document.dispatchEvent(new CustomEvent("wb:social")); } catch {}      // js/room-invite.js reloads its friend list on this
   }
   const seenKey = () => "wbid_fr_seen_" + myId;

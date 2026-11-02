@@ -12,6 +12,17 @@
 
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
+    { v: "1.15.0", date: "2026-11-02", title: "Battle update", items: [
+      "Improved Profile page: level, XP, stats, Daily Challenge progress and recent games in one cleaner screen.",
+      "Improved Shop with clearer cards and prices.",
+      "Leaderboard: see how you rank against other players.",
+      "Friend Zone in Battle: create a private room, share the code and race a friend to the same secret word.",
+      "Team Zone in Battle: team up with up to 5 players in one room. Everyone plays the same word and the first to solve it wins.",
+      "Spin Wheel: spin for coins, clues and skips.",
+      "Battle stats on your Profile, with Solo and Battle filters for your recent games.",
+      "25 new achievements, 50 in total, with a new Achievements page: tap See All and filter by All, Unlocked or Locked.",
+      "Friends list: add players after a battle, see who is online and manage requests.",
+      "Invite Friends from the lobby: invite friends straight into your Friend Zone or Team Zone room. They join with one tap, no room code needed."] },
     { v: "1.14.1", date: "2026-10-31", title: "Clue update", items: [
       "Hints are now called Clues everywhere.",
       "Clues you bought stay available: tap the lightbulb to read them again, even after a refresh.",
