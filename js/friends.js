@@ -209,7 +209,7 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
   let joinOffer = null;   // { room, until }: a battle room made from my invitation that I could not enter automatically
   const srvNow = () => (D && D.server_now_ms ? D.server_now_ms + (Date.now() - gotAt) : Date.now());
   const ago = (iso) => { const s = Math.max(0, (srvNow() - Date.parse(iso)) / 1000); return s < 60 ? "just now" : s < 3600 ? Math.floor(s / 60) + "m ago" : s < 86400 ? Math.floor(s / 3600) + "h ago" : Math.floor(s / 86400) + "d ago"; };
-  const pendingCount = () => (D ? (D.incoming || []).length + (D.inv_in || []).length : 0);
+  const pendingCount = () => (D ? (D.incoming || []).length + (D.inv_in || []).length + (D.room_inv_in || []).length : 0);
 
   // ---------- loading the overview ----------
   async function refresh(silent) {
@@ -231,6 +231,7 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
   function onData() {
     if (D.me && D.me !== myId) { myId = D.me; loadSeen(); subscribe(); }
     handleNotifs(); markReadSoon();
+    try { document.dispatchEvent(new CustomEvent("wb:social")); } catch {}      // js/room-invite.js reloads its friend list on this
   }
   const seenKey = () => "wbid_fr_seen_" + myId;
   function loadSeen() { try { const raw = localStorage.getItem(seenKey()); freshStart = raw === null; seen = new Set(JSON.parse(raw || "[]")); } catch { seen = new Set(); freshStart = true; } }
@@ -254,6 +255,9 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
     else if (n.type === "battle_invite") say(`⚔️ ${nm} invited you to a battle`, "success", 3800);
     else if (n.type === "invite_accepted") { say(`⚔️ ${nm} accepted your battle invitation!`, "success", 3800); if (n.room_id && srvNow() - Date.parse(n.created_at) < 120000) enterRoom(n.room_id, nm); }
     else if (n.type === "invite_declined") say(`${nm} declined your battle invitation.`, "", 3800);
+    else if (n.type === "room_invite") say(`👥 ${nm} invited you to join their room`, "success", 4200);
+    else if (n.type === "room_invite_accepted") say(`✅ ${nm} joined your room!`, "success", 3800);
+    else if (n.type === "room_invite_declined") say(`${nm} declined your room invitation.`, "", 3800);
   }
 
   // ---------- realtime + heartbeat ----------
@@ -353,9 +357,15 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
       ${av(v)}<div class="fr-info"><b class="fr-nm">${esc(v.name)}</b><span><span class="fr-chip pend">⏳ Waiting</span> <span class="fr-chip">${d.icon} ${d.name}</span></span><span class="fr-meta">Expires in <span class="fr-exp" data-until="${gotAt + Number(v.expires_in_ms)}"></span></span></div>
       <div class="fr-act"><button class="fr-btn no" type="button" data-fr="cancel-invite" data-id="${esc(v.iid)}"${dis("ci:" + v.iid)}>Cancel</button></div></li>`;
   }
+  function rinvCard(v, i) {
+    const k = "ri:" + v.iid, team = v.mode === "team", d = DIFF[v.difficulty] || DIFF.medium;
+    return `<li class="fr-card inv${leaving.has(v.iid) ? " out" : ""}" style="--i:${i}">
+      ${av(v)}<div class="fr-info"><b class="fr-nm">${esc(v.name)}</b><span class="fr-meta">${team ? "Team Zone" : "Friend Zone"} · ${Number(v.players)}/${Number(v.cap)} in the room</span><span><span class="fr-chip">${d.icon} ${d.name}</span> <span class="fr-meta fr-exp" data-until="${gotAt + Number(v.expires_in_ms)}"></span></span></div>
+      <div class="fr-act"><button class="fr-btn go" type="button" data-fr="accept-rinv" data-id="${esc(v.iid)}" data-name="${esc(v.name)}"${dis(k)}>Join</button><button class="fr-btn no" type="button" data-fr="decline-rinv" data-id="${esc(v.iid)}"${dis(k)}>Decline</button></div></li>`;
+  }
   function vInvites() {
-    const inn = D.inv_in || [], out = D.inv_out || [];
-    return `<section class="fr-sec"><h3>Battle invitations ${cnt(inn.length, true)}</h3>${inn.length ? `<ul class="fr-list grid2">${inn.map(invCard).join("")}</ul>`
+    const inn = D.inv_in || [], out = D.inv_out || [], rin = D.room_inv_in || [];
+    return (rin.length ? `<section class="fr-sec"><h3>Room invitations ${cnt(rin.length, true)}</h3><ul class="fr-list grid2">${rin.map(rinvCard).join("")}</ul></section>` : "") + `<section class="fr-sec"><h3>Battle invitations ${cnt(inn.length, true)}</h3>${inn.length ? `<ul class="fr-list grid2">${inn.map(invCard).join("")}</ul>`
         : msgBox("⚔️", "No battle invitations", "When a friend invites you, it shows up here. Accepting never changes your friends list.")}</section>
       <section class="fr-sec"><h3>Invitations you sent ${cnt(out.length)}</h3>${out.length ? `<ul class="fr-list grid2">${out.map(invOutCard).join("")}</ul>`
         : msgBox("📨", "None sent", "Tap <b>Invite to Battle</b> on a friend to challenge them. No room code needed.")}</section>`;
@@ -365,7 +375,10 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
     friend_accepted: (n) => ["🎉", `<b>${esc(n.name)}</b> accepted your friend request`, "friends"],
     battle_invite: (n) => ["⚔️", `<b>${esc(n.name)}</b> invited you to a ${esc((DIFF[n.difficulty] || DIFF.medium).name)} battle${n.inv_status && n.inv_status !== "pending" ? ` · ${n.inv_status === "accepted" ? "you accepted" : n.inv_status === "declined" ? "you declined" : n.inv_status === "expired" ? "expired" : "withdrawn"}` : ""}`, "invites"],
     invite_accepted: (n) => ["✅", `<b>${esc(n.name)}</b> accepted your battle invitation`, ""],
-    invite_declined: (n) => ["🚫", `<b>${esc(n.name)}</b> declined your battle invitation`, ""]
+    invite_declined: (n) => ["🚫", `<b>${esc(n.name)}</b> declined your battle invitation`, ""],
+    room_invite: (n) => ["👥", `<b>${esc(n.name)}</b> invited you to join their ${n.room_mode === "team" ? "Team Zone room" : "battle room"}${n.inv_status && n.inv_status !== "pending" ? ` · ${n.inv_status === "accepted" ? "you joined" : n.inv_status === "declined" ? "you declined" : n.inv_status === "expired" ? "expired" : "withdrawn"}` : ""}`, "invites"],
+    room_invite_accepted: (n) => ["✅", `<b>${esc(n.name)}</b> joined your room`, ""],
+    room_invite_declined: (n) => ["❌", `<b>${esc(n.name)}</b> declined your room invitation`, ""]
   };
   function vAlerts() {
     const list = (D.notifs || []).filter((n) => NOTE[n.type]);
@@ -382,7 +395,7 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
     return warn + (tab === "requests" ? vRequests() : tab === "invites" ? vInvites() : tab === "alerts" ? vAlerts() : vFriends());
   }
   function tabs() {
-    const f = D ? (D.friends || []).length : 0, rq = D ? (D.incoming || []).length : 0, iv = D ? (D.inv_in || []).length : 0, un = D ? Number(D.unread) || 0 : 0;
+    const f = D ? (D.friends || []).length : 0, rq = D ? (D.incoming || []).length : 0, iv = D ? (D.inv_in || []).length + (D.room_inv_in || []).length : 0, un = D ? Number(D.unread) || 0 : 0;
     const t = (id, label, c) => `<button class="fr-tab${tab === id ? " on" : ""}" type="button" role="tab" aria-selected="${tab === id}" data-fr="tab" data-tab="${id}">${label}${c}</button>`;
     return `<div class="fr-tabs" role="tablist" aria-label="Friends sections">${t("friends", "Friends", cnt(f))}${t("requests", "Requests", cnt(rq, true))}${t("invites", "Invites", cnt(iv, true))}${t("alerts", "Alerts", cnt(un, true))}</div>`;
   }
@@ -390,7 +403,7 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
     const root = $("#fr-root"); if (!root || !visible()) return;
     const n = D ? (D.friends || []).length : 0, c = $("#fr-count");
     if (c) c.textContent = D ? `${n} ${n === 1 ? "friend" : "friends"}` : "";
-    const sig = JSON.stringify([st, tab, netBad, menuFor, [...busy], [...leaving], D && [D.friends, D.incoming, D.outgoing, D.inv_in, D.inv_out, D.notifs, D.unread]]);
+    const sig = JSON.stringify([st, tab, netBad, menuFor, [...busy], [...leaving], D && [D.friends, D.incoming, D.outgoing, D.inv_in, D.inv_out, D.room_inv_in, D.notifs, D.unread]]);
     if (!force && sig === lastSig) return;
     lastSig = sig;
     const y = window.scrollY, keep = root.querySelector(".fr-menu") ? 0 : 1;
@@ -411,16 +424,19 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
     if (window.BattleGame && BattleGame.isOn && BattleGame.isOn()) return [];
     const fb = window.FriendBattle && FriendBattle.state && FriendBattle.state(); if (fb && fb.room && ["waiting", "lobby", "playing"].includes(fb.room.status)) return [];
     const items = (D.inv_in || []).filter((v) => !dismissed.has(v.iid) && gotAt + Number(v.expires_in_ms) > Date.now()).map((v) => ({ kind: "inv", v }));
+    const tzs = window.TeamZone && TeamZone.state && TeamZone.state(), inTeam = !!(tzs && tzs.room && ["waiting", "playing"].includes(tzs.room.status));
+    if (!inTeam) (D.room_inv_in || []).filter((v) => !dismissed.has(v.iid) && gotAt + Number(v.expires_in_ms) > Date.now()).forEach((v) => items.unshift({ kind: "rinv", v }));
     if (joinOffer && joinOffer.until > Date.now()) items.unshift({ kind: "join", v: joinOffer });
     return items.slice(0, 2);
   }
   function renderBanner() {
-    const items = bannerItems(), sig = JSON.stringify(items.map((x) => [x.kind, x.v.iid || x.v.room, busy.has("iv:" + x.v.iid)])); let el = $("#fr-banner");
+    const items = bannerItems(), sig = JSON.stringify(items.map((x) => [x.kind, x.v.iid || x.v.room, busy.has("iv:" + x.v.iid), busy.has("ri:" + x.v.iid)])); let el = $("#fr-banner");
     if (!items.length) { if (el) el.remove(); bannerSig = ""; return; }
     if (el && sig === bannerSig) return;
     bannerSig = sig;
     if (!el) { el = document.createElement("div"); el.id = "fr-banner"; el.setAttribute("role", "region"); el.setAttribute("aria-label", "Battle invitations"); document.body.append(el); }
     el.innerHTML = items.map((x) => {
+      if (x.kind === "rinv") { const v = x.v, team = v.mode === "team", k = "ri:" + v.iid; return `<div class="fr-bn"><span class="fr-av" aria-hidden="true">${esc(v.avatar)}</span><p><b>${esc(v.name)}</b> invites you to join their ${team ? "Team Zone room" : "battle room"}<small>${team ? `${Number(v.players)}/${Number(v.cap)} players · ` : ""}<span class="fr-exp" data-until="${gotAt + Number(v.expires_in_ms)}"></span></small></p><div class="fr-act"><button class="fr-btn go" type="button" data-frb="rinv-accept" data-id="${esc(v.iid)}" data-name="${esc(v.name)}"${dis(k)}>Join</button><button class="fr-btn no" type="button" data-frb="rinv-decline" data-id="${esc(v.iid)}"${dis(k)}>Decline</button></div></div>`; }
       if (x.kind === "join") return `<div class="fr-bn"><span class="fr-av" aria-hidden="true">⚔️</span><p><b>${esc(x.v.name)}</b> accepted your invitation!<small>Your battle room is ready.</small></p><div class="fr-act"><button class="fr-btn go" type="button" data-frb="join" data-room="${esc(x.v.room)}">Join Battle</button></div></div>`;
       const v = x.v, d = DIFF[v.difficulty] || DIFF.medium, k = "iv:" + v.iid;
       return `<div class="fr-bn"><span class="fr-av" aria-hidden="true">${esc(v.avatar)}</span><p><b>${esc(v.name)}</b> invites you to a battle<small>${d.icon} ${d.name} · ${d.min} min · <span class="fr-exp" data-until="${gotAt + Number(v.expires_in_ms)}"></span></small></p><div class="fr-act"><button class="fr-btn go" type="button" data-frb="accept" data-id="${esc(v.iid)}" data-name="${esc(v.name)}"${dis(k)}>Accept</button><button class="fr-btn no" type="button" data-frb="decline" data-id="${esc(v.iid)}"${dis(k)}>Decline</button></div></div>`;
@@ -468,6 +484,17 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
       if (fb && fb.api && typeof show === "function") { fb.api.enter(r.state); show("battle"); say("Battle room ready! Press Ready when you're set.", "success", 3200); }
     } else if (r.ok) { say("Invitation declined"); await leave(iid); }
     else { dismissed.add(iid); say(r.reason === "sender_away" || r.reason === "sender_busy" ? `${name || "They"}: ${errText(r)}` : errText(r), "error", 3600); await refresh(true); }
+  });
+
+  // Accepting a room invitation seats me in the room the host already opened (no code), then opens that lobby.
+  const respondRoomInvite = (iid, accept, name) => act("ri:" + iid, async () => {
+    const r = await call("ri_respond", { p_invite: iid, p_accept: accept });
+    if (r.ok && accept && r.state) {
+      dismissed.add(iid);
+      if (r.mode === "team") { const tz = window.TeamZone; if (tz && tz.api && typeof show === "function") { tz.api.apply(r.state, true); show("team"); say("You joined the team room! Press Ready when you're set.", "success", 3200); } }
+      else { const fb = window.FriendBattle; if (fb && fb.api && typeof show === "function") { fb.api.enter(r.state); show("battle"); say("You joined the battle room! Press Ready when you're set.", "success", 3200); } }
+    } else if (r.ok) { dismissed.add(iid); say("Invitation declined"); await leave(iid); }
+    else { dismissed.add(iid); say(window.RoomInvite ? RoomInvite.errText(r) : "That invitation is no longer available.", "error", 3800); await refresh(true); }
   });
 
   // The sender walks into the room their friend's acceptance just created.
@@ -542,6 +569,8 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
     else if (a === "cancel-invite") cancelInvite(id);
     else if (a === "accept-inv") respondInvite(id, true, b.dataset.name);
     else if (a === "decline-inv") respondInvite(id, false);
+    else if (a === "accept-rinv") respondRoomInvite(id, true, b.dataset.name);
+    else if (a === "decline-rinv") respondRoomInvite(id, false);
   }
   if (rootEl) { rootEl.addEventListener("click", onClick); rootEl.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target.matches('[data-fr="goto"]')) { e.preventDefault(); onClick(e); } }); }
   document.addEventListener("click", (e) => {
@@ -551,6 +580,8 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
       if (a === "accept") respondInvite(bn.dataset.id, true, bn.dataset.name);
       else if (a === "decline") { dismissed.add(bn.dataset.id); renderBanner(); respondInvite(bn.dataset.id, false); }
       else if (a === "join") joinOfferNow(bn.dataset.room);
+      else if (a === "rinv-accept") respondRoomInvite(bn.dataset.id, true, bn.dataset.name);
+      else if (a === "rinv-decline") { dismissed.add(bn.dataset.id); renderBanner(); respondRoomInvite(bn.dataset.id, false); }
       return;
     }
     if (menuFor && !e.target.closest(".fr-more")) { menuFor = ""; paint(true); }

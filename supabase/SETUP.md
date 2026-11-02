@@ -57,6 +57,15 @@ it). It adds placement rewards (edit the `tz_rewards` table to change amounts), 
 who is in a Team Zone battle cannot be put into a Friend Zone room. Players who see a generic "Something went wrong" when
 joining a Friend Zone room are most likely in a Team Zone battle.
 
+### 1k. Invite friends into a waiting lobby (Friend Zone and Team Zone)
+Run `supabase/migrations/012_room_invites.sql` after 011 (it needs 006, 007, 009, 010 and 011). It adds the **Invite Friends**
+button in both waiting lobbies. The host picks a friend, the friend gets a live notification with Accept / Decline, and
+accepting seats them in that same room without typing the code. The server checks that only the host invites, that the
+room still has a free seat, that the friend is not already in another battle, and it never allows two invitations to the same
+friend for the same room. Invitations close by themselves when the room fills up, starts, is cancelled or expires.
+Room codes and sharing work exactly as before. It uses only the public (anon) key, never the service-role key.
+It replaces the `fr_overview` function from 007 with a version that also returns room invitations (safe to run again).
+
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`

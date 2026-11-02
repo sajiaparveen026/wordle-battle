@@ -126,6 +126,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     lastSig = sig;
     el.innerHTML = view === "create" ? vCreate() : view === "join" ? vJoin() : S && S.room ? vRoom() : vHome();
     tickClock();
+    if (window.RoomInvite) RoomInvite.sync("team", S && S.room ? S.room.id : "", !!(S && S.room && S.room.status === "waiting" && S.me && S.me.is_host && (S.players || []).length < S.room.max_players));   // Invite Friends: only the host, only while there is a free seat
   }
   function vHome() {
     return `<div class="tz-hero"><h2>Team Zone</h2><p>3 to 5 players, one secret word. First to solve it wins.</p></div>
@@ -176,6 +177,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
       <div class="tz-codebox"><small>Room code</small><span class="tz-code" aria-label="Room code ${esc(r.code.split("").join(" "))}">${esc(r.code)}</span>
         <div class="tz-meta"><span class="tz-chip">${d.icon} ${d.name} · ${d.min} min</span><span class="tz-chip">👥 Up to ${r.max_players}</span></div>
         <div class="tz-row" style="width:100%"><button class="tz-go alt" type="button" data-tz="copy">📋 Copy Code</button><button class="tz-go alt" type="button" data-tz="share">📤 Share</button></div></div>
+      ${me.is_host && !full && window.RoomInvite ? RoomInvite.section("team", r.id) : ""}
       <div class="tz-count" aria-live="polite">${players.length} / ${r.max_players} players</div>
       <div class="tz-slots">${slots.join("")}</div>
       <p class="tz-status" role="status">${status}</p>

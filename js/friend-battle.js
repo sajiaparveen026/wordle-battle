@@ -211,6 +211,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     if (st === "waiting") {
       return `${banner()}<div class="fb-box"><p class="lbl">Room code</p>${codeTiles(r.code)}${diffChips(r)}
         <div class="fb-row"><button class="primary" type="button" data-fb="copy">📋 Copy Code</button><button class="primary alt" type="button" data-fb="share">📤 Share Invitation</button></div></div>
+      ${window.RoomInvite ? RoomInvite.section("friend", r.id) : ""}
       <div class="fb-players">${pcard(me)}<span class="fb-vs">VS</span>${pcard(null)}</div>
       <div class="fb-wait" role="status" aria-live="polite"><span class="fb-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Waiting for another player to join the battle...</span></div>
       <button class="primary alt" type="button" data-fb="leave">Cancel Room</button>`;
@@ -249,6 +250,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     el.innerHTML = `<div class="fb-view${fresh || force ? " fresh" : ""}">${html}</div>`;
     if (view === "join") { const inp = el.querySelector("#fb-code"); if (inp) { if (keepInput) inp.value = keepInput; updJoinBtn(); if (fresh) inp.focus({ preventScroll: true }); } }
     clock();
+    if (window.RoomInvite) RoomInvite.sync("friend", S && S.room ? S.room.id : "", !!(S && view === "room" && status() === "waiting"));   // the Invite Friends panel closes itself once the room is not waiting for a second player
   }
   const sigOf = () => !S ? "" : JSON.stringify([S.room.status, S.room.version, S.players.map((p) => [p.id, p.ready, p.connection, p.username])]);
   function updJoinBtn() { const i = $("#fb-code"), b = $("#fb-join"); if (i && b) b.disabled = joining || i.value.length !== 6; }
