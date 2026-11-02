@@ -1144,3 +1144,11 @@ html[data-motion=reduced] #battle .fb-go,html[data-motion=reduced] #battle .fb .
 @media (max-width:340px){.logo.sm,.auth-hero.sm .logo.sm{font-size:.8rem;gap:.45em}.logo.sm .lt i{letter-spacing:.06em;margin-right:-.06em}}
 
 #r-daily:empty{display:none}
+
+/* Battle / Team boards: typing a letter must never make the tiles (and so the board) taller.
+   Tiles stay square and the letter scales with the tile, instead of the letter's own size pushing the rows apart. */
+#game.battle #board .tile,#game.team #board .tile{min-width:0;min-height:0;line-height:1}
+@supports (width:1cqw){
+  #game.battle #board,#game.team #board{container-type:inline-size}
+  #game.battle #board .tile,#game.team #board .tile{font-size:clamp(.8rem,11cqw,2rem)}
+}
