@@ -369,7 +369,7 @@
     if (error) { say(error.code === "23505" ? "That username is taken" : "Couldn't save username", "error"); input.value = Player.data.username; return; }
     Player.data.username = v; Player.save(true); say("Username saved", "success"); window.WBApp.refresh();
   }
-  async function setAvatar(a) { if (user && !user.offline) await sb.from("profiles").update({ avatar: a }).eq("id", user.id); }
+  async function setAvatar(a) { if (!user || user.offline) return false; try { const { error } = await sb.from("profiles").update({ avatar: a }).eq("id", user.id); return !error; } catch { return false; } }
   async function logout() {
     if (!(await confirmBox("Log out?", "Your progress is saved to your account.", "Log out"))) return;
     if (meta.dirty) await push();

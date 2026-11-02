@@ -3,7 +3,7 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const ROWS = 6, COLS = 5;
 const KEYS = ["qwertyuiop", "asdfghjkl", "zxcvbnm-"]; // - = Backspace. No on-screen Enter: guesses are sent with the Submit button
-const AVATARS = ["🦊", "🐼", "🐯", "🦉", "🐙", "🚀"];
+const AVATARS = Avatars.all;   // 6 classic emoji + 10 illustrated avatars (see js/avatars.js)
 
 // ---------- Storage ----------
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(wbKey(k))) ?? d; } catch { return d; } };
@@ -161,7 +161,7 @@ function refreshCoins() {
 // ---------- Dashboard ----------
 function renderDashboard() {
   const p = Player.data, lv = Player.levelInfo();
-  $("#d-avatar").textContent = p.avatar; $("#d-name").textContent = p.username;
+  $("#d-avatar").innerHTML = Avatars.inner(p.avatar); $("#d-name").textContent = p.username;
   $("#d-level").textContent = `Level ${lv.level} · ${lv.xp}/${lv.need} XP`;
   $("#d-badge").textContent = lv.level; animateXp("#d-xp", (lv.xp / lv.need) * 100);
   const done = !!dailyRecord();
@@ -184,7 +184,7 @@ const fmtDate = (iso, long) => { const d = new Date(iso); return isNaN(d) ? "" :
 let showAllGames = false, pfStatMode = "solo", pfRecent = "solo";
 function renderProfile() {
   const p = Player.data, lv = Player.levelInfo(), meta = (window.Auth && Auth.profileMeta && Auth.profileMeta()) || {};
-  $("#pf-avatar").textContent = p.avatar; $("#pf-name").textContent = p.username; $("#pf-badge").textContent = lv.level;
+  $("#pf-avatar").innerHTML = Avatars.inner(p.avatar); $("#pf-name").textContent = p.username; $("#pf-badge").textContent = lv.level;
   $("#pf-level").textContent = `Level ${lv.level}`;
   $("#pf-xptext").textContent = `${lv.xp.toLocaleString()} / ${lv.need.toLocaleString()} XP`; animateXp("#pf-xp", (lv.xp / lv.need) * 100);
   const joined = fmtDate(meta.joined || p.joinedAt);
@@ -227,7 +227,7 @@ function renderRecentGames() {
     const sub = pfEl("div", "pf-sub");
     if (battle) {
       sub.append(pfEl("span", "pf-tag " + g.type, g.type === "team" ? "👥 Team Battle" : "⚔️ Friend Battle"));
-      if (g.type === "friend" && g.opp) { const o = pfEl("span", "pf-opp"); o.append(pfEl("i", "pf-oav", g.opp.avatar), pfEl("span", "pf-oname", g.opp.name)); sub.append(o); }
+      if (g.type === "friend" && g.opp) { const o = pfEl("span", "pf-opp"); const oav = pfEl("i", "pf-oav"); oav.innerHTML = Avatars.inner(g.opp.avatar); o.append(oav, pfEl("span", "pf-oname", g.opp.name)); sub.append(o); }
       if (g.type === "team" && g.place) sub.append(pfEl("span", "pf-place", `${ordinalN(g.place)}${g.size ? ` of ${g.size} players` : ""}`));
       const fin = g.status === "solved" ? (g.ms != null ? `Solved in ${g.ms >= 60000 ? Math.floor(g.ms / 60000) + ":" + String(((g.ms / 1000) % 60).toFixed(0)).padStart(2, "0") : (g.ms / 1000).toFixed(1) + "s"}` : "Solved") : g.status === "failed" ? "Out of attempts" : result === "draw" ? "Draw" : "Time's up";
       sub.append(pfEl("span", "pf-fin", fin));
@@ -239,7 +239,8 @@ function renderRecentGames() {
 }
 function renderEdit() {
   $("#s-name").value = Player.data.username;
-  $("#s-avatars").innerHTML = AVATARS.map((a) => `<button class="${a === Player.data.avatar ? "on" : ""}" data-av="${a}">${a}</button>`).join("");
+  $("#s-avatars").innerHTML = AVATARS.map((a) => { const on = a === Player.data.avatar, nm = Avatars.label(a); return `<button type="button" class="${on ? "on" : ""}" data-av="${a}" aria-pressed="${on}" aria-label="${nm}" title="${nm}">${Avatars.inner(a)}</button>`; }).join("");
+  const sel = $("#s-avname"); if (sel) sel.innerHTML = AVATARS.includes(Player.data.avatar) ? `Selected: <b>${Avatars.label(Player.data.avatar)}</b>` : "";
 }
 function openEdit() { renderEdit(); $("#edit-profile").classList.remove("hidden"); lockModal(true); $("#s-name").focus(); }
 function closeEdit() { if ($("#edit-profile").classList.contains("hidden")) return; $("#edit-profile").classList.add("hidden"); lockModal(false); renderProfile(); renderDashboard(); }
@@ -758,7 +759,7 @@ document.addEventListener("click", (e) => {
   if (t.dataset.go) go(t.dataset.go);
   else if (t.dataset.buy) buyItem(t.dataset.buy);
   else if (t.dataset.back !== undefined) show("dashboard"); // every Back button returns to the dashboard
-  else if (t.dataset.av) { Player.data.avatar = t.dataset.av; Player.save(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(t.dataset.av); renderEdit(); renderProfile(); }
+  else if (t.dataset.av) { const av = t.dataset.av; Player.data.avatar = av; Player.save(); renderEdit(); renderProfile(); renderDashboard(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(av).then((ok) => { if (!ok) toast("Avatar saved on this device, but not to your account yet. Check your connection and pick it again.", "error", 4200); }); }
   else if (t.dataset.hint) useHint(t.dataset.hint);
 });
 $("#go-settings").onclick = openSettings;

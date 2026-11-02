@@ -166,7 +166,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     if (!p) return `<div class="fb-pc empty"><div class="fb-av" aria-hidden="true">?</div><b>Waiting…</b><small>for a friend</small></div>`;
     const conn = p.connection || "connected";
     const cl = conn === "connected" ? "Online" : conn === "reconnecting" ? "Reconnecting…" : conn === "left" ? "Left" : "Offline";
-    return `<div class="fb-pc${p.ready ? " ready" : ""}"><div class="fb-av" aria-hidden="true">${esc(p.avatar)}</div>
+    return `<div class="fb-pc${p.ready ? " ready" : ""}"><div class="fb-av" aria-hidden="true">${Avatars.inner(p.avatar)}</div>
       <b>${esc(p.username)}${p.is_me ? '<span class="fb-you">YOU</span>' : ""}</b>
       <small>${p.seat === 1 ? "Host" : "Guest"}</small>
       <span class="fb-st ${esc(conn)}"><i></i>${cl}</span>

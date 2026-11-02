@@ -176,7 +176,7 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
       const used = p.attempts_used || 0, dots = [...Array(6)].map((_, i) => `<i class="${i < used ? (p.status === "failed" ? "bad" : "used") : ""}"></i>`).join("");
       const cls = ["tzg-pc", p.is_me ? "me" : "", p.status === "solved" ? "solved" : "", p.status === "failed" || p.connection === "left" ? "out" : ""].join(" ");
       return `<div class="${cls}" role="listitem" aria-label="${esc(p.username)}, ${esc(st[0])}, ${used} of 6 attempts">
-        <span class="tzg-av" aria-hidden="true">${esc(p.avatar)}<i class="${esc(p.connection)}"></i></span>
+        <span class="tzg-av" aria-hidden="true">${Avatars.inner(p.avatar)}<i class="${esc(p.connection)}"></i></span>
         <div style="min-width:0"><b>${esc(p.username)}${p.is_me ? " (you)" : ""}</b><small class="${st[1]}">${esc(st[0])}</small><div class="tzg-dots" aria-hidden="true">${dots}</div></div></div>`;
     }).join("");
   }
@@ -314,7 +314,7 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
       const coins = p.reward ? p.reward.coins : 0, xp = p.reward ? p.reward.xp : 0;
       return `<li class="tzg-rc ${m.cls}${p.is_me ? " me" : ""}">
         <span class="tzg-pos" aria-label="${esc(ordinal(p.finish_place || 0))} place">${m.ic ? `<i aria-hidden="true">${m.ic}</i>` : ""}<b>${p.finish_place ? ordinal(p.finish_place) : "–"}</b></span>
-        <span class="tzg-av" aria-hidden="true">${esc(p.avatar)}</span>
+        <span class="tzg-av" aria-hidden="true">${Avatars.inner(p.avatar)}</span>
         <span class="tzg-who"><b>${esc(p.username)}${p.is_me ? " (you)" : ""}</b><small>${esc(sub)}</small></span>
         <span class="tzg-earn"><span class="tzg-coin">+${coins} 🪙</span><span class="tzg-xp">+${xp} XP</span>${p.is_me ? "" : friendBtn(p)}</span></li>`;
     }).join("");

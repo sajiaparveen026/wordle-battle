@@ -153,8 +153,8 @@ html[data-motion=reduced] .lbx *{animation:none!important}
     const n = place ? num(place) : (label || "–");
     return `<div class="lbx-rank" role="status" aria-live="polite" aria-label="Current rank ${place ? esc(num(place)) : esc(label || "unranked")}"><span class="k">Current Rank</span><span class="n" aria-hidden="true">${esc(n)}</span></div>`;
   }
-  const pod = (p, i, mePid) => `<li class="lbx-pod p${i + 1}${p.pid === mePid ? " me" : ""}">${i === 0 ? '<span class="lbx-crown" aria-hidden="true">👑</span>' : ""}<span class="lbx-medal" aria-label="Rank ${i + 1}">${i + 1}</span><span class="lbx-av" aria-hidden="true">${esc(p.avatar)}</span><b><span class="lbx-nm">${esc(p.username)}</span>${p.pid === mePid ? '<i class="lbx-tag">YOU</i>' : ""}</b><span class="lbx-xp">${num(p.xp)} XP</span><small>Level ${num(p.level)}<br>${num(p.wins)} win${Number(p.wins) === 1 ? "" : "s"}</small></li>`;
-  const row = (p, i, mePid, mePlace) => `<li class="lbx-row${p.pid === mePid ? " me" : (mePlace && Number(p.place) > mePlace ? " below" : "")}" style="--i:${i}"><span class="no">${num(p.place)}</span><span class="lbx-av" aria-hidden="true">${esc(p.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(p.username)}</span>${p.pid === mePid ? '<i class="lbx-tag">YOU</i>' : ""}</b><span>${stat(p)}</span></div><div class="lbx-xp">${num(p.xp)}<small>XP</small></div></li>`;
+  const pod = (p, i, mePid) => `<li class="lbx-pod p${i + 1}${p.pid === mePid ? " me" : ""}">${i === 0 ? '<span class="lbx-crown" aria-hidden="true">👑</span>' : ""}<span class="lbx-medal" aria-label="Rank ${i + 1}">${i + 1}</span><span class="lbx-av" aria-hidden="true">${Avatars.inner(p.avatar)}</span><b><span class="lbx-nm">${esc(p.username)}</span>${p.pid === mePid ? '<i class="lbx-tag">YOU</i>' : ""}</b><span class="lbx-xp">${num(p.xp)} XP</span><small>Level ${num(p.level)}<br>${num(p.wins)} win${Number(p.wins) === 1 ? "" : "s"}</small></li>`;
+  const row = (p, i, mePid, mePlace) => `<li class="lbx-row${p.pid === mePid ? " me" : (mePlace && Number(p.place) > mePlace ? " below" : "")}" style="--i:${i}"><span class="no">${num(p.place)}</span><span class="lbx-av" aria-hidden="true">${Avatars.inner(p.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(p.username)}</span>${p.pid === mePid ? '<i class="lbx-tag">YOU</i>' : ""}</b><span>${stat(p)}</span></div><div class="lbx-xp">${num(p.xp)}<small>XP</small></div></li>`;
   const msg = (ic, title, text, btn) => `<div class="lbx-msg" role="status"><span class="ic" aria-hidden="true">${ic}</span><b>${title}</b><span>${text}</span>${btn ? '<button type="button" class="primary" data-lb-retry>Try again</button>' : ""}</div>`;
 
   function paint() {
@@ -164,7 +164,7 @@ html[data-motion=reduced] .lbx *{animation:none!important}
     if (st.status === "loading" && !st.data) html = `<div class="lbx-sk" aria-busy="true" aria-label="Loading leaderboard"><i></i><i></i><i></i><i></i><i></i></div>`;
     else if (st.status === "local") {
       html = rankIndicator(played(loc) ? 1 : 0, "–") + (played(loc)
-        ? `<ol class="lbx-list"><li class="lbx-row me" style="--i:0"><span class="no">1</span><span class="lbx-av" aria-hidden="true">${esc(loc.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(loc.username)}</span><i class="lbx-tag">YOU</i></b><span>${stat(loc)}</span></div><div class="lbx-xp">${num(loc.xp)}<small>XP</small></div></li></ol>`
+        ? `<ol class="lbx-list"><li class="lbx-row me" style="--i:0"><span class="no">1</span><span class="lbx-av" aria-hidden="true">${Avatars.inner(loc.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(loc.username)}</span><i class="lbx-tag">YOU</i></b><span>${stat(loc)}</span></div><div class="lbx-xp">${num(loc.xp)}<small>XP</small></div></li></ol>`
         : "") + msg("🌍", "Only you, for now", "Online rankings aren't switched on in this copy of the app, so only your own progress is shown. Other players will appear here once online play is set up.");
     } else if (st.status === "error" && !st.data) html = rankIndicator(0, "–") + msg("📡", "Couldn't load the leaderboard", "Check your connection and try again. Your progress is safe.", true);
     else {
@@ -173,7 +173,7 @@ html[data-motion=reduced] .lbx *{animation:none!important}
       html = rankIndicator(myPlace, played(loc) ? "…" : "–");
       if (st.status === "error") html += `<p class="lbx-sub" role="status">Couldn't refresh just now. Showing the last rankings.</p>`;
       if (!top.length) {
-        html += (played(loc) ? `<ol class="lbx-list"><li class="lbx-row me" style="--i:0"><span class="no">1</span><span class="lbx-av" aria-hidden="true">${esc(loc.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(loc.username)}</span><i class="lbx-tag">YOU</i></b><span>${stat(loc)}</span></div><div class="lbx-xp">${num(loc.xp)}<small>XP</small></div></li></ol>` : "")
+        html += (played(loc) ? `<ol class="lbx-list"><li class="lbx-row me" style="--i:0"><span class="no">1</span><span class="lbx-av" aria-hidden="true">${Avatars.inner(loc.avatar)}</span><div class="nm"><b><span class="lbx-nm">${esc(loc.username)}</span><i class="lbx-tag">YOU</i></b><span>${stat(loc)}</span></div><div class="lbx-xp">${num(loc.xp)}<small>XP</small></div></li></ol>` : "")
           + msg("🏆", played(loc) ? "You're the first one here!" : "No players yet", played(loc) ? "More players will appear as they join and play." : "Finish a game to take the first spot on the leaderboard.");
       } else {
         html += `<ol class="lbx-podium" aria-label="Top three players">${top.slice(0, 3).map((p, i) => pod(p, i, mePid)).join("")}</ol>`;

@@ -12,6 +12,14 @@
 
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
+    { v: "1.17.0", date: "2026-11-02", title: "Avatar refresh", items: [
+      "The original 6 avatars (Fox, Panda, Tiger, Owl, Octopus, Rocket) were redrawn to match the new illustrated style. If you already picked one, it stays selected.",
+      "8 new avatars: Valkyrie, Elf Archer, Sorceress, Ace Pilot, Neon Hacker, Shadow Rogue, Punk Rocker and Pop Idol.",
+    ] },
+    { v: "1.16.0", date: "2026-11-02", title: "New avatars", items: [
+      "10 new illustrated avatars: Shadow Ninja, Silver Knight, Arcane Wizard, Chrome Bot, Viking Raider, Pirate Captain, Iron Samurai, Star Pilot, Golden Dragon and Crown Queen.",
+      "A cleaner avatar picker with a clear highlight on your current avatar. Your avatar shows everywhere: Profile, Friends, battle rooms, battles and the Leaderboard.",
+    ] },
     { v: "1.15.0", date: "2026-11-02", title: "Battle update", items: [
       "Improved Profile page: level, XP, stats, Daily Challenge progress and recent games in one cleaner screen.",
       "Improved Shop with clearer cards and prices.",

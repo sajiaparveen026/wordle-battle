@@ -652,7 +652,7 @@
 <div id="edit-profile" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ep-title">
   <div class="card"><button id="ep-x" class="x" aria-label="Close">✕</button><h2 id="ep-title">Edit profile</h2>
     <h4>Username</h4><input id="s-name" maxlength="16" autocomplete="off">
-    <h4>Avatar</h4><div id="s-avatars" class="avatars"></div>
+    <h4>Avatar</h4><div id="s-avatars" class="avatars" role="group" aria-label="Choose your avatar"></div><p id="s-avname" class="avname" aria-live="polite"></p>
     <div class="actions"><button id="ep-done" class="primary" type="button">Done</button></div></div>
 </div>
 <div id="install-help" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ih-title">
@@ -835,6 +835,7 @@
 <script src="js/words.js"></script>
 <script src="js/clues.js"></script>
 <script src="js/store.js"></script>
+<script src="js/avatars.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/app.js"></script>

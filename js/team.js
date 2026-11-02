@@ -155,7 +155,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     const cls = ["tz-pl", p.ready ? "ready" : "", p.is_me ? "me" : "", p.connection === "disconnected" ? "dc" : ""].join(" ");
     const st = p.connection === "disconnected" ? "Disconnected" : p.connection === "reconnecting" ? "Reconnecting…" : p.ready ? "Ready" : "Not ready";
     return `<div class="${cls}" style="--i:${p.seat}">
-      <span class="tz-av" aria-hidden="true">${esc(p.avatar)}<i class="tz-dot ${esc(p.connection)}"></i></span>
+      <span class="tz-av" aria-hidden="true">${Avatars.inner(p.avatar)}<i class="tz-dot ${esc(p.connection)}"></i></span>
       <div class="tz-info"><span class="tz-nm"><span>${esc(p.username)}</span>${p.is_host ? '<i class="tz-tag">HOST</i>' : ""}${p.is_me ? '<i class="tz-tag you">YOU</i>' : ""}</span><span class="tz-st">${st}</span></div>
       <span aria-hidden="true">${p.ready ? "✅" : "⏳"}</span></div>`;
   }

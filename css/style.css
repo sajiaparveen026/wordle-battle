@@ -1152,3 +1152,27 @@ html[data-motion=reduced] #battle .fb-go,html[data-motion=reduced] #battle .fb .
   #game.battle #board,#game.team #board{container-type:inline-size}
   #game.battle #board .tile,#game.team #board .tile{font-size:clamp(.8rem,11cqw,2rem)}
 }
+/* ===== Avatars (v1.16.0): illustrated avatars + the avatar picker =====
+   The 10 new avatars are drawn as an <img class="avx"> that fills whatever circle the screen already uses
+   (Profile, Friends, battle rooms, battles, Team Zone, Leaderboard). Emoji avatars are untouched. */
+.avx{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;user-select:none;-webkit-user-drag:none}
+:is(.avatar,.pf-oav,.bt-av,.fb-av,.fr-av,.lbx-av,.ri-av,.tzg-av,.tz-av):has(>.avx){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding:0;overflow:visible}
+
+/* Picker: 4 columns on phones, 8 on tablets and desktop (16 avatars = 4 neat rows, then 2). */
+#edit-profile .card{max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain}
+.avatars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 10px;justify-items:center;margin:6px 0 8px;padding:4px 2px}
+.avatars button{position:relative;display:grid;place-items:center;width:100%;max-width:68px;height:auto;aspect-ratio:1/1;padding:0;border-radius:50%;border:2px solid var(--line);background:var(--panel-2);font-size:1.9rem;line-height:1;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent}
+.avatars button:hover{border-color:var(--gold-dim);transform:translateY(-2px)}
+.avatars button:active{transform:scale(.95)}
+.avatars button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.avatars button:has(>.avx){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.avatars button.on{border-color:var(--gold);transform:scale(1.07);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 30%,transparent),0 0 18px color-mix(in srgb,var(--gold) 50%,transparent)}
+.avatars button.on::after{content:"\2713";position:absolute;right:-5px;bottom:-5px;display:grid;place-items:center;width:21px;height:21px;border-radius:50%;background:var(--gold);color:var(--on-color);border:2px solid var(--panel);font-size:.72rem;font-weight:900;line-height:1;pointer-events:none}
+.avname{margin:0 0 10px;text-align:center;color:var(--muted);font-size:.85rem;min-height:1.3em}
+.avname b{color:var(--gold)}
+@media (min-width:600px){
+  #edit-profile .card{max-width:600px}
+  .avatars{grid-template-columns:repeat(8,minmax(0,1fr))}
+  .avatars button{max-width:60px;font-size:1.75rem}
+}
+@media (prefers-reduced-motion:reduce){.avatars button,.avatars button:hover,.avatars button.on{transition:none;transform:none}}

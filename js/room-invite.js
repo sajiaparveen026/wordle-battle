@@ -144,7 +144,7 @@ html[data-motion=reduced] .ri-modal,html[data-motion=reduced] .ri-sheet,html[dat
   }
   function card(f) {
     const sub = f.state === "invited" ? `Pending reply` : f.online ? "Online" : "Offline";
-    return `<li class="ri-card${f.online ? " on" : ""}"><span class="ri-av" aria-hidden="true">${esc(f.avatar)}<i></i></span>
+    return `<li class="ri-card${f.online ? " on" : ""}"><span class="ri-av" aria-hidden="true">${Avatars.inner(f.avatar)}<i></i></span>
       <div class="ri-info"><b>${esc(f.name)}</b><small>Level ${Number(f.level) || 1} &middot; <span class="st">${sub}</span>${f.state === "invited" && f.online ? " &middot; Online" : ""}</small></div>
       <div class="ri-act">${stateBox(f)}</div></li>`;
   }

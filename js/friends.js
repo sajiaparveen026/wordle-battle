@@ -311,7 +311,7 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
 
   // ---------- drawing the Friends page ----------
   const dis = (k) => (busy.has(k) ? " disabled" : "");
-  const av = (p, cls) => `<span class="fr-av" aria-hidden="true">${esc(p.avatar)}${cls ? `<i class="fr-dotst ${cls}"></i>` : ""}</span>`;
+  const av = (p, cls) => `<span class="fr-av" aria-hidden="true">${Avatars.inner(p.avatar)}${cls ? `<i class="fr-dotst ${cls}"></i>` : ""}</span>`;
   const cnt = (n, hot) => (n ? `<i class="fr-n${hot ? " hot" : ""}">${n > 99 ? "99+" : n}</i>` : "");
   function msgBox(ic, title, text, btn) { return `<div class="fr-empty small" role="status"><span class="ic" aria-hidden="true">${ic}</span><h3>${title}</h3><p>${text}</p>${btn || ""}</div>`; }
   function friendCard(f, i) {
@@ -438,10 +438,10 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
     bannerSig = sig;
     if (!el) { el = document.createElement("div"); el.id = "fr-banner"; el.setAttribute("role", "region"); el.setAttribute("aria-label", "Battle invitations"); document.body.append(el); }
     el.innerHTML = items.map((x) => {
-      if (x.kind === "rinv") { const v = x.v, team = v.mode === "team", k = "ri:" + v.iid; return `<div class="fr-bn"><span class="fr-av" aria-hidden="true">${esc(v.avatar)}</span><p><b>${esc(v.name)}</b> invites you to join their ${team ? "Team Zone room" : "battle room"}<small>${team ? `${Number(v.players)}/${Number(v.cap)} players · ` : ""}<span class="fr-exp" data-until="${gotAt + Number(v.expires_in_ms)}"></span></small></p><div class="fr-act"><button class="fr-btn go" type="button" data-frb="rinv-accept" data-id="${esc(v.iid)}" data-name="${esc(v.name)}"${dis(k)}>Join</button><button class="fr-btn no" type="button" data-frb="rinv-decline" data-id="${esc(v.iid)}"${dis(k)}>Decline</button></div></div>`; }
+      if (x.kind === "rinv") { const v = x.v, team = v.mode === "team", k = "ri:" + v.iid; return `<div class="fr-bn"><span class="fr-av" aria-hidden="true">${Avatars.inner(v.avatar)}</span><p><b>${esc(v.name)}</b> invites you to join their ${team ? "Team Zone room" : "battle room"}<small>${team ? `${Number(v.players)}/${Number(v.cap)} players · ` : ""}<span class="fr-exp" data-until="${gotAt + Number(v.expires_in_ms)}"></span></small></p><div class="fr-act"><button class="fr-btn go" type="button" data-frb="rinv-accept" data-id="${esc(v.iid)}" data-name="${esc(v.name)}"${dis(k)}>Join</button><button class="fr-btn no" type="button" data-frb="rinv-decline" data-id="${esc(v.iid)}"${dis(k)}>Decline</button></div></div>`; }
       if (x.kind === "join") return `<div class="fr-bn"><span class="fr-av" aria-hidden="true">⚔️</span><p><b>${esc(x.v.name)}</b> accepted your invitation!<small>Your battle room is ready.</small></p><div class="fr-act"><button class="fr-btn go" type="button" data-frb="join" data-room="${esc(x.v.room)}">Join Battle</button></div></div>`;
       const v = x.v, d = DIFF[v.difficulty] || DIFF.medium, k = "iv:" + v.iid;
-      return `<div class="fr-bn"><span class="fr-av" aria-hidden="true">${esc(v.avatar)}</span><p><b>${esc(v.name)}</b> invites you to a battle<small>${d.icon} ${d.name} · ${d.min} min · <span class="fr-exp" data-until="${gotAt + Number(v.expires_in_ms)}"></span></small></p><div class="fr-act"><button class="fr-btn go" type="button" data-frb="accept" data-id="${esc(v.iid)}" data-name="${esc(v.name)}"${dis(k)}>Accept</button><button class="fr-btn no" type="button" data-frb="decline" data-id="${esc(v.iid)}"${dis(k)}>Decline</button></div></div>`;
+      return `<div class="fr-bn"><span class="fr-av" aria-hidden="true">${Avatars.inner(v.avatar)}</span><p><b>${esc(v.name)}</b> invites you to a battle<small>${d.icon} ${d.name} · ${d.min} min · <span class="fr-exp" data-until="${gotAt + Number(v.expires_in_ms)}"></span></small></p><div class="fr-act"><button class="fr-btn go" type="button" data-frb="accept" data-id="${esc(v.iid)}" data-name="${esc(v.name)}"${dis(k)}>Accept</button><button class="fr-btn no" type="button" data-frb="decline" data-id="${esc(v.iid)}"${dis(k)}>Decline</button></div></div>`;
     }).join("");
     tickClock();
   }
