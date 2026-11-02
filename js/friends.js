@@ -70,6 +70,7 @@ html[data-motion=reduced] .fr-open::after{animation:none}
 .fr-btn.no{background:transparent}
 .fr-btn.sm{padding:8px 10px}
 .fr-more{position:relative}
+.fr-card.menu-open,.fr-card:has(.fr-menu){z-index:30}
 .fr-dots{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--panel-2);color:var(--text);font-size:1.2rem;line-height:1;cursor:pointer}
 .fr-dots:hover{border-color:var(--gold)}
 .fr-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:5;min-width:170px;padding:6px;border-radius:14px;background:var(--panel);border:1px solid var(--line);box-shadow:0 14px 30px rgba(0,0,0,.4);animation:fr-in .18s ease both}
@@ -315,7 +316,7 @@ html[data-motion=reduced] .frx *,html[data-motion=reduced] #fr-banner *,html[dat
   function msgBox(ic, title, text, btn) { return `<div class="fr-empty small" role="status"><span class="ic" aria-hidden="true">${ic}</span><h3>${title}</h3><p>${text}</p>${btn || ""}</div>`; }
   function friendCard(f, i) {
     const inv = (D.inv_out || []).find((x) => x.fid === f.fid);
-    return `<li class="fr-card${f.online ? " on" : ""}" style="--i:${i}" data-fid="${esc(f.fid)}">
+    return `<li class="fr-card${f.online ? " on" : ""}${menuFor === f.fid ? " menu-open" : ""}" style="--i:${i}" data-fid="${esc(f.fid)}">
       ${av(f, f.online ? "on" : "off")}
       <div class="fr-info"><b class="fr-nm">${esc(f.name)}</b><span class="fr-status ${f.online ? "on" : "off"}"><i></i>${f.online ? "Online" : "Offline"}</span><span class="fr-meta">Level ${num(f.level)} · ${num(f.xp)} XP</span></div>
       <div class="fr-act">
