@@ -15,8 +15,8 @@
 #game.battle .controls{grid-template-columns:var(--side) minmax(0,1fr) var(--side)}
 #game.battle .hint[data-state=used]{opacity:.5;filter:grayscale(.7)}
 #game.battle .hint .badge{font-size:.62rem;font-weight:800;letter-spacing:.4px}
-#game.battle #board{width:min(100%,340px,max(170px,calc((100dvh - 520px)*5/6)))}
-@supports (height:1cqh){#game.battle #board{width:min(100%,var(--bw,340px),max(120px,calc(100cqh*5/6)))}}
+#game.battle #board{width:min(100%,340px,max(170px,calc((100dvh - 560px)*5/6)))}
+@supports (height:1cqh){#game.battle #board{width:min(100%,var(--bw,340px),max(120px,calc((100cqh - 2px)*5/6)))}}
 #game.battle .winscore{visibility:hidden}
 .bt-top{display:grid;gap:4px;flex:none;padding:0 0 2px}
 .bt-h{margin:0;text-align:center;font-size:1.05rem;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,var(--gold),var(--red1,#E0264F),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:bt-shine 3s linear infinite;background-size:200% 100%}
