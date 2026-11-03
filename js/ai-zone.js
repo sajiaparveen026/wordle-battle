@@ -56,7 +56,7 @@
     const card = (k) => { const L = LEVELS[k]; return `<article class="az-lv ${k}" aria-label="${L.name}, ${L.tag}. Your opponent is ${L.bot}. ${esc(L.line)} Thinks for ${L.think} seconds per guess.">
       <span class="az-plate">${robot(k, 66)}</span>
       <div class="az-lvt"><h3>${L.name} <span class="az-dash" aria-hidden="true">–</span> ${L.bot} <small>${L.tag}</small></h3><p>${esc(L.line)}</p><span class="az-pills"><span class="az-pill">⏱ Thinks ${L.think}s per guess</span></span></div>
-      <button class="az-go primary" type="button" data-az="enter" data-level="${k}"${lock ? " disabled" : ""}${rec ? ' title="Finish or forfeit your current match first"' : ""} aria-label="Enter ${L.name} match against ${L.bot}">Enter</button></article>`; };
+      <button class="az-go" type="button" data-az="enter" data-level="${k}"${lock ? " disabled" : ""}${rec ? ' title="Finish or forfeit your current match first"' : ""} aria-label="Enter ${L.name} match against ${L.bot}">Enter →</button></article>`; };
     root.innerHTML = `<div class="fb-hero"><h2 class="sr-only">AI Zone</h2><p>Same secret word, 6 attempts each. First to solve it wins.</p></div>
       ${rec ? `<div class="az-resume" role="group" aria-label="Unfinished match"><span class="az-plate sm">${robot(rec.level, 38)}</span><div><b>Match in progress</b><small>${LEVELS[rec.level].name} · ${rec.pGuesses.length}/6 guesses</small></div><button class="primary" type="button" data-az="resume">Resume</button><button class="az-x" type="button" data-az="drop" aria-label="Forfeit the unfinished match">Forfeit</button></div>` : ""}
       <div class="az-cards" role="group" aria-label="Choose a difficulty and press Enter">${["easy", "medium", "hard"].map(card).join("")}</div>`;

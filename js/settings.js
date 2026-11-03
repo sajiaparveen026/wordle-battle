@@ -12,6 +12,16 @@
 
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
+    {
+  v: "1.18.0",
+  date: "2026-11-03",
+  title: "New AI Zone",
+  items: [
+    "Battle an AI opponent in Easy, Medium or Hard mode.",
+    "Choose BOLT, NOVA or TITAN. Each has its own strategy and thinking time.",
+    "Tap Enter on a difficulty card to start a match right away."
+  ]
+},
     { v: "1.17.0", date: "2026-11-02", title: "Avatar refresh", items: [
       "The original 6 avatars (Fox, Panda, Tiger, Owl, Octopus, Rocket) were redrawn to match the new illustrated style. If you already picked one, it stays selected.",
       "8 new avatars: Valkyrie, Elf Archer, Sorceress, Ace Pilot, Neon Hacker, Shadow Rogue, Punk Rocker and Pop Idol.",
