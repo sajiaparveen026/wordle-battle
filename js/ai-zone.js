@@ -55,7 +55,7 @@
     const rec = savedMatch(), a = Player.data.ai, lock = !!rec || entering;
     const card = (k) => { const L = LEVELS[k]; return `<article class="az-lv ${k}" aria-label="${L.name}, ${L.tag}. Your opponent is ${L.bot}. ${esc(L.line)} Thinks for ${L.think} seconds per guess.">
       <span class="az-plate">${robot(k, 66)}</span>
-      <div class="az-lvt"><h3>${L.name} <span class="az-dash" aria-hidden="true">–</span> ${L.bot} <small>${L.tag}</small></h3><p>${esc(L.line)}</p><span class="az-pills"><span class="az-pill">⏱ Thinks ${L.think}s per guess</span></span></div>
+      <div class="az-lvt"><h3>${L.bot} <small>${L.tag}</small></h3><p>${esc(L.line)}</p><span class="az-pills"><span class="az-pill">⏱ Thinks ${L.think}s per guess</span></span></div>
       <button class="az-go" type="button" data-az="enter" data-level="${k}"${lock ? " disabled" : ""}${rec ? ' title="Finish or forfeit your current match first"' : ""} aria-label="Enter ${L.name} match against ${L.bot}">Enter →</button></article>`; };
     root.innerHTML = `<div class="fb-hero"><h2 class="sr-only">AI Zone</h2><p>Same secret word, 6 attempts each. First to solve it wins.</p></div>
       ${rec ? `<div class="az-resume" role="group" aria-label="Unfinished match"><span class="az-plate sm">${robot(rec.level, 38)}</span><div><b>Match in progress</b><small>${LEVELS[rec.level].name} · ${rec.pGuesses.length}/6 guesses</small></div><button class="primary" type="button" data-az="resume">Resume</button><button class="az-x" type="button" data-az="drop" aria-label="Forfeit the unfinished match">Forfeit</button></div>` : ""}
@@ -85,14 +85,31 @@
       <div class="az-id"><b id="az-name"></b><span class="az-chip" id="az-chip"></span><button class="az-tg" id="az-tg" type="button" aria-expanded="false" aria-controls="az-mini" aria-label="Show all of the AI's guesses"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg></button></div>
       <div class="az-att" id="az-att"></div>
       <div class="az-st" id="az-st" role="status" aria-live="polite"></div>
-      <div class="az-last" id="az-last" aria-label="Latest AI guess"></div></div>
-      <div class="az-mini" id="az-mini" aria-label="AI board"></div><p class="az-note" id="az-note" role="status"></p><p class="az-clue hidden" id="az-clue"></p>`;
+      <div class="az-last" id="az-last" aria-label="Latest AI guess"></div>
+      <button class="az-vis" id="az-vis" type="button" aria-controls="az-mini"><span class="az-vis-ic" aria-hidden="true"><svg class="on" viewBox="0 0 24 24" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="off" viewBox="0 0 24 24" focusable="false"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5.6 19 2 12 2 12a18.5 18.5 0 0 1 5.1-5.9"/><path d="M9.9 5.2A10 10 0 0 1 12 5c6.4 0 10 7 10 7a18.6 18.6 0 0 1-2.2 3.2"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg></span><span class="az-vis-tx"></span></button></div>
+      <div class="az-mini" id="az-mini" aria-label="AI board"></div><p class="az-veil" id="az-veil"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5.6 19 2 12 2 12a18.5 18.5 0 0 1 5.1-5.9"/><path d="M9.9 5.2A10 10 0 0 1 12 5c6.4 0 10 7 10 7a18.6 18.6 0 0 1-2.2 3.2"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg><span>AI guesses are hidden</span></p><p class="az-note" id="az-note" role="status"></p><p class="az-clue hidden" id="az-clue"></p>`;
     g.insertBefore(top, $("#g-title"));
     $("#az-av").innerHTML = robot(M.level, 40); $("#az-name").textContent = lv().bot; $("#az-chip").innerHTML = `${lv().name}<span class="az-tagline"> · ${lv().tag}</span>`;
     $("#g-title").textContent = "AI Zone";
   }
   const miniRows = () => Array.from({ length: ROWS }, (_, r) => { const g = M.aGuesses[r]; return `<div class="az-mr">${Array.from({ length: COLS }, (_, c) => `<i class="az-t${g ? " " + K[g.code[c]] : ""}" data-r="${r}" data-c="${c}">${g ? esc(g.word[c]) : ""}</i>`).join("")}</div>`; }).join("");
   function drawMini() { const m = $("#az-mini"); if (m) m.innerHTML = miniRows(); drawLast(); }
+  // Show / Hide AI Guesses (desktop only: the CSS only reveals the button and applies the hiding inside the desktop media query, so on phones and tablets this
+  // flag is harmless and the guesses are drawn exactly as before). It only flips a class: the AI keeps guessing, the tiles keep being drawn behind the scenes.
+  function drawVis() {
+    const top = $("#az-top"), b = $("#az-vis"); if (!top || !M) return; const h = M.hideAi === true;
+    top.classList.toggle("az-hide", h);
+    if (b) { b.classList.toggle("is-hidden", h); const t = b.querySelector(".az-vis-tx"); if (t) t.textContent = h ? "Show AI Guesses" : "Hide AI Guesses"; }
+  }
+  function toggleVis() { if (!M) return; M.hideAi = M.hideAi !== true; drawVis(); persist(); }
+  // The top-centre of the game screen shows "BATTLE WITH <AI NAME>" instead of the score while an AI match is on. It re-uses the score's own element (same spot),
+  // so the score logic in app.js keeps running untouched underneath; the CSS (#game.ai only) just swaps which one is visible. begin() redraws it for every match.
+  function drawTitle() {
+    const ws = $("#game .winscore"); if (!ws || !M) return;
+    let t = $("#az-bt"); if (!t) { t = document.createElement("span"); t.id = "az-bt"; t.className = "az-bt"; ws.append(t); }
+    t.innerHTML = '<span class="az-bt-w">Battle with</span><span class="az-bt-n"></span>'; t.querySelector(".az-bt-n").textContent = lv().bot;
+    ws.setAttribute("aria-label", "Battle with " + lv().bot); ws.removeAttribute("title");
+  }
   function drawLast(hideRow) {
     const e = $("#az-last"); if (!e) return; const g = M.aGuesses[M.aGuesses.length - 1];
     e.innerHTML = Array.from({ length: COLS }, (_, c) => `<i class="az-t${g && hideRow !== M.aGuesses.length - 1 ? " " + K[g.code[c]] : ""}">${g && hideRow !== M.aGuesses.length - 1 ? esc(g.word[c]) : ""}</i>`).join("");
@@ -282,14 +299,14 @@
   // ---------- starting, resuming, saving, leaving ----------
   function persist() {
     if (!M || M.phase !== "play") return;
-    store.set("ai_match", { id: M.id, level: M.level, secret: M.secret, startedAt: M.startedAt, phase: "play", pGuesses: M.pGuesses, aGuesses: M.aGuesses, pStatus: M.pStatus, aStatus: M.aStatus, thinkLeft: Math.max(0, Math.round(M.thinkLeft)), activeMs: Math.round(M.activeMs), pu: M.pu });
+    store.set("ai_match", { id: M.id, level: M.level, secret: M.secret, startedAt: M.startedAt, phase: "play", pGuesses: M.pGuesses, aGuesses: M.aGuesses, pStatus: M.pStatus, aStatus: M.aStatus, thinkLeft: Math.max(0, Math.round(M.thinkLeft)), activeMs: Math.round(M.activeMs), pu: M.pu, hideAi: M.hideAi === true });
   }
   function begin(m, fresh) {
     cleanup(false);
-    M = m; ai = AIEngine.createPlayer(M.level); on = true; cur = ""; busy = false; aiBusy = false; stHtml = ""; rendered = 0;
-    buildHud(); buildBoard(); $$("#keyboard .key").forEach((k) => k.classList.remove("correct", "present", "absent", "disabled"));
+    M = m; M.hideAi = M.hideAi === true; ai = AIEngine.createPlayer(M.level); on = true; cur = ""; busy = false; aiBusy = false; stHtml = ""; rendered = 0;
+    buildHud(); drawTitle(); buildBoard(); $$("#keyboard .key").forEach((k) => k.classList.remove("correct", "present", "absent", "disabled"));
     M.pGuesses.forEach((g, i) => { drawGuess(i, g); rendered++; });
-    drawMini(); drawAtt(); drawKeys(); drawNote(); notice(""); show("game");
+    drawMini(); drawVis(); drawAtt(); drawKeys(); drawNote(); notice(""); show("game");
     paintTyping(); drawStatus();
     if (fresh) {
       M.phase = "ready"; drawStatus(); paintTyping();
@@ -308,6 +325,7 @@
     stopTick(); clearLater(); aiTurn++; aiBusy = false; busy = false;
     const r = $("#az-res"); if (r) r.remove(); const cd = $("#az-cd"); if (cd) cd.remove(); lockModal(false);
     const g = $("#game"); if (g) g.classList.remove("ai");
+    const bt = document.getElementById("az-bt"); if (bt) bt.remove(); const ws = $("#game .winscore"); if (ws) { ws.setAttribute("aria-label", "Wins"); ws.setAttribute("title", "Total wins"); }   // the score goes back to normal for every other mode
     ["az-top", "az-clue"].forEach((id) => { const e = document.getElementById(id); if (e) e.remove(); });
     $$("#keyboard .key").forEach((k) => k.classList.remove("correct", "present", "absent", "disabled"));
     $$("#board .tile").forEach((t) => delete t.dataset.hint);
@@ -352,7 +370,7 @@
       <p class="bt-ans">The word was <b>${esc(m.secret.toUpperCase())}</b> · Match time <b>${mmss(m.activeMs)}</b></p>
       ${meaning ? `<p class="az-mean"><small>Meaning</small>${esc(meaning)}</p>` : ""}
       <div class="bt-rw" id="az-rw"></div>
-      <div class="bt-two"><button class="primary big" type="button" data-az="again" id="az-again">▶ Play Again</button><button class="primary alt" type="button" data-az="zone">Back to AI Zone</button></div></div>`;
+      <div class="r-actions"><button class="again-link" type="button" data-az="again" id="az-again">Play again</button><div class="r-icons"><button class="r-icon" type="button" data-az="home" aria-label="Home" title="Home"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-home"/></svg><small>Home</small></button><button class="r-icon" type="button" data-az="profile" aria-label="Profile" title="Profile"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-profile"/></svg><small>Profile</small></button><button class="r-icon ai" type="button" data-az="zone" aria-label="AI Zone" title="AI Zone"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-robot"/></svg><small>AI Zone</small></button></div></div></div>`;
     document.body.append(el); lockModal(true); $("#az-again").focus();
     if (res === "win") { snd("win"); gfx("confetti"); } else if (res === "loss") snd("lose");
     drawReward(reward, res);
@@ -369,6 +387,66 @@
     if (rw.coins) snd("coin");
   }
 
+  // ---------- AI Battle Stats ----------
+  // Read-only. Everything comes from what Player.rewardAI already saved: Player.data.ai (lifetime totals) and Player.data.ahist (one entry per finished match, written once per match id).
+  // Forfeited and unfinished matches are never saved there, and no secret word is stored, so none can appear on this page. Nothing here writes data or changes rewards.
+  let statsOpen = false, statsAll = false;
+  const num = (v) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+  const pctTxt = (w, n) => (n ? Math.round((w / n) * 100) + "%" : "\u2014");
+  const fmtWhen = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }) + " \u00b7 " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); };
+  function statsData() {
+    const d = Player.data, seen = new Set(), hist = [];
+    (Array.isArray(d.ahist) ? d.ahist : []).forEach((r) => {                                 // valid, finished and unique (by match id) records only
+      if (!r || typeof r.id !== "string" || seen.has(r.id) || !LEVELS[r.level] || !["win", "loss", "draw"].includes(r.result)) return;
+      seen.add(r.id); hist.push(r);
+    });
+    hist.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+    const count = (l) => ({ played: l.length, won: l.filter((r) => r.result === "win").length, lost: l.filter((r) => r.result === "loss").length, draw: l.filter((r) => r.result === "draw").length });
+    const byLevel = {}; Object.keys(LEVELS).forEach((k) => { byLevel[k] = count(hist.filter((r) => r.level === k)); });
+    const a = d.ai || {}, h = count(hist), partial = num(a.played) > hist.length;           // partial: more matches were played than the last-50 list keeps
+    const total = partial ? { played: num(a.played), won: num(a.won), lost: num(a.lost), draw: num(a.draw) } : h;
+    let run = 0, best = 0; hist.forEach((r) => { if (r.result === "win") { run++; best = Math.max(best, run); } else if (r.result === "loss") run = 0; });
+    return { hist, byLevel, total, partial, cur: partial ? num(a.streak) : run, best: Math.max(best, partial ? num(a.best) : 0) };
+  }
+  function donut(t) {
+    const C = 2 * Math.PI * 48, den = Math.max(t.played, t.won + t.lost + t.draw); let off = 0;
+    const seg = (n, cls) => { if (!n || !den) return ""; const len = C * n / den; const s = `<circle class="azs-seg ${cls}" cx="60" cy="60" r="48" style="stroke-dasharray:${len.toFixed(2)} ${(C - len).toFixed(2)};stroke-dashoffset:${(-off).toFixed(2)}"/>`; off += len; return s; };
+    return `<svg class="azs-ring" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><circle class="azs-track" cx="60" cy="60" r="48"/>${seg(t.won, "w")}${seg(t.lost, "l")}${seg(t.draw, "d")}</svg>`;
+  }
+  function renderStats() {
+    const box = $("#az-stats"); if (!box) return;
+    const S = statsData(), t = S.total, rate = pctTxt(t.won, t.played), newest = S.hist.slice().reverse(), list = statsAll ? newest : newest.slice(0, 10);
+    const tile = (v, l, c) => `<div class="azs-tile${c ? " " + c : ""}"><b>${v}</b><small>${l}</small></div>`;
+    const lv = (k) => {
+      const L = LEVELS[k], c = S.byLevel[k], mini = (v, l) => `<div><b>${v}</b><small>${l}</small></div>`;
+      return `<article class="azs-lv ${k}" aria-label="${L.name} difficulty statistics"><header><span class="az-plate sm" aria-hidden="true">${robot(k, 34)}</span><h4>${L.name}<small>${esc(L.bot)}</small></h4><b class="azs-rate" title="Win rate">${pctTxt(c.won, c.played)}</b></header>
+        <div class="azs-bar" role="img" aria-label="${c.won} wins, ${c.lost} losses, ${c.draw} draws"><i class="w" style="flex-grow:${c.won}"></i><i class="l" style="flex-grow:${c.lost}"></i><i class="d" style="flex-grow:${c.draw}"></i></div>
+        <div class="azs-mini">${mini(c.played, "Played")}${mini(c.won, "Wins")}${mini(c.lost, "Losses")}${mini(pctTxt(c.won, c.played), "Win rate")}</div></article>`;
+    };
+    const row = (r) => {
+      const L = LEVELS[r.level], res = r.result, lbl = { win: "WIN", loss: "LOSS", draw: "DRAW" }[res];
+      return `<li class="azs-row ${res}"><span class="az-plate sm" aria-hidden="true">${robot(r.level, 30)}</span><div class="azs-who"><b>${esc(L.bot)}</b><small>${L.name}</small></div><span class="azs-res ${res}">${lbl}</span>
+        <div class="azs-meta"><span>\uD83C\uDFAF ${num(r.tries)}/${ROWS} guesses</span><span>\u23F1 ${r.ms == null ? "\u2014" : mmss(r.ms)}</span><span class="azs-rw">\uD83E\uDE99 +${num(r.coins)} \u00b7 \u26A1 +${num(r.xp)} XP</span></div><time datetime="${esc(r.at)}">${esc(fmtWhen(r.at))}</time></li>`;
+    };
+    box.innerHTML = `<section class="azs-card" aria-labelledby="azs-h1"><h3 id="azs-h1">Overall Statistics</h3>
+        <div class="azs-ov"><div class="azs-donut">${donut(t)}<div class="azs-dc"><b>${rate}</b><small>Win rate</small></div></div>
+          <ul class="azs-leg"><li class="w"><i></i>Wins<b>${t.won}</b></li><li class="l"><i></i>Losses<b>${t.lost}</b></li><li class="d"><i></i>Draws<b>${t.draw}</b></li></ul></div>
+        <div class="azs-tiles">${tile(t.played, "Battles Played")}${tile(t.won, "Battles Won", "w")}${tile(t.lost, "Battles Lost")}${tile(rate, "Win Rate", "w")}${tile(S.cur, "Current Win Streak")}${tile(S.best, "Best Win Streak")}</div>
+        <p class="azs-note">Win rate = wins \u00f7 battles played. Forfeited matches are not counted.${S.partial ? " Difficulty stats and history cover your latest 50 battles." : ""}</p></section>
+      <section class="azs-card" aria-labelledby="azs-h2"><h3 id="azs-h2">Difficulty Statistics</h3><div class="azs-lvs">${Object.keys(LEVELS).map(lv).join("")}</div></section>
+      <section class="azs-card" aria-labelledby="azs-h3"><h3 id="azs-h3">Battle Performance</h3>
+        ${list.length ? `<ul class="azs-hist">${list.map(row).join("")}</ul>` : `<p class="azs-empty">${t.played ? "No battle details are saved yet." : "No completed AI battles yet."} Finish a match against BOLT, NOVA or TITAN and it will show up here.</p>`}
+        ${newest.length > 10 ? `<button class="azs-more" type="button" data-az="statsmore" aria-expanded="${statsAll}">${statsAll ? "Show less" : "Show all " + newest.length + " battles"}</button>` : ""}</section>
+      <button class="primary alt azs-back" type="button" data-az="statsback">\u2190 Back to AI Zone</button>`;
+  }
+  function setStatsView(open) {
+    statsOpen = open; const root = $("#az-root"), box = $("#az-stats"), t = $("#az-title"), b = $("#az-stbtn");
+    if (root) root.classList.toggle("hidden", open); if (box) box.classList.toggle("hidden", !open);
+    if (t) t.textContent = open ? "AI Battle Stats" : "AI Zone"; if (b) { b.setAttribute("aria-expanded", String(open)); b.classList.toggle("on", open); }
+  }
+  function openStats() { if (statsOpen) return; statsAll = false; renderStats(); setStatsView(true); try { window.scrollTo(0, 0); $("#az-stats").focus({ preventScroll: true }); } catch {} }
+  function closeStats(refocus) { if (!statsOpen) return; setStatsView(false); renderHome(); try { window.scrollTo(0, 0); if (refocus) $("#az-stbtn").focus({ preventScroll: true }); } catch {} }
+
   // ---------- events ----------
   document.addEventListener("click", (e) => {
     const a = e.target.closest && e.target.closest("[data-az]");
@@ -378,10 +456,16 @@
       else if (act === "resume") resumeMatch();
       else if (act === "drop") { store.del("ai_match"); renderHome(); toast("Match forfeited", ""); }
       else if (act === "again") { const lvl = M ? M.level : null; cleanup(false); if (LEVELS[lvl]) startMatch(lvl); }
+      else if (act === "home") { cleanup(false); show("dashboard"); }
+      else if (act === "profile") { cleanup(false); show("profile"); }
       else if (act === "zone") cleanup(true);
+      else if (act === "stats") openStats();
+      else if (act === "statsback") closeStats(true);
+      else if (act === "statsmore") { statsAll = !statsAll; renderStats(); const m = $("#az-stats .azs-more"); if (m) m.focus({ preventScroll: true }); }
       return;
     }
-    if (e.target.closest && e.target.closest("#az-back")) { show("battle"); return; }
+    if (e.target.closest && e.target.closest("#az-back")) { if (statsOpen) closeStats(true); else show("battle"); return; }
+    if (e.target.closest && e.target.closest("#az-vis")) { toggleVis(); return; }
     const tg = e.target.closest && e.target.closest("#az-tg");
     if (tg) { const o = $("#az-top").classList.toggle("open"); tg.setAttribute("aria-expanded", String(o)); return; }
   });
@@ -406,10 +490,11 @@
     if (k === "enter") { e.preventDefault(); if (!e.repeat) press("enter"); } else if (k === "backspace") press("back"); else if (/^[a-z]$/.test(k)) press(k);
   }, true);
   document.addEventListener("visibilitychange", () => { if (on && M && M.phase === "play") { persist(); lastT = performance.now(); } });
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && statsOpen && screen === "aizone" && !modalOpen()) closeStats(true); });
   window.addEventListener("pagehide", () => { if (on && M && M.phase === "play") persist(); });
 
   window.AIZone = {
-    screenChanged(name) { enterTok++; entering = false; if (name === "aizone") renderHome(); },
+    screenChanged(name) { enterTok++; entering = false; if (statsOpen) setStatsView(false); if (name === "aizone") renderHome(); },
     isOn: () => on, levels: LEVELS, robot
   };
 })();

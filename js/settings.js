@@ -13,6 +13,28 @@
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
     {
+  v: "1.20.0",
+  date: "2026-11-03",
+  title: "AI Battle Stats",
+  items: [
+    "New stats icon at the top of the AI Zone. Tap it to open AI Battle Stats.",
+    "Overall record: battles played, won and lost, win rate, current win streak and best win streak.",
+    "Separate Easy, Medium and Hard records with win-rate bars.",
+    "Battle Performance history: opponent, difficulty, result, guesses, completion time, date and time, and the coins and XP you earned.",
+    "Built from your real finished battles and saved to your guest or account progress. Forfeited matches are not counted."
+  ]
+},
+    {
+  v: "1.19.0",
+  date: "2026-11-03",
+  title: "Result screen shortcuts",
+  items: [
+    "AI Battle results now have Play Again plus Home, Profile and AI Zone icons.",
+    "Solo and Daily Challenge results now have a Profile icon beside Home.",
+    "Redesigned result icons with a glow and tap effects."
+  ]
+},
+    {
   v: "1.18.0",
   date: "2026-11-03",
   title: "New AI Zone",

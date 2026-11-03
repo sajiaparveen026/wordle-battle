@@ -815,6 +815,7 @@ $("#s-name").onchange = (e) => {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#clue").classList.contains("hidden") && $("#dialog").classList.contains("hidden")) closeClue(); if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) closeModal(); if (e.key === "Escape" && !$("#daily-done").classList.contains("hidden")) closeDailyDone(); });
 $("#dd-ok").onclick = closeDailyDone;
 $("#btn-home").onclick = () => { closeModal(); show("dashboard"); };
+$("#btn-profile").onclick = () => { closeModal(); show("profile"); };
 $("#btn-shop").onclick = () => { closeModal(); go("shop"); };
 $("#btn-again").onclick = () => { closeModal(); openGame("practice", true); };
 document.addEventListener("keydown", (e) => {
