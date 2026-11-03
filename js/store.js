@@ -18,6 +18,7 @@ const SHOP_ITEMS = [
   { id: "skip", kind: "skip", name: "Skip", price: PRICES.skip, icon: "skip", tile: "t-skip" },
   { id: "word", kind: "hint", type: "word", name: HINTS.word.name, price: PRICES.word, icon: "bulb", tile: "t-word" }
 ];
+const REWARDS_AI = { easy: { win: [10, 15], draw: [5, 8], loss: [0, 5] }, medium: { win: [20, 30], draw: [10, 15], loss: [0, 8] }, hard: { win: [30, 50], draw: [15, 25], loss: [0, 10] } }; // AI Zone [coins, xp] per outcome; a Hard win pays the same as an online battle win
 const REWARDS = { practice: { coins: 30, xp: 30 }, daily: { coins: 50, xp: 60 } }; // coins per win: 30 solo, 50 daily (each game id pays once)
 
 const Player = (() => {
@@ -33,6 +34,8 @@ const Player = (() => {
     earned: 0, noHintWins: 0, sessionsPlayed: 0, lastSession: "", lastGameAt: 0, battles: { played: 0, won: 0 }, ach: {},
     // Battle profile stats (separate from Solo): bstats = completed Friend + Team battles, bhist = the last 50 of them (Recent Plays > Battle)
     bstats: null, bhist: [],
+    // AI Zone (js/ai-zone.js): ai = completed matches vs the computer, ahist = the last 50 of them. Kept apart from Solo, Friend Battle and Team Battle.
+    ai: null, ahist: [],
     // More achievement counters (js/achievements.js): fb / tb = completed Friend / Team battles (tb.won = finished first), fast = wins within 2 min / 60 s / 45 s,
     // noPower = wins that used no hint and no skip, friendsMax = most friends you have had at once. skipGame = the game id that came from a Skip (not synced).
     fb: null, tb: null, fast: null, noPower: 0, friendsMax: 0, skipGame: ""
@@ -67,6 +70,8 @@ const Player = (() => {
   const cleanB = (b) => { const o = { played: cnt(b.played), won: cnt(b.won), lost: cnt(b.lost), draw: cnt(b.draw), streak: cnt(b.streak), best: cnt(b.best) }; o.best = Math.max(o.best, o.streak); return o; };
   p.bstats = p.bstats && typeof p.bstats === "object" ? cleanB(p.bstats) : seedB();
   if (!Array.isArray(p.bhist)) p.bhist = [];
+  p.ai = p.ai && typeof p.ai === "object" ? cleanB(p.ai) : { played: 0, won: 0, lost: 0, draw: 0, streak: 0, best: 0 };
+  if (!Array.isArray(p.ahist)) p.ahist = [];
   // Friend / Team battle counters. Older saves are seeded once from the battle history they still have (last 50): only entries that are clearly
   // a Friend battle (has an opponent) or a Team battle (typed "team") are counted, so nothing is ever over-counted.
   const cleanC = (o) => { const pl = cnt(o.played); return { played: pl, won: Math.min(cnt(o.won), pl) }; };
@@ -148,6 +153,20 @@ const Player = (() => {
       p.bhist = p.bhist.slice(-50);
       const side = m.type === "team" ? p.tb : p.fb; side.played++; if (outcome === "win") side.won++;      // Friend and Team battles are counted apart (tb.won = finished first)
       if (outcome === "win" && m.status === "solved") { fastWin(m.ms); if (m.hints === 0) p.noPower++; }      // a battle win only counts for speed / no-power-up when you really solved the word
+      countSession(); p.rewarded.push(key); p.rewarded = p.rewarded.slice(-300); save();
+      return { coins, xp, outcome, levelUp: this.levelInfo().level > before };
+    },
+    // AI Zone reward + record. Paid and counted ONCE per match id (a refresh, a second tab or a retry can never pay twice). Only coins / XP / the AI counters change:
+    // wins, losses and the battle counters are NOT touched, so Solo, Friend Battle, Team Battle and the leaderboard never see these matches. No word is stored.
+    rewardAI(matchId, level, outcome, meta) {
+      const key = "A:" + matchId;
+      if (!matchId || p.rewarded.includes(key) || !REWARDS_AI[level] || !["win", "loss", "draw"].includes(outcome)) return null;
+      const [coins, xp] = REWARDS_AI[level][outcome], before = this.levelInfo().level, m = meta && typeof meta === "object" ? meta : {}, ok = (v) => (Number.isInteger(v) && v >= 0 && v <= 6 ? v : 0);
+      p.coins += coins; p.earned += coins; p.xp += xp;
+      const a = p.ai; a.played++;
+      if (outcome === "win") { a.won++; a.streak++; a.best = Math.max(a.best, a.streak); } else if (outcome === "loss") { a.lost++; a.streak = 0; } else a.draw++;
+      p.ahist.push({ id: String(matchId).slice(0, 60), level, result: outcome, tries: ok(m.tries), aiTries: ok(m.aiTries), status: m.status === "solved" ? "solved" : "failed", ms: Number.isFinite(m.ms) && m.ms >= 0 ? Math.round(m.ms) : null, coins, xp, at: new Date().toISOString() });
+      p.ahist = p.ahist.slice(-50);
       countSession(); p.rewarded.push(key); p.rewarded = p.rewarded.slice(-300); save();
       return { coins, xp, outcome, levelUp: this.levelInfo().level > before };
     },

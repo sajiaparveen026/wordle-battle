@@ -295,6 +295,12 @@
   <div id="fb-root" class="fb" aria-live="off"></div>
 </section>
 
+<!-- AI ZONE -->
+<section id="aizone" class="screen hidden">
+  <header class="top"><button class="ibtn" id="az-back" aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><b>AI Zone</b><span style="width:44px" aria-hidden="true"></span></header>
+  <div id="az-root" class="az fb"></div>
+</section>
+
 <!-- FRIENDS -->
 <section id="friends" class="screen hidden">
   <header class="top"><button class="ibtn" data-back aria-label="Back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg></button><div class="fr-ttl"><b>Friends</b><small id="fr-count" aria-live="polite"></small></div><span style="width:44px" aria-hidden="true"></span></header>
@@ -418,12 +424,13 @@
   <div class="pf-seg" id="pf-modes" role="tablist" aria-label="Statistics mode">
     <button class="pf-cap on" type="button" role="tab" aria-selected="true" data-pfs="solo">Solo</button>
     <button class="pf-cap" type="button" role="tab" aria-selected="false" data-pfs="battle">Battle</button>
+    <button class="pf-cap" type="button" role="tab" aria-selected="false" data-pfs="ai">AI</button>
   </div>
 
   <div class="pf-stats" id="pf-stats">
     <div class="pf-stat c-purple"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-pad"/></svg><b id="pf-played">0</b><small id="pf-l-played">Games Played</small></div>
     <div class="pf-stat c-gold"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-cup"/></svg><b id="pf-won">0</b><small id="pf-l-won">Games Won</small></div>
-    <div class="pf-stat c-green"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-bars"/></svg><b id="pf-rate">—</b><small>Win Rate</small></div>
+    <div class="pf-stat c-green"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-bars"/></svg><b id="pf-rate">—</b><small id="pf-l-rate">Win Rate</small></div>
     <div class="pf-stat c-orange"><svg class="i3" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><use href="#i3-flame"/></svg><b id="pf-wstreak">0</b><small id="pf-l-streak">Win Streak</small></div>
   </div>
 
@@ -652,7 +659,7 @@
 <div id="edit-profile" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ep-title">
   <div class="card"><button id="ep-x" class="x" aria-label="Close">✕</button><h2 id="ep-title">Edit profile</h2>
     <h4>Username</h4><input id="s-name" maxlength="16" autocomplete="off">
-    <h4>Avatar</h4><div id="s-avatars" class="avatars" role="group" aria-label="Choose your avatar"></div><p id="s-avname" class="avname" aria-live="polite"></p>
+    <h4>Avatar</h4><div id="s-avatars" class="avatars"></div>
     <div class="actions"><button id="ep-done" class="primary" type="button">Done</button></div></div>
 </div>
 <div id="install-help" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ih-title">
@@ -828,6 +835,7 @@
   </div>
 </div>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="azSil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F5F7"/><stop offset=".45" stop-color="#B7BBC4"/><stop offset=".55" stop-color="#8D929D"/><stop offset="1" stop-color="#D3D6DC"/></linearGradient><linearGradient id="azGld" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE680"/><stop offset=".55" stop-color="#FACC15"/><stop offset="1" stop-color="#B8860B"/></linearGradient><linearGradient id="azDrk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E2E31"/><stop offset="1" stop-color="#101011"/></linearGradient></defs></svg>
 <script src="js/version.js"></script>
 <script src="js/build.js"></script>
 <script src="js/config.js"></script>
@@ -835,15 +843,17 @@
 <script src="js/words.js"></script>
 <script src="js/clues.js"></script>
 <script src="js/store.js"></script>
-<script src="js/avatars.js"></script>
 <script src="js/vendor/supabase.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/avatars.js"></script>
 <script src="js/app.js"></script>
 <script src="js/tutorial.js"></script>
 <script src="js/achievements.js"></script>
 <script src="js/leaderboard.js"></script>
 <script src="js/friend-battle.js"></script>
 <script src="js/battle-game.js"></script>
+<script src="js/ai-engine.js"></script>
+<script src="js/ai-zone.js"></script>
 <script src="js/friends.js"></script>
 <script src="js/room-invite.js"></script>
 <script src="js/wheel.js"></script>

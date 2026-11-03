@@ -3,7 +3,7 @@ const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const ROWS = 6, COLS = 5;
 const KEYS = ["qwertyuiop", "asdfghjkl", "zxcvbnm-"]; // - = Backspace. No on-screen Enter: guesses are sent with the Submit button
-const AVATARS = Avatars.all;   // 6 classic emoji + 10 illustrated avatars (see js/avatars.js)
+const AVATARS = Avatars.all;
 
 // ---------- Storage ----------
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(wbKey(k))) ?? d; } catch { return d; } };
@@ -130,12 +130,13 @@ function show(name, fromHistory) {
   $$(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== name));
   const el = $("#" + name); el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
   $("#bottomnav").classList.toggle("hidden", name === "game" || AUTH_SCREENS.includes(name));
-  const navMap = { game: "play", battle: "play", friends: "play", team: "play", wheel: "dashboard" };
+  const navMap = { game: "play", battle: "play", aizone: "play", friends: "play", team: "play", wheel: "dashboard" };
   $$("#bottomnav [data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === (navMap[name] || name)));
   if (name === "leaderboard") renderLeaderboard();
   if (window.TeamZone) TeamZone.screenChanged(name);  // js/team.js: Team Zone
   if (window.Achievements) Achievements.screenChanged(name);   // js/achievements.js: the full Achievements page
   if (window.Wheel) Wheel.screenChanged(name);       // js/wheel.js: Spin Wheel
+  if (window.AIZone) AIZone.screenChanged(name);     // js/ai-zone.js: AI Zone
   if (window.Friends) Friends.screenChanged(name);   // js/friends.js: friends, requests, invitations
   if (window.FriendBattle) FriendBattle.screenChanged(name);   // js/friend-battle.js + js/battle-game.js: Friend Zone rooms and battles
   if (name === "dashboard") renderDashboard();
@@ -161,7 +162,8 @@ function refreshCoins() {
 // ---------- Dashboard ----------
 function renderDashboard() {
   const p = Player.data, lv = Player.levelInfo();
-  $("#d-avatar").innerHTML = Avatars.inner(p.avatar); $("#d-name").textContent = p.username;
+  $("#d-avatar").innerHTML = Avatars.inner(p.avatar);
+  $("#d-name").textContent = p.username;
   $("#d-level").textContent = `Level ${lv.level} · ${lv.xp}/${lv.need} XP`;
   $("#d-badge").textContent = lv.level; animateXp("#d-xp", (lv.xp / lv.need) * 100);
   const done = !!dailyRecord();
@@ -196,8 +198,16 @@ function renderProfile() {
   renderRecentGames();
   if (window.Achievements) Achievements.render();   // achievements carousel + counter
 }
-function renderProfileStats() {           // Solo and Battle numbers come from separate counters and never mix
+function renderProfileStats() {           // Solo, Battle and AI numbers come from separate counters and never mix
   const p = Player.data, battle = pfStatMode === "battle";
+  if (pfStatMode === "ai") {                // AI Zone: matches played / won / lost, then the win rate (p.ai is only written by Player.rewardAI)
+    const a = p.ai;
+    $("#pf-played").textContent = a.played; $("#pf-won").textContent = a.won; $("#pf-rate").textContent = a.lost; $("#pf-wstreak").textContent = a.played ? Math.round((a.won / a.played) * 100) + "%" : "—";
+    $("#pf-l-played").textContent = "AI Matches"; $("#pf-l-won").textContent = "AI Wins"; $("#pf-l-rate").textContent = "AI Losses"; $("#pf-l-streak").textContent = "Win Rate";
+    $$("#pf-modes [data-pfs]").forEach((b) => { const on = b.dataset.pfs === pfStatMode; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
+    return;
+  }
+  $("#pf-l-rate").textContent = "Win Rate";
   let played, won, streak;
   if (battle) { const b = p.bstats; played = b.played; won = b.won; streak = b.streak; }
   else { const c = Player.soloCounts(); played = c.played; won = c.won; streak = p.streak; }   // Solo: battle results taken out (see Player.soloCounts)
@@ -212,7 +222,7 @@ const ordinalN = (n) => { const t = n % 100; return n + (t >= 11 && t <= 13 ? "t
 const pfEl = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 function renderRecentGames() {
   const p = Player.data;   // newest first; only finished games are listed and no word/answer is ever stored, so none can be shown
-  const all = (pfRecent === "battle" ? [...p.bhist] : p.history.filter((h) => h.mode === (pfRecent === "daily" ? "daily" : "practice"))).reverse();
+  const all = (pfRecent === "battle" ? [...p.bhist, ...p.ahist.map((h) => ({ ...h, type: "ai" }))].sort((a, b) => Date.parse(a.at) - Date.parse(b.at)) : p.history.filter((h) => h.mode === (pfRecent === "daily" ? "daily" : "practice"))).reverse();
   const list = showAllGames ? all : all.slice(0, 5), ul = $("#pf-games"); ul.innerHTML = "";
   $$("#pf-rfilter [data-pfr]").forEach((b) => { const on = b.dataset.pfr === pfRecent; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
   if (!all.length) ul.append(pfEl("li", "pf-none", { daily: "No Daily Challenges yet. Finish one and it will show up here.", solo: "No Solo games yet. Finish a game and it will show up here.", battle: "No battles yet. Finish a Friend or Team battle and it will show up here." }[pfRecent]));
@@ -226,10 +236,11 @@ function renderRecentGames() {
     const dt = pfEl("time", "", fmtDT(g.at)); dt.dateTime = g.at; li.append(dt);
     const sub = pfEl("div", "pf-sub");
     if (battle) {
-      sub.append(pfEl("span", "pf-tag " + g.type, g.type === "team" ? "👥 Team Battle" : "⚔️ Friend Battle"));
-      if (g.type === "friend" && g.opp) { const o = pfEl("span", "pf-opp"); const oav = pfEl("i", "pf-oav"); oav.innerHTML = Avatars.inner(g.opp.avatar); o.append(oav, pfEl("span", "pf-oname", g.opp.name)); sub.append(o); }
+      sub.append(pfEl("span", "pf-tag " + g.type, g.type === "team" ? "👥 Team Battle" : g.type === "ai" ? "🤖 AI Battle" : "⚔️ Friend Battle"));
+      if (g.type === "ai") { const L = (window.AIZone && AIZone.levels[g.level]) || { name: g.level, bot: "AI" }; const o = pfEl("span", "pf-opp"); o.append(pfEl("span", "pf-oname", `${L.bot} · ${L.name}`)); sub.append(o); }
+      if (g.type === "friend" && g.opp) { const o = pfEl("span", "pf-opp"); o.append(pfEl("i", "pf-oav", g.opp.avatar), pfEl("span", "pf-oname", g.opp.name)); sub.append(o); }
       if (g.type === "team" && g.place) sub.append(pfEl("span", "pf-place", `${ordinalN(g.place)}${g.size ? ` of ${g.size} players` : ""}`));
-      const fin = g.status === "solved" ? (g.ms != null ? `Solved in ${g.ms >= 60000 ? Math.floor(g.ms / 60000) + ":" + String(((g.ms / 1000) % 60).toFixed(0)).padStart(2, "0") : (g.ms / 1000).toFixed(1) + "s"}` : "Solved") : g.status === "failed" ? "Out of attempts" : result === "draw" ? "Draw" : "Time's up";
+      const fin = g.type === "ai" ? (result === "win" ? (g.ms != null ? `Solved in ${g.ms >= 60000 ? Math.floor(g.ms / 60000) + ":" + String(((g.ms / 1000) % 60).toFixed(0)).padStart(2, "0") : (g.ms / 1000).toFixed(1) + "s"}` : "Solved") : result === "loss" ? "AI solved it first" : "Draw") : g.status === "solved" ? (g.ms != null ? `Solved in ${g.ms >= 60000 ? Math.floor(g.ms / 60000) + ":" + String(((g.ms / 1000) % 60).toFixed(0)).padStart(2, "0") : (g.ms / 1000).toFixed(1) + "s"}` : "Solved") : g.status === "failed" ? "Out of attempts" : result === "draw" ? "Draw" : "Time's up";
       sub.append(pfEl("span", "pf-fin", fin));
     }
     sub.append(pfEl("span", "pf-rw", `🪙 +${coins || 0} · ⚡ +${xp || 0} XP`));
@@ -239,8 +250,19 @@ function renderRecentGames() {
 }
 function renderEdit() {
   $("#s-name").value = Player.data.username;
-  $("#s-avatars").innerHTML = AVATARS.map((a) => { const on = a === Player.data.avatar, nm = Avatars.label(a); return `<button type="button" class="${on ? "on" : ""}" data-av="${a}" aria-pressed="${on}" aria-label="${nm}" title="${nm}">${Avatars.inner(a)}</button>`; }).join("");
-  const sel = $("#s-avname"); if (sel) sel.innerHTML = AVATARS.includes(Player.data.avatar) ? `Selected: <b>${Avatars.label(Player.data.avatar)}</b>` : "";
+  $("#s-avatars").innerHTML = AVATARS.map((a) => {
+  const selected = a === Player.data.avatar;
+  const name = Avatars.label(a);
+
+  return `<button
+    type="button"
+    class="${selected ? "on" : ""}"
+    data-av="${a}"
+    aria-pressed="${selected}"
+    aria-label="${name}"
+    title="${name}"
+  >${Avatars.inner(a)}</button>`;
+}).join("");
 }
 function openEdit() { renderEdit(); $("#edit-profile").classList.remove("hidden"); lockModal(true); $("#s-name").focus(); }
 function closeEdit() { if ($("#edit-profile").classList.contains("hidden")) return; $("#edit-profile").classList.add("hidden"); lockModal(false); renderProfile(); renderDashboard(); }
@@ -759,7 +781,7 @@ document.addEventListener("click", (e) => {
   if (t.dataset.go) go(t.dataset.go);
   else if (t.dataset.buy) buyItem(t.dataset.buy);
   else if (t.dataset.back !== undefined) show("dashboard"); // every Back button returns to the dashboard
-  else if (t.dataset.av) { const av = t.dataset.av; Player.data.avatar = av; Player.save(); renderEdit(); renderProfile(); renderDashboard(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(av).then((ok) => { if (!ok) toast("Avatar saved on this device, but not to your account yet. Check your connection and pick it again.", "error", 4200); }); }
+  else if (t.dataset.av) { Player.data.avatar = t.dataset.av; Player.save(); if (window.Auth && Auth.isAccount()) Auth.setAvatar(t.dataset.av); renderEdit(); renderProfile(); }
   else if (t.dataset.hint) useHint(t.dataset.hint);
 });
 $("#go-settings").onclick = openSettings;

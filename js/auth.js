@@ -238,7 +238,7 @@
   const metaKey = () => "wb_sync_" + user.id;
   const loadMeta = () => { try { return JSON.parse(localStorage.getItem("wb_sync_" + window.WB_NS)) || { rev: 0, dirty: false }; } catch { return { rev: 0, dirty: false }; } };
   const saveMeta = () => localStorage.setItem(metaKey(), JSON.stringify(meta));
-  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt", "earned", "noHintWins", "sessionsPlayed", "lastSession", "lastGameAt", "battles", "ach", "bstats", "bhist", "fb", "tb", "fast", "noPower", "friendsMax"];
+  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt", "earned", "noHintWins", "sessionsPlayed", "lastSession", "lastGameAt", "battles", "ach", "bstats", "bhist", "ai", "ahist", "fb", "tb", "fast", "noPower", "friendsMax"];
   const snapshot = () => { const P = Player.data, player = {}; KEYS.forEach((k) => (player[k] = P[k])); return { v: 1, player, stats: window.WBApp.getStats() }; };
   function applySnapshot(s) { // sanitise before trusting remote/guest data in the local store
     if (!s || typeof s.player !== "object") return;
@@ -266,6 +266,10 @@
     if (Array.isArray(r.bhist)) P.bhist = r.bhist.filter((h) => h && typeof h.id === "string" && ["friend", "team"].includes(h.type) && ["win", "loss", "draw"].includes(h.result) && typeof h.at === "string" && !isNaN(Date.parse(h.at)))
       .map((h) => ({ id: h.id.slice(0, 60), type: h.type, result: h.result, tries: Number.isInteger(h.tries) && h.tries >= 0 && h.tries <= 6 ? h.tries : null, status: h.status === "solved" || h.status === "failed" ? h.status : "", ms: Number.isFinite(h.ms) && h.ms >= 0 ? h.ms : null,
         opp: h.opp && typeof h.opp.name === "string" ? { name: h.opp.name.slice(0, 16), avatar: String(h.opp.avatar || "").slice(0, 8) } : null, place: Number.isInteger(h.place) && h.place >= 1 && h.place <= 5 ? h.place : null, size: Number.isInteger(h.size) && h.size >= 2 && h.size <= 5 ? h.size : null, coins: n(h.coins, 0), xp: n(h.xp, 0), at: h.at })).slice(-50);
+    // AI Zone record (older cloud saves have none: keep the local one)
+    if (r.ai && typeof r.ai === "object") { const a = r.ai; P.ai = { played: n(a.played, 0), won: n(a.won, 0), lost: n(a.lost, 0), draw: n(a.draw, 0), streak: n(a.streak, 0), best: n(a.best, 0) }; P.ai.best = Math.max(P.ai.best, P.ai.streak); }
+    if (Array.isArray(r.ahist)) P.ahist = r.ahist.filter((h) => h && typeof h.id === "string" && ["easy", "medium", "hard"].includes(h.level) && ["win", "loss", "draw"].includes(h.result) && typeof h.at === "string" && !isNaN(Date.parse(h.at)))
+      .map((h) => ({ id: h.id.slice(0, 60), level: h.level, result: h.result, tries: Number.isInteger(h.tries) && h.tries >= 0 && h.tries <= 6 ? h.tries : 0, aiTries: Number.isInteger(h.aiTries) && h.aiTries >= 0 && h.aiTries <= 6 ? h.aiTries : 0, status: h.status === "solved" ? "solved" : "failed", ms: Number.isFinite(h.ms) && h.ms >= 0 ? h.ms : null, coins: n(h.coins, 0), xp: n(h.xp, 0), at: h.at })).slice(-50);
     // newer achievement counters: older cloud saves have none (keep local); otherwise the higher value wins, so a stale device can never lower them
     const hi = (cloud, local) => Math.max(n(cloud, 0), local || 0);
     const side = (c, l) => { if (!c || typeof c !== "object") return l; const pl = Math.max(n(c.played, 0), l.played); return { played: pl, won: Math.min(Math.max(n(c.won, 0), l.won), pl) }; };
@@ -369,7 +373,7 @@
     if (error) { say(error.code === "23505" ? "That username is taken" : "Couldn't save username", "error"); input.value = Player.data.username; return; }
     Player.data.username = v; Player.save(true); say("Username saved", "success"); window.WBApp.refresh();
   }
-  async function setAvatar(a) { if (!user || user.offline) return false; try { const { error } = await sb.from("profiles").update({ avatar: a }).eq("id", user.id); return !error; } catch { return false; } }
+  async function setAvatar(a) { if (user && !user.offline) await sb.from("profiles").update({ avatar: a }).eq("id", user.id); }
   async function logout() {
     if (!(await confirmBox("Log out?", "Your progress is saved to your account.", "Log out"))) return;
     if (meta.dirty) await push();

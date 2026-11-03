@@ -28,7 +28,7 @@
 .fb-card:not([disabled]):hover::after{transform:translateX(120%)}
 .fb-card:not([disabled]):active{transform:translateY(0) scale(.985)}
 .fb-card[disabled]{cursor:not-allowed;filter:saturate(.55);opacity:.82}
-.fb-card.ai{--c:#7C8CFF}.fb-card.create{--c:#4ADE80}.fb-card.join{--c:#38BDF8}
+.fb-card.ai{--c:#D5D8DE}.fb-card.create{--c:#4ADE80}.fb-card.join{--c:#38BDF8}
 .fb-ico{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;font-size:1.7rem;background:color-mix(in srgb,var(--c) 22%,var(--panel-2));border:1px solid color-mix(in srgb,var(--c) 50%,var(--line));box-shadow:0 0 16px color-mix(in srgb,var(--c) 30%,transparent)}
 .fb-card h3{margin:2px 0 0;font-size:1.12rem}
 .fb-card p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.4}
@@ -166,7 +166,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     if (!p) return `<div class="fb-pc empty"><div class="fb-av" aria-hidden="true">?</div><b>Waiting…</b><small>for a friend</small></div>`;
     const conn = p.connection || "connected";
     const cl = conn === "connected" ? "Online" : conn === "reconnecting" ? "Reconnecting…" : conn === "left" ? "Left" : "Offline";
-    return `<div class="fb-pc${p.ready ? " ready" : ""}"><div class="fb-av" aria-hidden="true">${Avatars.inner(p.avatar)}</div>
+    return `<div class="fb-pc${p.ready ? " ready" : ""}"><div class="fb-av" aria-hidden="true">${esc(p.avatar)}</div>
       <b>${esc(p.username)}${p.is_me ? '<span class="fb-you">YOU</span>' : ""}</b>
       <small>${p.seat === 1 ? "Host" : "Guest"}</small>
       <span class="fb-st ${esc(conn)}"><i></i>${cl}</span>
@@ -178,13 +178,13 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
   function vLanding() {
     return `<div class="fb-hero"><h2>Choose your arena</h2><p>Pick how you want to battle.</p></div>
     <div class="fb-cards two">
-      <button class="fb-card ai" type="button" disabled aria-disabled="true"><span class="fb-ico" aria-hidden="true">🤖</span><h3>AI Zone</h3><p>Face a smart computer opponent.</p><span class="fb-chip soon">Coming Soon</span></button>
+      <button class="fb-card ai" type="button" data-go="aizone"><span class="fb-ico" aria-hidden="true">🤖</span><h3>AI Zone</h3><p>Face a smart computer opponent. Pick Easy, Medium or Hard.</p><span class="fb-go">Enter →</span></button>
       <button class="fb-card" type="button" data-fb="friend"><span class="fb-ico" aria-hidden="true">👥</span><h3>Friend Zone</h3><p>Create a private room or join a friend's battle.</p><span class="fb-go">Enter →</span></button>
       <button class="fb-card wide team" type="button" data-go="team"><span class="fb-ico" aria-hidden="true">🧑‍🤝‍🧑</span><h3>Team Zone</h3><p>Battle with 3 to 5 players in one room. First to solve the word wins.</p><span class="fb-go">Enter →</span></button>
     </div>`;
   }
   function vFriend() {
-    return `<div class="fb-hero"><h2 class="sr-only">Friend Zone</h2><p>Challenge a friend in a private room.</p></div>
+    return `<div class="fb-hero"><h2 class="sr-only">Friend Zone</h2><p>Battle a friend in a private room.</p></div>
     <div class="fb-cards two">
       <button class="fb-card create" type="button" data-fb="create"><span class="fb-ico" aria-hidden="true">➕</span><h3>Create a Room</h3><p>Pick a difficulty and get a code to share.</p><span class="fb-go">Create →</span></button>
       <button class="fb-card join" type="button" data-fb="join"><span class="fb-ico" aria-hidden="true">🔑</span><h3>Enter a Room</h3><p>Have a code? Jump into your friend's battle.</p><span class="fb-go">Join →</span></button>
