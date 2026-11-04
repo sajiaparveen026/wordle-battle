@@ -248,7 +248,9 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
 
   // ---------- result card (the winner/loser screen; rewards and rematch are further down) ----------
   function showResult() {
-    if (resultShown || !S) return; resultShown = true; cur = "";
+    if (resultShown || !S) return;
+    if (window.Series && Series.owns("friend", S)) return;       // a Series round: Series Mode shows its own round popup and pays its own rewards
+    resultShown = true; cur = "";
     const r = room(), m = me(), o = opp(), res = m.outcome === "win" ? "win" : m.outcome === "draw" ? "draw" : "loss";
     const win = (S.players.find((p) => p.id === r.winner_player_id)) || null;
     const head = { win: "BATTLE WON!", loss: "BATTLE LOST!", draw: "BATTLE DRAW!" }[res];

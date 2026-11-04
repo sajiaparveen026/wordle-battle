@@ -376,6 +376,7 @@ html[data-motion=reduced] .tzg-rm,html[data-motion=reduced] .tzg-cd b,html[data-
   }
   function renderResult() {
     if (!S || !room() || room().status !== "finished") return;
+    if (window.Series && Series.owns("team", S)) return;       // a Series round: Series Mode shows its own round popup and pays its own rewards
     const rid = room().id; resultShown = true;
     if (resRoom !== rid) { resRoom = rid; friendOverride = {}; }
     let el = $("#tzg-res");
