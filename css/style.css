@@ -732,7 +732,7 @@ html[data-motion=reduced] .installcard,html[data-motion=reduced] #update-bar,htm
 @media (max-width:360px){.installcard{flex-wrap:wrap}.installcard .ic-txt{flex-basis:calc(100% - 50px)}.installcard .ic-btn{margin-left:auto}}
 
 /* ===== Profile screen (separate from Settings) ===== */
-#profile .pf-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;text-align:center;margin-bottom:12px}
+#profile .pf-top,#achievements > .pf-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;text-align:center;margin-bottom:12px}
 #profile .pf-top .icon{display:grid;place-items:center}
 .pf-ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .pf-card{display:block;width:100%;margin:0 0 12px;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:18px;color:var(--text);text-align:left;font:inherit}
@@ -1078,6 +1078,7 @@ html[data-motion=reduced] #battle .fb-go,html[data-motion=reduced] #battle .fb .
 
 /* tier 1: the six screen titles */
 #profile .pf-top > b,
+#achievements > .pf-top > b,
 #leaderboard > .top > b,
 #shop > .top > b,
 #aizone > .top > b,
@@ -1089,6 +1090,7 @@ html[data-motion=reduced] #battle .fb-go,html[data-motion=reduced] #battle .fb .
 }
 /* thin neon underline: sits inside the title's own padding, so it never moves anything around it */
 #profile .pf-top > b::after,
+#achievements > .pf-top > b::after,
 #leaderboard > .top > b::after,
 #shop > .top > b::after,
 #aizone > .top > b::after,
@@ -1109,6 +1111,7 @@ html[data-motion=reduced] #battle .fb-go,html[data-motion=reduced] #battle .fb .
 /* gradient fill + soft glow (browsers without background-clip:text keep the plain text colour above) */
 @supports ((-webkit-background-clip:text) or (background-clip:text)){
   #profile .pf-top > b,
+  #achievements > .pf-top > b,
   #leaderboard > .top > b,
   #shop > .top > b,
   #aizone > .top > b,
@@ -1421,3 +1424,27 @@ html[data-motion=reduced] .az-dots i,html[data-motion=reduced] .az-t.flip{animat
 .azs-back{width:100%;min-height:50px;border-radius:16px}
 @media (min-width:470px){.azs-lvs{grid-template-columns:repeat(3,minmax(0,1fr))}.azs-mini{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:8px}.azs-lv header{flex-wrap:wrap}}
 @media (max-width:360px){.azs-tiles{gap:6px}.azs-tile b{font-size:1.25rem}.azs-donut{width:112px;height:112px}}
+
+/* ===== Solo / Daily power-up limits: per-game badge + "Usage Limit Reached!" notice ===== */
+#game .controls .hint.maxed .cnt,#game .controls .hint.maxed small.badge{display:none!important}
+#game .controls .hint.maxed .cico svg{filter:grayscale(.55) drop-shadow(0 1px 1px rgba(0,0,0,.4));opacity:.75}
+.msg.limit{display:grid;gap:3px;width:min(92vw,340px);box-sizing:border-box;padding:12px 18px;border-radius:14px;text-align:center;background:var(--panel);color:var(--text);border:1px solid var(--gold);box-shadow:0 0 20px color-mix(in srgb,var(--gold) 30%,transparent),0 10px 24px rgba(0,0,0,.4);font-weight:500;line-height:1.35;animation:limitpop .35s cubic-bezier(.2,.9,.3,1.25),fade 3.8s forwards}
+.msg.limit b{color:var(--gold);font-size:.98rem;font-weight:800;letter-spacing:.3px}
+.msg.limit span{font-size:.86rem;color:var(--text)}
+@keyframes limitpop{0%{transform:translateY(-8px) scale(.94);opacity:0}100%{transform:none;opacity:1}}
+html[data-motion=reduced] .msg.limit{animation:fade 3.8s forwards}
+@media (prefers-reduced-motion:reduce){.msg.limit{animation:fade 3.8s forwards}}
+
+/* ===== "Correct word" block on the Friend Zone and Team Zone result screens ===== */
+.wm-box{display:grid;gap:4px;justify-items:center;text-align:center;margin:6px 0 10px;padding:12px 14px;border-radius:16px;background:var(--panel-2);border:1px solid var(--gold-dim);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.wm-lbl{font-size:.68rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.wm-word{font-family:var(--hd-font);font-weight:700;font-size:clamp(1.7rem,7vw,2.3rem);line-height:1.1;letter-spacing:.2em;padding-left:.2em;color:var(--text);text-shadow:0 0 14px color-mix(in srgb,var(--gold) 35%,transparent);overflow-wrap:anywhere}
+.wm-mean{margin:2px 0 0;max-width:36ch;font-size:.95rem;line-height:1.4;font-style:italic;color:var(--text);overflow-wrap:anywhere}
+.wm-mean span{font-style:normal;font-weight:700;color:var(--muted)}
+/* AI Zone win: the flying reward coins must show above the result overlay (z-index 60) */
+body:has(#az-res) .shop-coin,body:has(#az-res) .shop-pop{z-index:70}
+
+/* AI Zone: tapping anywhere on an opponent card enters the match, same as its Enter button */
+.az-lv[data-az=enter]{cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.az-lv[data-az=enter]:has(.az-go:disabled){cursor:default}
+.az-lv[data-az=enter]:active:not(:has(.az-go:disabled)){transform:scale(.985)}

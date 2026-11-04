@@ -53,7 +53,7 @@
   function renderHome() {
     const root = $("#az-root"); if (!root) return;
     const rec = savedMatch(), a = Player.data.ai, lock = !!rec || entering;
-    const card = (k) => { const L = LEVELS[k]; return `<article class="az-lv ${k}" aria-label="${L.name}, ${L.tag}. Your opponent is ${L.bot}. ${esc(L.line)} Thinks for ${L.think} seconds per guess.">
+    const card = (k) => { const L = LEVELS[k]; return `<article class="az-lv ${k}" data-az="enter" data-level="${k}" aria-label="${L.name}, ${L.tag}. Your opponent is ${L.bot}. ${esc(L.line)} Thinks for ${L.think} seconds per guess.">
       <span class="az-plate">${robot(k, 66)}</span>
       <div class="az-lvt"><h3>${L.bot} <small>${L.tag}</small></h3><p>${esc(L.line)}</p><span class="az-pills"><span class="az-pill">⏱ Thinks ${L.think}s per guess</span></span></div>
       <button class="az-go" type="button" data-az="enter" data-level="${k}"${lock ? " disabled" : ""}${rec ? ' title="Finish or forfeit your current match first"' : ""} aria-label="Enter ${L.name} match against ${L.bot}">Enter →</button></article>`; };
@@ -373,15 +373,22 @@
       <div class="r-actions"><button class="again-link" type="button" data-az="again" id="az-again">Play again</button><div class="r-icons"><button class="r-icon" type="button" data-az="home" aria-label="Home" title="Home"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-home"/></svg><small>Home</small></button><button class="r-icon" type="button" data-az="profile" aria-label="Profile" title="Profile"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-profile"/></svg><small>Profile</small></button><button class="r-icon ai" type="button" data-az="zone" aria-label="AI Zone" title="AI Zone"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-robot"/></svg><small>AI Zone</small></button></div></div></div>`;
     document.body.append(el); lockModal(true); $("#az-again").focus();
     if (res === "win") { snd("win"); gfx("confetti"); } else if (res === "loss") snd("lose");
-    drawReward(reward, res);
+    drawReward(reward, res, m.id);
   }
-  function drawReward(rw, res) {
+  let fxFor = "";   // the match whose reward coins already flew (one animation per paid win)
+  function drawReward(rw, res, matchId) {
     const box = $("#az-rw"); if (!box) return;
     if (!rw) { box.innerHTML = '<p class="bt-note2">Reward already collected.</p>'; return; }
     const lvl = Player.levelInfo();
     box.innerHTML = `<div class="rewardbox"><div class="rchips"><div class="chip"><b id="az-rc">+${rw.coins}</b><small>🪙 Coins</small></div><div class="chip xpc"><b id="az-rx">+${rw.xp}</b><small>⚡ XP</small></div></div>
       <small id="az-rb" class="r-balance">Balance: ${Player.data.coins} 🪙</small><div class="xp"><i id="az-xp" style="width:${Math.round(lvl.xp / lvl.need * 100)}%"></i></div><small>Level ${lvl.level} · ${lvl.xp}/${lvl.need} XP</small>${rw.levelUp ? '<p class="bt-note2">⬆ Level up!</p>' : ""}</div>`;
-    gfx("refreshCoins");
+    // A win that was just paid (rw is only set when rewardAI credited it now) flies the coins into the top balance, like Solo / Daily; the balance shows the old number until they land.
+    // Losses, draws and "already collected" results never animate, and one match animates once (fxFor), so reopening or re-drawing the result never replays it.
+    if (res === "win" && rw.coins > 0 && matchId && fxFor !== matchId) {
+      fxFor = matchId; const old = Math.max(0, Player.data.coins - rw.coins);
+      $$(".coin-val").forEach((v) => (v.textContent = old)); const rb = $("#az-rb"); if (rb) rb.textContent = `Balance: ${old} 🪙`;
+      setTimeout(() => { if (!$("#az-rc")) return gfx("refreshCoins"); gfx("coinsToBalance", $("#az-rc"), rw.coins, { onTick: (v) => { const b = $("#az-rb"); if (b) b.textContent = `Balance: ${v} 🪙`; } }); }, quick() ? 0 : 1050);
+    } else gfx("refreshCoins");
     if (rw.coins) gfx("countUp", $("#az-rc"), rw.coins, "+"); if (rw.xp) gfx("countUp", $("#az-rx"), rw.xp, "+");
     gfx("animateXp", "#az-xp", Math.round(lvl.xp / lvl.need * 100));
     if (rw.coins) snd("coin");
@@ -452,7 +459,7 @@
     const a = e.target.closest && e.target.closest("[data-az]");
     if (a && ($("#aizone") && !$("#aizone").classList.contains("hidden") || a.closest("#az-res"))) {
       const act = a.dataset.az;
-      if (act === "enter") { e.preventDefault(); enter(a.dataset.level, a); }
+      if (act === "enter") { e.preventDefault(); const go = a.classList.contains("az-lv") ? a.querySelector(".az-go") : a; if (go && !go.disabled) enter(a.dataset.level, go); }   // the whole card works like its Enter button (and respects it being locked)
       else if (act === "resume") resumeMatch();
       else if (act === "drop") { store.del("ai_match"); renderHome(); toast("Match forfeited", ""); }
       else if (act === "again") { const lvl = M ? M.level : null; cleanup(false); if (LEVELS[lvl]) startMatch(lvl); }

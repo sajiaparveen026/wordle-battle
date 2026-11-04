@@ -77,10 +77,29 @@
 .tzg-ask{margin:0;font-size:.88rem;font-weight:700}
 @media (max-width:380px){.tzg-rc{grid-template-columns:auto minmax(0,1fr);}.tzg-rc .tzg-earn{grid-column:2;justify-items:start;grid-auto-flow:column;gap:8px;align-items:center}.tzg-rc .tzg-pos{grid-row:span 2}}
 .tzg-ans{font-size:.88rem;color:var(--muted)}.tzg-ans b{color:var(--text);letter-spacing:3px;font-size:1rem}
+.tzg-hostnote{font-size:.78rem}.tzg-hostnote b{letter-spacing:0;font-size:inherit;color:var(--text)}
+.tzg-res.rm-open{padding-bottom:min(66vh,380px)}
+.tzg-rm{position:fixed;z-index:65;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(calc(100vw - 24px),360px);max-height:min(62vh,440px);overflow:auto;box-sizing:border-box;display:grid;gap:9px;padding:14px;border-radius:18px;background:linear-gradient(170deg,color-mix(in srgb,var(--gold) 14%,var(--panel)),var(--panel) 70%);border:1px solid color-mix(in srgb,var(--gold) 55%,var(--line));box-shadow:0 12px 32px rgba(0,0,0,.5),0 0 22px color-mix(in srgb,var(--gold) 20%,transparent);animation:tzg-rmin .3s cubic-bezier(.2,.9,.3,1.2) both}
+.tzg-rm-h{display:flex;align-items:center;justify-content:space-between;gap:10px}.tzg-rm-h b{font-size:.98rem;color:var(--gold);letter-spacing:.3px;line-height:1.2}
+.tzg-rm-n{padding:3px 10px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-size:.74rem;font-weight:800;white-space:nowrap}
+.tzg-rm-p{margin:0;font-size:.84rem;line-height:1.4;color:var(--text)}
+.tzg-rm-bar{height:5px;border-radius:5px;background:var(--panel-2);overflow:hidden}.tzg-rm-bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold-dim),var(--gold));transition:width .25s linear}
+.tzg-rm-l{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.tzg-rm-l li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 8px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);font-size:.84rem}
+.tzg-rm-l li b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;color:var(--text)}
+.tzg-rms{font-size:.74rem;font-weight:800;white-space:nowrap;color:var(--muted)}
+.tzg-rm-l li.accepted{border-color:color-mix(in srgb,#22a45d 55%,var(--line))}.tzg-rm-l li.accepted .tzg-rms{color:#22a45d}
+.tzg-rm-l li.declined{border-color:color-mix(in srgb,#e5484d 55%,var(--line))}.tzg-rm-l li.declined .tzg-rms{color:#e5484d}
+.tzg-rm .tzg-av{width:28px;height:28px;font-size:1.05rem}
+.tzg-rm-s{margin:0;text-align:center;color:var(--muted);font-size:.78rem}
+.tzg-rm .tzg-row{display:flex;gap:8px}.tzg-rm .tzg-row>*{flex:1}
+.tzg-rm .tzg-go{padding:10px 12px;font-size:.88rem}
+@keyframes tzg-rmin{from{opacity:0;transform:translate(-50%,16px)}}
+@media (max-width:360px){.tzg-rm{padding:12px}.tzg-rm-l li{font-size:.8rem}}
 @keyframes tzg-blink{50%{opacity:.45}}
 @keyframes tzg-pop{from{opacity:0;transform:scale(.6)}60%{transform:scale(1.05)}}
 @keyframes tzg-fade{from{opacity:0}}
-html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[data-motion=reduced] .tzg-tm.low b{animation:none!important}
+html[data-motion=reduced] .tzg-rm,html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[data-motion=reduced] .tzg-tm.low b{animation:none!important}
 `;
   if (!document.getElementById("tzg-css")) { const st = document.createElement("style"); st.id = "tzg-css"; st.textContent = CSS; document.head.append(st); }
 
@@ -244,11 +263,11 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
   }
 
   // ---------- result: ranked list, rewards, Add Friend, rematch ----------
-  let resRoom = "", claimedFor = "", friendOverride = {}, rmHop = "", lastRm = "", curRoom = "", lastResHtml = "";
+  let resRoom = "", claimedFor = "", friendOverride = {}, rmHop = "", curRoom = "", lastResHtml = "";
   const medal = (n) => (n === 1 ? { cls: "gold", ic: "👑" } : n === 2 ? { cls: "silver", ic: "🥈" } : n === 3 ? { cls: "bronze", ic: "🥉" } : { cls: "", ic: "" });
   const RM_ERR = { busy: "Someone is already in another battle.", no_request: "That rematch request is no longer open.", host_left: "The host left, so there's no rematch.",
                    no_opponents: "Nobody is left to play again with.", left: "You left this battle.", already_started: "The rematch has already started.", forbidden: "You're no longer in this battle.",
-                   not_found: "That player isn't in this battle.", self: "That's you!", friend_limit: "Your friends list is full.", throttled: "Slow down a little, then try again.", error: "Something went wrong. Try again." };
+                   not_host: "Only the host can start a rematch.", host_cannot_respond: "You're the host, so you're already ready.", not_finished: "The battle isn't over yet.", try_again: "Couldn't start the rematch. Try again.", not_found: "That player isn't in this battle.", self: "That's you!", friend_limit: "Your friends list is full.", throttled: "Slow down a little, then try again.", error: "Something went wrong. Try again." };
   const FR_TXT = { friends: "Friends", sent: "Request sent", incoming: "Accept request", accepted: "Friends" };
 
   // Collect my reward once per battle. Player.rewardBattle writes each room only once, so a refresh can never pay twice.
@@ -274,20 +293,86 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
     if (st === "incoming") return `<button class="tzg-add" type="button" data-tzg="friend" data-id="${esc(p.id)}" aria-label="Accept ${esc(p.username)}'s friend request">${FR_TXT.incoming}</button>`;
     return `<button class="tzg-add" type="button" data-tzg="friend" data-id="${esc(p.id)}" aria-label="Add ${esc(p.username)} as a friend">＋ Add Friend</button>`;
   }
+  // ---------- rematch: only the host asks; everyone else answers in a small popup; the host sees a live list ----------
+  // The server decides everything (tz_rematch_request is host-only there too). This only draws the request that comes back.
+  const RM_WIN = 30000, RM_TXT = { accepted: "✓ Accepted & Ready", declined: "✕ Declined", waiting: "⏳ Waiting..." };
+  let rmBusy = false, rmDismissed = "", rmExpAt = 0, rmExpFor = "", rmSig = "", rmAutoT = 0;
+  const hostOf = () => S.players.find((p) => p.is_host);
   function rematchBlock() {
-    const rm = S.rematch || {}, others = S.players.filter((p) => !p.is_me && p.connection !== "left");
-    const me = S.players.find((p) => p.is_me);
-    const secs = Math.ceil((rm.expires_in_ms || 0) / 1000);
+    const rm = S.rematch || {}, me = S.players.find((p) => p.is_me), host = hostOf();
+    const others = S.players.filter((p) => !p.is_me && p.connection !== "left");
+    if (!me || me.connection === "left") return "";
     if (rm.state === "started") return `<p class="tzg-ans">Rematch starting… same team, new word.</p>`;
-    if (rm.state === "open" && rm.by_me) return `<p class="tzg-ans">Waiting for the others to accept (${rm.votes}/${rm.needed}) · ${secs}s</p>`;
-    if (rm.state === "open" && rm.voted) return `<p class="tzg-ans">Waiting for the others (${rm.votes}/${rm.needed}) · ${secs}s</p>`;
-    if (rm.state === "open") {
-      const asker = S.players.find((p) => p.id === rm.requested_by);
-      return `<p class="tzg-ask">${esc(asker ? asker.username : "A player")} wants a rematch with the same team.</p>
-        <div class="tzg-row"><button class="tzg-go" type="button" data-tzg="rm-yes">Accept · ${secs}s</button><button class="tzg-go alt" type="button" data-tzg="rm-no">Decline</button></div>`;
+    if (!(S.me && S.me.is_host)) {                                                   // everyone else: no button, and it is clear why
+      if (!host || host.connection === "left") return `<p class="tzg-ans">The host left, so there's no rematch.</p>`;
+      return `<p class="tzg-ans tzg-hostnote">Only the host (<b>${esc(host.username)}</b>) can start a rematch.</p>`;
     }
-    if (!me || me.connection === "left" || others.length === 0) return "";
-    return `<button class="tzg-go" type="button" data-tzg="rm-ask">⚔️ Rematch with the team</button>`;
+    if (others.length === 0) return `<p class="tzg-ans">Nobody is left to play again with.</p>`;
+    if (rm.state === "open") return `<p class="tzg-ans">Rematch request sent. Waiting for your team…</p>`;
+    return `<button class="tzg-go" type="button" data-tzg="rm-ask"${rmBusy ? " disabled" : ""}>⚔️ Rematch</button><p class="tzg-ans tzg-hostnote">You're the host, so only you can start a rematch.</p>`;
+  }
+  function rmRows(rm) {
+    return S.players.filter((p) => p.connection !== "left").map((p) => {
+      const st = p.rematch || (p.is_host ? "accepted" : "waiting");
+      const txt = p.is_host && st === "accepted" ? "✓ Host · Ready" : rm.state !== "open" && st === "waiting" ? "⏳ No response" : RM_TXT[st];
+      return `<li class="${st}"><span class="tzg-av" aria-hidden="true">${Avatars.inner(p.avatar)}</span><b>${esc(p.username)}${p.is_me ? " (you)" : ""}</b><span class="tzg-rms">${txt}</span></li>`;
+    }).join("");
+  }
+  const nameList = (l) => l.map((p) => `<b>${esc(p.username)}</b>`).join(", ").replace(/, ([^,]*)$/, " and $1");
+  function clearRematchUi() {
+    const p = $("#tzg-rm"); if (p) p.remove(); const r = $("#tzg-res"); if (r) r.classList.remove("rm-open");
+    clearTimeout(rmAutoT); rmAutoT = 0; rmSig = ""; rmDismissed = ""; rmExpFor = "";
+  }
+  function renderRematch() {
+    const rm = (S && S.rematch) || {}, me = S && S.players && S.players.find((p) => p.is_me), isHost = !!(S && S.me && S.me.is_host);
+    const key = rm.id ? rm.id + ":" + rm.state : "";
+    let kind = "";
+    if (S && room() && room().status === "finished" && me && me.connection !== "left" && rm.id) {
+      if (rm.state === "open") kind = isHost || rm.voted === true ? "wait" : "invite";
+      else if (["declined", "expired", "cancelled", "busy"].includes(rm.state) && rmDismissed !== key) kind = "end";
+    }
+    let pop = $("#tzg-rm");
+    const res = $("#tzg-res"); if (res) res.classList.toggle("rm-open", !!kind);
+    if (!kind) { if (pop) pop.remove(); rmSig = ""; return; }
+    if (rm.state === "open") { rmExpAt = Date.now() + (Number(rm.expires_in_ms) || 0); rmExpFor = rmExpFor === rm.id + "x" ? rmExpFor : ""; }
+    const sig = JSON.stringify([kind, key, isHost, rm.votes, rm.needed, S.players.map((p) => [p.id, p.rematch, p.connection])]);
+    if (pop && sig === rmSig) return;                                                // nothing changed: leave it alone, so a tap is never lost mid-redraw
+    rmSig = sig;
+    if (!pop) { pop = document.createElement("div"); pop.id = "tzg-rm"; pop.className = "tzg-rm"; document.body.append(pop); }
+    const bar = `<div class="tzg-rm-bar" aria-hidden="true"><i></i></div>`;
+    const timer = (pre) => `<p class="tzg-rm-s"><span class="tzg-rm-t" data-p="${esc(pre)}"></span></p>`;
+    const host = hostOf();
+    if (kind === "invite") {
+      pop.setAttribute("role", "alertdialog"); pop.setAttribute("aria-label", "Rematch request");
+      pop.innerHTML = `<div class="tzg-rm-h"><b>Your team wants a rematch!</b></div>
+        <p class="tzg-rm-p">${esc(host ? host.username : "The host")} started a rematch with the same team and a new word.</p>${bar}${timer("")}
+        <div class="tzg-row"><button class="tzg-go" type="button" data-tzg="rm-yes"${rmBusy ? " disabled" : ""}>Accept</button><button class="tzg-go alt" type="button" data-tzg="rm-no"${rmBusy ? " disabled" : ""}>Decline</button></div>`;
+    } else if (kind === "wait") {
+      pop.setAttribute("role", "status"); pop.setAttribute("aria-label", "Rematch status");
+      pop.innerHTML = `<div class="tzg-rm-h"><b>Waiting for Players</b><span class="tzg-rm-n">${Number(rm.votes) || 0}/${Number(rm.needed) || 0} Players Ready</span></div>${bar}
+        <ul class="tzg-rm-l">${rmRows(rm)}</ul>${timer(isHost ? "Starts when everyone accepts" : "You're ready. Waiting for the others")}
+        ${isHost ? `<button class="tzg-go alt" type="button" data-tzg="rm-cancel"${rmBusy ? " disabled" : ""}>Cancel rematch</button>` : ""}`;
+    } else {
+      const declined = S.players.filter((p) => p.rematch === "declined"), silent = S.players.filter((p) => p.rematch === "waiting" && !p.is_host && p.connection !== "left");
+      const title = { declined: "Rematch declined", expired: "Rematch expired", cancelled: "Rematch cancelled", busy: "Can't start the rematch" }[rm.state];
+      const msg = rm.state === "declined" ? (declined.length ? `${nameList(declined)} declined the rematch.` : "A player declined the rematch.")
+                : rm.state === "expired" ? (silent.length ? `No response from ${nameList(silent)}.` : "The request ran out of time.")
+                : rm.state === "cancelled" ? "The host cancelled the request." : "Someone is already in another battle.";
+      pop.setAttribute("role", "alertdialog"); pop.setAttribute("aria-label", title);
+      pop.innerHTML = `<div class="tzg-rm-h"><b>${title}</b></div><p class="tzg-rm-p">${msg}</p>
+        ${isHost ? `<ul class="tzg-rm-l">${rmRows(rm)}</ul><div class="tzg-row"><button class="tzg-go" type="button" data-tzg="rm-ask"${rmBusy ? " disabled" : ""}>Send new request</button><button class="tzg-go alt" type="button" data-tzg="rm-close">Close</button></div>`
+                  : `<div class="tzg-row"><button class="tzg-go alt" type="button" data-tzg="rm-close">Close</button></div>`}`;
+      clearTimeout(rmAutoT);
+      if (!isHost) rmAutoT = setTimeout(() => { rmDismissed = key; renderRematch(); }, 7000);   // the others return to the result screen by themselves
+    }
+    tickRematch();
+  }
+  function tickRematch() {                                                          // called every 250 ms: the countdown text and bar
+    const rm = S && S.rematch; if (!rm || rm.state !== "open") return;
+    const left = Math.max(0, rmExpAt - Date.now()), t = $("#tzg-rm .tzg-rm-t"), bar = $("#tzg-rm .tzg-rm-bar i");
+    if (t) t.textContent = (t.dataset.p ? t.dataset.p + " · " : "") + Math.ceil(left / 1000) + "s left";
+    if (bar) bar.style.width = Math.min(100, left / RM_WIN * 100) + "%";
+    if (left <= 0 && rmExpFor !== rm.id + "x") { rmExpFor = rm.id + "x"; setTimeout(() => { if (api() && api().sync) api().sync(); }, 600); }   // ask the server: it marks the request expired and tells everyone
   }
   function renderResult() {
     if (!S || !room() || room().status !== "finished") return;
@@ -305,7 +390,7 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
     const solver = placed.find((p) => p.finish_place === 1);
     const reason = room().end_reason === "solved" ? (solver && solver.is_me ? "You got it first, so the battle ended." : `${solver ? esc(solver.username) : "A player"} solved it first, so the battle ended.`)
                  : room().end_reason === "timeout" ? "Time ran out." : "Nobody could solve it.";
-    const answer = S.answer ? `<p class="tzg-ans">The word was <b>${esc(S.answer.toUpperCase())}</b></p>` : "";
+    const answer = S.answer ? (typeof wordMeaningHtml === "function" ? wordMeaningHtml(S.answer) : `<p class="tzg-ans">The word was <b>${esc(S.answer.toUpperCase())}</b></p>`) : "";
     const rows = placed.map((p) => {
       const m = medal(p.finish_place);
       const sub = p.status === "solved" ? `Solved in ${(p.completion_ms / 1000).toFixed(1)}s`
@@ -319,8 +404,6 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
         <span class="tzg-earn"><span class="tzg-coin">+${coins} 🪙</span><span class="tzg-xp">+${xp} XP</span>${p.is_me ? "" : friendBtn(p)}</span></li>`;
     }).join("");
     const rm = S.rematch || {};
-    if (lastRm === "open" && rm.state === "none" && !rm.new_room_id) { if (typeof toast === "function") toast("Rematch was declined or expired.", "", 4500); }
-    lastRm = rm.state || "none";
     const html = `<div class="tzg-card ${won ? "win" : me && me.finish_place ? "loss" : "draw"}"><h2>${esc(title)}</h2><p>${esc(reason)}</p>${answer}
       <ul class="tzg-rank">${rows}</ul><div class="tzg-rmbox">${rematchBlock()}</div>
       <button class="primary" type="button" id="tzg-done">Back to Team Zone</button></div>`;
@@ -329,6 +412,7 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
       $("#tzg-done").addEventListener("click", finishAndLeave);
     }
     claimOnce();
+    renderRematch();
     // a rematch was started by the others: move everyone into the new battle
     if (rm.state === "started" && rm.new_room_id && rmHop !== rm.new_room_id) {
       rmHop = rm.new_room_id;
@@ -340,7 +424,7 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
     exit(); if (api()) api().finish();
   }
   document.addEventListener("click", async (e) => {
-    const b = e.target.closest && e.target.closest("#tzg-res [data-tzg]"); if (!b || b.disabled || !room()) return;
+    const b = e.target.closest && e.target.closest("#tzg-res [data-tzg],#tzg-rm [data-tzg]"); if (!b || b.disabled || !room()) return;
     e.preventDefault();
     const a = b.dataset.tzg, rid = room().id;
     const fail = (r) => { if (typeof toast === "function") toast(RM_ERR[r.reason] || RM_ERR.error, "error", 3200); };
@@ -351,12 +435,20 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
       else { b.disabled = false; fail(r); }
       return;
     }
-    if (a === "rm-ask" || a === "rm-yes" || a === "rm-no") {
-      b.disabled = true;
-      const r = a === "rm-ask" ? await api().call("tz_rematch_request", { p_room: rid })
-                : await api().call("tz_rematch_respond", { p_room: rid, p_accept: a === "rm-yes" });
-      if (r.state) api().apply(r.state);
-      if (!r.ok && r.reason !== "left") fail(r);
+    if (a === "rm-close") { const k = S && S.rematch && S.rematch.id ? S.rematch.id + ":" + S.rematch.state : ""; rmDismissed = k; renderRematch(); return; }
+    if (a === "rm-ask" || a === "rm-yes" || a === "rm-no" || a === "rm-cancel") {
+      if (rmBusy) return;                                                             // a double tap sends one request, not two
+      rmBusy = true; b.disabled = true;
+      let r;
+      try {
+        r = a === "rm-ask" ? await api().call("tz_rematch_request", { p_room: rid })
+          : a === "rm-cancel" ? await api().call("tz_rematch_cancel", { p_room: rid })
+          : await api().call("tz_rematch_respond", { p_room: rid, p_accept: a === "rm-yes" });
+      } finally { rmBusy = false; }
+      if (r && r.state) api().apply(r.state);
+      if (r && !r.ok && r.reason !== "left" && r.reason !== "no_request") fail(r);
+      if (r && !r.ok && r.reason === "no_request" && typeof toast === "function") toast(RM_ERR.no_request, "", 2600);
+      renderResult();
       return;
     }
   });
@@ -373,6 +465,7 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
     if (s === "finished" && !busy && !flipping) renderResult();
   }
   function resetForNewRoom() {                          // a rematch started: same screen, fresh board
+    clearRematchUi(); lastResHtml = "";
     const r = $("#tzg-res"); if (r) r.remove(); lockModal(false);
     cur = ""; rendered = 0; busy = false; flipping = false; resultShown = false; lastCd = -1;
     makeBoard(); curRoom = room().id;
@@ -381,9 +474,10 @@ html[data-motion=reduced] .tzg-cd b,html[data-motion=reduced] .tzg-card,html[dat
     curRoom = room() ? room().id : "";
     on = true; resultShown = false; cur = ""; rendered = 0; busy = false; flipping = false; lastCd = -1; leaving = false;
     buildUi(); makeBoard(); show("game");
-    clearInterval(tmr); tmr = setInterval(() => { if (!S) return; drawTimer(); drawStrip(); drawNote(); }, 250);
+    clearInterval(tmr); tmr = setInterval(() => { if (!S) return; drawTimer(); drawStrip(); drawNote(); tickRematch(); }, 250);
   }
   function exit() {
+    clearRematchUi(); lastResHtml = "";
     clearInterval(tmr); tmr = 0; on = false; leaving = true;
     const r = $("#tzg-res"); if (r) r.remove(); lockModal(false);
     curRoom = ""; const cd = $("#tzg-cd"); if (cd) cd.remove();

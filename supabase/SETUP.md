@@ -66,6 +66,14 @@ friend for the same room. Invitations close by themselves when the room fills up
 Room codes and sharing work exactly as before. It uses only the public (anon) key, never the service-role key.
 It replaces the `fr_overview` function from 007 with a version that also returns room invitations (safe to run again).
 
+### 1l. Team Zone rematch: host-controlled
+Run `supabase/migrations/013_team_rematch_host.sql` after 011 (012 is separate; run it in any order relative to 013). Only the host (the
+player who created the room) can start a Team Zone rematch, and the server checks that, not just the screen. Each request gets its
+own id and lasts 30 seconds. The others answer Accept or Decline, the host sees a live list of who accepted, declined or has not
+answered, and the new battle starts only when everyone has accepted: same players, size and difficulty, a new room, and a new secret
+word. One decline, a timeout, or the host cancelling ends the request and the host can send a fresh one. Friend Zone is not changed.
+Safe to run again. Until it is run, the old rematch (anyone can ask) keeps working, but without the new host popup details.
+
 ## 2. Allow your site's addresses (needed for email links, password reset and Google)
 Dashboard > **Authentication > URL Configuration**
 - **Site URL**: your Vercel address, e.g. `https://wordle-battle.vercel.app`

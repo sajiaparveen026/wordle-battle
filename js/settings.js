@@ -13,6 +13,48 @@
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
     {
+  v: "1.23.1",
+  date: "2026-11-04",
+  title: "Tap an AI card to play",
+  items: [
+    "In AI Zone you can now tap anywhere on BOLT, NOVA or TITAN to start the match, not just the Enter button."
+  ]
+},
+    {
+  v: "1.23.0",
+  date: "2026-11-04",
+  title: "Word meanings and AI coin rewards",
+  items: [
+    "Friend Zone and Team Zone results now show the correct word with its meaning underneath.",
+    "AI Zone wins now send the reward coins flying into your balance, like Solo and Daily Challenge.",
+    "The Achievements title now matches the Profile and Shop titles."
+  ]
+},
+    {
+  v: "1.22.0",
+  date: "2026-11-04",
+  title: "Team Zone rematch",
+  items: [
+    "Only the host can start a Team Zone rematch. Everyone else sees who is in charge.",
+    "The host sees a live Waiting for Players popup with each player's avatar, name and answer.",
+    "Players get a small Your team wants a rematch popup with Accept and Decline.",
+    "The rematch starts when everyone has accepted: same team, same difficulty, a new word and a fresh start.",
+    "If someone declines or does not answer within 30 seconds, the request ends and the host sees who, then can try again."
+  ]
+},
+    {
+  v: "1.21.0",
+  date: "2026-11-03",
+  title: "Power-up limits",
+  items: [
+    "Solo Play and Daily Challenge: Reveal a Letter can be used 2 times per game.",
+    "Solo Play and Daily Challenge: Remove Wrong Letters can be used 2 times per game.",
+    "Clues stay at 3 unlocks per word, 10 coins each, and bought clues can be read again for free.",
+    "Tap a used-up power-up to see a \"Usage Limit Reached!\" notice. Refreshing or reopening a game does not reset your uses.",
+    "AI Zone, Friend Zone and Team Zone power-ups are unchanged."
+  ]
+},
+    {
   v: "1.20.0",
   date: "2026-11-03",
   title: "AI Battle Stats",

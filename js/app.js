@@ -20,8 +20,18 @@ let stats = load("stats", { played: 0, wins: 0, streak: 0, best: 0, dist: [0, 0,
 
 // ---------- Game state ----------
 let mode = "practice", answer = "", gameId = "", guesses = [], current = "", status = "playing", busy = false;
-const newHint = () => ({ reveals: {}, disabled: [], clues: [] }); // clues = indexes of the word-hint clues already shown in this game
-const loadHint = (h) => { const o = Object.assign(newHint(), h || {}); if (!Array.isArray(o.clues)) o.clues = []; return o; };
+// used = successful Reveal / Remove uses in THIS game (saved with the game, so a refresh or re-open never resets them; a new game starts at 0)
+const HINT_LIMITS = { reveal: 2, remove: 2 };   // Solo + Daily only: max uses per game. Clues have their own cap (MAX_CLUES = 3 per word).
+const newHint = () => ({ reveals: {}, disabled: [], clues: [], used: { reveal: 0, remove: 0 } }); // clues = indexes of the word-hint clues already shown in this game
+const loadHint = (h) => {
+  const o = Object.assign(newHint(), h || {}); if (!Array.isArray(o.clues)) o.clues = [];
+  if (!o.reveals || typeof o.reveals !== "object" || Array.isArray(o.reveals)) o.reveals = {};
+  if (!Array.isArray(o.disabled)) o.disabled = [];
+  const u = h && h.used && typeof h.used === "object" ? h.used : {}, n = (v) => (Number.isInteger(v) && v >= 0 ? v : 0);
+  // never lower than what the saved game already shows (an older save has no counter: a Reveal fills one tile, a Remove drops up to 5 letters)
+  o.used = { reveal: Math.max(n(u.reveal), Object.keys(o.reveals).length), remove: Math.max(n(u.remove), Math.ceil(o.disabled.length / 5)) };
+  return o;
+};
 let hintState = newHint();
 // Dates use the player's LOCAL day, so the daily resets at their own midnight.
 const isoLocal = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -68,6 +78,12 @@ const sfx = {
 // ---------- Small UI helpers ----------
 function toast(text, kind = "", ms = 2200) {
   const el = document.createElement("div"); el.className = "msg " + kind; el.textContent = text;
+  $("#toast").prepend(el); setTimeout(() => el.remove(), ms);
+}
+function noticeToast(title, text, ms = 3800) {   // a two-line notice (bold title + message), same toast stack as toast()
+  $$("#toast .msg.limit").forEach((e) => e.remove());   // repeated taps replay one notice instead of stacking several
+  const el = document.createElement("div"); el.className = "msg limit"; el.setAttribute("role", "alert");
+  const t = document.createElement("b"), m = document.createElement("span"); t.textContent = title; m.textContent = text; el.append(t, m);
   $("#toast").prepend(el); setTimeout(() => el.remove(), ms);
 }
 // Shows a dialog; resolves with the index of the clicked button.
@@ -444,6 +460,12 @@ function updateHintButtons() {
     b.setAttribute("aria-label", `${HINTS[t].name}, ${say}`); b.title = `${HINTS[t].name} (${say})`;
     b.classList.toggle("paid", left <= 0);
     b.disabled = status !== "playing";
+    const g = $("#game");
+    if (g && !g.classList.contains("ai") && !g.classList.contains("battle") && !g.classList.contains("team")) {   // per-game limits: Solo and Daily only (no counter is drawn; a used-up button just looks spent)
+      const word = t === "word", full = word ? ownedClues().length >= clueCap() : hintState.used[t] >= HINT_LIMITS[t];
+      b.classList.toggle("maxed", full);
+      if (full) b.setAttribute("aria-label", `${HINTS[t].name}, limit reached`);
+    }
   });
   updateSkipButton(); refreshCoins();
 }
@@ -500,6 +522,9 @@ async function useHint(type) {
   if (status !== "playing" || busy) return;
   if (type === "word") return openClues();   // the lightbulb never pays by itself: it opens the popup (buying happens inside it)
   if (spendLock) return;
+  if (hintState.used[type] >= HINT_LIMITS[type]) {   // the limit lives in the saved game state, so it holds after a refresh and can't be skipped by tapping fast
+    sfx.bad(); return noticeToast("Usage Limit Reached!", `You've already used ${type === "reveal" ? "Reveal a Letter" : "Remove Wrong Letters"} the maximum number of times in this game.`);
+  }
   spendLock = true;
   try {
     const plan = type === "reveal" ? planReveal() : planRemove();
@@ -511,6 +536,7 @@ async function useHint(type) {
       if (status !== "playing" || gameId !== gid) return; // game may have changed while the dialog was open
       if (!Player.spend(cost)) return toast("Not enough coins", "error");
     } else Player.consumeHint(type);
+    hintState.used[type]++;   // counted only here: the use succeeded and any payment is already taken
     if (type === "reveal") { hintState.reveals[plan.pos] = plan.letter; toast(`Letter ${plan.pos + 1} is ${plan.letter.toUpperCase()}`, "success"); }
     else { hintState.disabled.push(...plan); toast(`${plan.length} wrong letters removed`, "success"); }
     sfx.coin(); flash($(`[data-hint=${type}]`)); renderHintTiles(); colorKeys(); updateHintButtons(); saveProgress();
@@ -729,6 +755,11 @@ function countUp(el, to, prefix) { // short count-up so rewards are easy to noti
 function meaningOf(w) { // first clue of each word is its short meaning (js/clues.js)
   const c = window.CLUES && window.CLUES[w], m = c && c[0] && c[0][0] === "meaning" ? c[0][1] : "";
   return m ? m.charAt(0).toUpperCase() + m.slice(1) : "";
+}
+function wordMeaningHtml(word) { // "Correct word" block for the Friend / Team result screens: the word big, its short meaning below (display only)
+  const w = String(word || "").toLowerCase(); if (!w) return "";
+  const m = meaningOf(w), h = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  return `<div class="wm-box"><small class="wm-lbl">Correct word</small><b class="wm-word">${h(w.toUpperCase())}</b>${m ? `<p class="wm-mean"><span>Meaning:</span> ${h(m)}</p>` : ""}</div>`;
 }
 function showResult() {
   const won = status === "won", r = lastReward, n = guesses.length;

@@ -173,7 +173,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
       ${extra === "ready" ? `<span class="fb-rd">${p.ready ? "✓ Ready" : "Not ready"}</span>` : ""}</div>`;
   }
   function codeTiles(code) { return `<div class="fb-code" role="img" aria-label="Room code ${esc(code.split("").join(" "))}">${code.split("").map((ch) => `<span class="fb-tile" aria-hidden="true">${esc(ch)}</span>`).join("")}</div>`; }
-  function diffChips(r) { const d = DIFF[r.difficulty] || DIFF.medium; return `<div class="fb-meta"><span class="fb-chip" style="--c:var(--gold)">${d.icon} ${d.name} · ${d.min} min</span><span class="fb-chip" id="fb-exp" style="--c:#38BDF8"></span></div>`; }
+  function diffChips(r) { const d = DIFF[r.difficulty] || DIFF.medium; return `<div class="fb-meta"><span class="fb-chip" style="--c:var(--gold)">${d.icon} ${d.name} · ${d.min} min</span><span class="fb-chip" id="fb-exp" style="--c:#38BDF8"></span>${window.Series ? Series.chips("friend", r) : ""}</div>`; }
 
   function vLanding() {
     return `<div class="fb-hero"><h2>Choose your arena</h2><p>Pick how you want to battle.</p></div>
@@ -185,6 +185,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
   }
   function vFriend() {
     return `<div class="fb-hero"><h2 class="sr-only">Friend Zone</h2><p>Battle a friend in a private room.</p></div>
+    ${window.Series ? Series.button("friend") : ""}
     <div class="fb-cards two">
       <button class="fb-card create" type="button" data-fb="create"><span class="fb-ico" aria-hidden="true">➕</span><h3>Create a Room</h3><p>Pick a difficulty and get a code to share.</p><span class="fb-go">Create →</span></button>
       <button class="fb-card join" type="button" data-fb="join"><span class="fb-ico" aria-hidden="true">🔑</span><h3>Enter a Room</h3><p>Have a code? Jump into your friend's battle.</p><span class="fb-go">Join →</span></button>
@@ -239,6 +240,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
     const el = root(); if (!el || !active) return;
     let html, t;
     if (view === "room" && S) { html = vRoom(); t = status() === "lobby" ? "Battle Lobby" : status() === "playing" ? "Battle" : "Waiting Room"; }
+    else if (window.Series && Series.is(view)) { const x = Series.page("friend", view); html = x.html; t = x.title; }
     else if (view === "friend") { html = vFriend(); t = "Friend Zone"; }
     else if (view === "create") { html = vCreate(); t = "Create Room"; }
     else if (view === "join") { html = vJoin(); t = "Join Room"; }
@@ -370,6 +372,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
   function back() {
     err = ""; errRoom = "";
     if (view === "room") return leaveRoom();
+    if (window.Series && Series.is(view)) { Series.back("friend", view); return; }
     view = view === "create" || view === "join" ? "friend" : "landing"; render();
   }
 
@@ -446,5 +449,5 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
   }
   setTimeout(() => autoReturn(0), 2600);
 
-  window.FriendBattle = { open, close, screenChanged, state: () => S, api: { call, srvNow, apply: setState, sync, end, enter } };
+  window.FriendBattle = { open, close, screenChanged, state: () => S, api: { call, srvNow, apply: setState, sync, end, enter, render, setView: (v) => { view = v; err = ""; errRoom = ""; render(); } } };
 })();

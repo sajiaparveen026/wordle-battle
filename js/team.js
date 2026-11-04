@@ -124,12 +124,13 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     const sig = JSON.stringify([view, err, busy, createSize, createDiff, joinCode, S && S.room, S && S.players, S && S.me, netBad]);
     if (!force && sig === lastSig) return;
     lastSig = sig;
-    el.innerHTML = view === "create" ? vCreate() : view === "join" ? vJoin() : S && S.room ? vRoom() : vHome();
+    el.innerHTML = window.Series && Series.is(view) ? Series.page("team", view).html : view === "create" ? vCreate() : view === "join" ? vJoin() : S && S.room ? vRoom() : vHome();
     tickClock();
     if (window.RoomInvite) RoomInvite.sync("team", S && S.room ? S.room.id : "", !!(S && S.room && S.room.status === "waiting" && S.me && S.me.is_host && (S.players || []).length < S.room.max_players));   // Invite Friends: only the host, only while there is a free seat
   }
   function vHome() {
     return `<div class="tz-hero"><h2 class="sr-only">Team Zone</h2><p>Compete with friends. One secret word. Only one winner!</p></div>
+      ${window.Series ? Series.button("team") : ""}
       <div class="fb-cards two">
         <button class="fb-card create" type="button" data-tz="create"><span class="fb-ico" aria-hidden="true">➕</span><h3>Create a Team Room</h3><p>Pick the group size and difficulty, then share the code.</p><span class="fb-go">Create →</span></button>
         <button class="fb-card join" type="button" data-tz="join"><span class="fb-ico" aria-hidden="true">🔑</span><h3>Enter a Room Code</h3><p>Have a code from a friend? Jump into their team.</p><span class="fb-go">Join →</span></button>
@@ -175,7 +176,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     const exit = me.is_host ? `<button class="tz-go warn" type="button" data-tz="leave" data-host="1"${busy ? " disabled" : ""}>Cancel Room</button>` : `<button class="tz-go alt" type="button" data-tz="leave"${busy ? " disabled" : ""}>Leave Room</button>`;
     return `<div class="tz-hero"><h2>Team Zone Lobby</h2><p>Share the code. Everyone in the room plays the same secret word.</p></div>
       <div class="tz-codebox"><small>Room code</small><span class="tz-code" aria-label="Room code ${esc(r.code.split("").join(" "))}">${esc(r.code)}</span>
-        <div class="tz-meta"><span class="tz-chip">${d.icon} ${d.name} · ${d.min} min</span><span class="tz-chip">👥 Up to ${r.max_players}</span></div>
+        <div class="tz-meta"><span class="tz-chip">${d.icon} ${d.name} · ${d.min} min</span><span class="tz-chip">👥 Up to ${r.max_players}</span>${window.Series ? Series.chips("team", r) : ""}</div>
         <div class="tz-row" style="width:100%"><button class="tz-go alt" type="button" data-tz="copy">📋 Copy Code</button><button class="tz-go alt" type="button" data-tz="share">📤 Share</button></div></div>
       ${me.is_host && !full && window.RoomInvite ? RoomInvite.section("team", r.id) : ""}
       <div class="tz-count" aria-live="polite">${players.length} / ${r.max_players} players</div>
@@ -309,7 +310,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     // Back on Team Zone returns to the Battle hub, like Friend Zone (every other Back goes to the dashboard)
     document.addEventListener("click", (e) => {
       if (curScreen() !== "team" || !e.target.closest("#team [data-back]")) return;
-      e.stopPropagation(); e.preventDefault(); if (view !== "home" && !S) { view = "home"; paint(true); return; }
+      e.stopPropagation(); e.preventDefault(); if (window.Series && Series.is(view)) { Series.back("team", view); return; } if (view !== "home" && !S) { view = "home"; paint(true); return; }
       if (typeof show === "function") show("battle");
     }, true);
   }
@@ -320,7 +321,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     if (S) return;
     const slow = new Promise((res) => setTimeout(() => res({ ok: false, reason: "network" }), 6000));
     const g = await Promise.race([call("tz_get_active", {}), slow]);   // a stalled server can no longer hold the screen empty                  // resume a room I am still in, or a finished one whose reward I have not collected
-    const id = g.ok ? (g.active && g.active.room_id) || g.unclaimed_room_id : "";
+    const id = g.ok ? (g.active && g.active.room_id) || g.unclaimed_room_id || g.rematch_room_id : "";
     if (id) { const s = await call("tz_sync", { p_room: id }); if (s.ok) return apply(s.state); }
     paint(true);
   }
@@ -335,7 +336,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     if (!client()) { if (n < 4) setTimeout(() => autoReturn(n + 1), 1500); return; }   // connection not ready yet: try again shortly
     if (S) return;
     const g = await call("tz_get_active", {});
-    if (!g.ok || S || (!(g.active && g.active.room_id) && !g.unclaimed_room_id)) return;
+    if (!g.ok || S || (!(g.active && g.active.room_id) && !g.unclaimed_room_id && !g.rematch_room_id)) return;
     if (typeof screen !== "undefined" && screen !== "dashboard") return;
     if (typeof show === "function") show("team");                    // open() resumes the room or the result
   }
@@ -350,6 +351,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     call: (fn, args) => call(fn, args, false),
     srvNow: () => (S && S.server_now_ms ? S.server_now_ms + (Date.now() - gotAt) : Date.now()),
     apply, sync,
+    repaint: () => paint(true), setView: (v) => { view = v; err = ""; paint(true); },
     async leave(id) {                             // send the leave first, so "my room" can no longer find it
       if (id) dropped.add(id);
       unwatch(); clearInterval(pollT); pollT = 0;
