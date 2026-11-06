@@ -156,6 +156,16 @@ const Player = (() => {
       countSession(); p.rewarded.push(key); p.rewarded = p.rewarded.slice(-300); save();
       return { coins, xp, outcome, levelUp: this.levelInfo().level > before };
     },
+    // Series Mode reward (coins + XP only). Paid once per key ("<series>:round:<n>" / "<series>:overall:0"); it is NOT a battle result, so wins, losses, streaks and history are untouched.
+    rewardSeries(key, coins, xp) {
+      const k = "S:" + key;
+      if (!key || p.rewarded.includes(k)) return null;
+      coins = Math.min(1000, Math.max(0, Number(coins) | 0)); xp = Math.min(1000, Math.max(0, Number(xp) | 0));
+      const before = this.levelInfo().level;
+      p.coins += coins; p.earned += coins; p.xp += xp;
+      p.rewarded.push(k); p.rewarded = p.rewarded.slice(-300); save();
+      return { coins, xp, levelUp: this.levelInfo().level > before };
+    },
     // AI Zone reward + record. Paid and counted ONCE per match id (a refresh, a second tab or a retry can never pay twice). Only coins / XP / the AI counters change:
     // wins, losses and the battle counters are NOT touched, so Solo, Friend Battle, Team Battle and the leaderboard never see these matches. No word is stored.
     rewardAI(matchId, level, outcome, meta) {

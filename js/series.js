@@ -1,7 +1,7 @@
-// Series Mode (Stages 1-2: entry button, Create / Join Series, lobby labels, rounds, between-round popup, final results) for Friend Zone and Team Zone.
+// Series Mode (create / join, lobby, rounds, between-round popup, final results, rewards, Play Again, final screen after a refresh) for Friend Zone and Team Zone.
 // This file only DRAWS screens and sends taps. Every decision (valid settings, room code, capacity, expiry, already started,
 // who may join, the round winner, the next word, the overall winner) is made by Supabase: supabase/migrations/014_series_mode.sql and
-// 015_series_rounds.sql (series_create / series_join / series_info / series_sync).
+// 015_series_rounds.sql, 016_series_rewards.sql and 017_series_hardening.sql (series_create / series_join / series_info / series_sync / series_claim / series_again).
 // The lobby itself is the existing Friend Zone / Team Zone waiting room; this file adds the Series label chips to it.
 (() => {
   "use strict";
@@ -196,6 +196,25 @@ html[data-motion=reduced] .sr-entry{transition:none!important}
 .sr-sec{width:100%;margin:2px 0 -4px;text-align:left;font-size:.72rem;font-weight:900;letter-spacing:1.6px;color:var(--muted);text-transform:uppercase}
 .sr-pl li .l{display:flex;align-items:center;gap:8px;min-width:0}.sr-pl li .l i{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:50%;font-style:normal;overflow:hidden;background:var(--panel);border:1px solid var(--line)}
 .sr-pl li .w{font-weight:900;color:var(--gold);white-space:nowrap}.sr-pl li.top{border-color:color-mix(in srgb,var(--gold) 60%,var(--line))}
+.sr-rw{width:100%;display:grid;gap:6px;justify-items:center}.sr-rw:empty{display:none}
+.sr-rw .t{font-size:.7rem;font-weight:900;letter-spacing:1.6px;color:var(--muted);text-transform:uppercase}
+.sr-chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.sr-chip2{display:inline-flex;align-items:baseline;gap:6px;padding:7px 12px;border-radius:14px;background:var(--panel-2);border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line));font-weight:900}
+.sr-chip2 b{font-size:1.15rem;font-variant-numeric:tabular-nums}.sr-chip2 small{color:var(--muted);font-weight:800;font-size:.72rem}
+.sr-chip2.xp{border-color:color-mix(in srgb,#8B5CF6 55%,var(--line))}.sr-bal{font-size:.78rem;color:var(--muted);font-weight:700}
+.sr-tot{width:100%;display:grid;gap:8px;padding:12px;border-radius:18px;background:var(--panel-2);border:1px solid var(--line)}
+.sr-tot .r{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--muted);font-weight:700}.sr-tot .r b{color:var(--text)}
+.sr-tot .r.all{padding-top:8px;border-top:1px dashed var(--line);font-size:.95rem}.sr-tot .r.all b{color:var(--gold)}
+.sr-nav{width:100%;display:flex;justify-content:center;gap:18px;margin-top:2px}
+.sr-ni{display:grid;justify-items:center;gap:6px;min-width:64px;padding:0;border:0;background:none;cursor:pointer;color:var(--text);font:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.sr-ni .ic{display:grid;place-items:center;width:56px;height:56px;border-radius:19px;color:var(--gold);transition:transform .15s,box-shadow .2s,border-color .2s;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 16%,var(--panel-2)),var(--panel-2));border:1.5px solid color-mix(in srgb,var(--gold) 45%,var(--line));box-shadow:0 3px 0 var(--line)}
+.sr-ni svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sr-ni small{font-size:.68rem;font-weight:800;letter-spacing:.8px;color:var(--muted);text-transform:uppercase}
+.sr-ni:hover .ic{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 6px 0 var(--line),0 8px 22px color-mix(in srgb,var(--gold) 28%,transparent)}
+.sr-ni:active .ic{transform:translateY(1px);box-shadow:0 1px 0 var(--line)}.sr-ni:focus-visible .ic{outline:3px solid var(--gold);outline-offset:2px}
+.sr-btn:disabled{opacity:.55;cursor:default}.sr-wait{margin:0;font-size:.82rem;font-weight:700;color:var(--muted)}.sr-err{margin:0;font-size:.82rem;font-weight:800;color:#F87171}
+html[data-motion=reduced] .sr-ni .ic{transition:none!important}
 @keyframes sr-fade{from{opacity:0}}@keyframes sr-pop{from{opacity:0;transform:translateY(14px) scale(.97)}}@keyframes sr-float{50%{transform:translateY(-4px)}}
 html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:none!important}
 `;
@@ -245,7 +264,12 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
 
   async function tick() {
     if (D.busy) return;
-    const ctx = curCtx(); if (!ctx) { hidePop(); return; }
+    const ctx = curCtx();
+    if (!ctx) {
+      if (D.view === "final" && D.data && D.ctx) { await refreshFinal(); return; }     // the final screen was restored after a refresh: keep it up to date (Play Again)
+      hidePop(); return;
+    }
+    D.ctx = ctx;
     const st = stateOf(ctx), room = st.room;
     if (!["playing", "finished"].includes(room.status)) return;       // still in the lobby: nothing to run yet
     if (!info.has(room.id)) { ensureInfo(ctx, room); return; }
@@ -260,6 +284,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     else info.set(room.id, r.series);
     paintHeader(ctx, r);
     paintOverlay(ctx);
+    if (r.pending_rewards > 0) claimNow(r.series.id, true);
   }
   setInterval(tick, 1000);
 
@@ -291,11 +316,11 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
       const foot = last
         ? `<button class="sr-btn" type="button" id="sr-results">Go to Results</button>`
         : `<div class="sr-cd" role="timer" aria-live="off"><small>Next round starting in</small><b id="sr-n">5</b></div>`;
-      el.innerHTML = `<div class="sr-card"><div class="sr-tag">ROUND ${lr.round_no} COMPLETED</div><p class="sr-sm" style="margin:-6px 0 0">Correct Word</p>${wordTiles(lr.word)}${meaning}${win}${foot}</div>`;
+      el.innerHTML = `<div class="sr-card"><div class="sr-tag">ROUND ${lr.round_no} COMPLETED</div><p class="sr-sm" style="margin:-6px 0 0">Correct Word</p>${wordTiles(lr.word)}${meaning}${win}<div class="sr-rw" id="sr-rw"></div>${foot}</div>`;
       document.body.append(el); lock(true);
       const b = el.querySelector("#sr-results"); if (b) { b.addEventListener("click", () => { D.ack.add(r.series.id); D.view = "final"; el.remove(); popKey = ""; drawFinal(ctx, D.data); }); b.focus({ preventScroll: true }); }
     }
-    tickPop();
+    tickPop(); paintRw();
   }
   function tickPop() {
     const n = document.getElementById("sr-n"), r = D.data; if (!n || !r || !r.last_round || !r.last_round.next_at_ms) return;
@@ -307,7 +332,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
   function drawFinal(ctx, r) {
     const old = finEl(), pe = popEl(); if (pe) pe.remove();
     const players = r.players || [], rounds = r.rounds || [], o = r.overall || {}, top = Math.max(0, ...players.map((p) => p.wins));
-    const sig = JSON.stringify([players, rounds, o]);
+    const sig = JSON.stringify([players, rounds, o, r.rewards, r.again, r.is_host, D.againMsg || ""]);
     if (old && old.dataset.sig === sig) return; if (old) old.remove();
     const winner = o.result === "win" ? players.find((p) => p.seat === o.winner_seat) : null;
     const tied = players.filter((p) => p.wins === top);
@@ -321,14 +346,131 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     el.innerHTML = `<div class="sr-card">${head}${note}
       <p class="sr-sec">Round by round</p><ul class="sr-list">${rl}</ul>
       <p class="sr-sec">Rounds won</p><ul class="sr-list sr-pl">${pl}</ul>
-      <button class="sr-btn alt" type="button" id="sr-leave">Back to ${ctx === "friend" ? "Battle" : "Team Zone"}</button></div>`;
+      ${rewardSummary(r)}
+      ${againBlock(r)}
+      <div class="sr-nav" role="group" aria-label="Where to next">
+        <button class="sr-ni" type="button" data-nav="dashboard" aria-label="Home"><span class="ic">${ICON.home}</span><small>Home</small></button>
+        <button class="sr-ni" type="button" data-nav="shop" aria-label="Shop"><span class="ic">${ICON.shop}</span><small>Shop</small></button>
+        <button class="sr-ni" type="button" data-nav="zone" aria-label="${ctx === "friend" ? "Friend Zone" : "Team Zone"}"><span class="ic">${ICON.zone}</span><small>${ctx === "friend" ? "Friend Zone" : "Team Zone"}</small></button>
+      </div></div>`;
     document.body.append(el); lock(true); D.view = "final";
-    el.querySelector("#sr-leave").addEventListener("click", () => leaveSeries(ctx));
+    el.querySelectorAll("[data-nav]").forEach((b) => b.addEventListener("click", () => exitTo(ctx, b.dataset.nav)));
+    const pa = el.querySelector("#sr-again"); if (pa) pa.addEventListener("click", () => playAgain(ctx));
+    if (!D.confettiFor || D.confettiFor !== r.series.id) { D.confettiFor = r.series.id; if (winner && winner.is_me) fx("confetti"); }
   }
-  function leaveSeries(ctx) {
-    hidePop(); D.data = null; popKey = "";
-    if (ctx === "friend") { if (window.BattleGame && BattleGame.isOn()) BattleGame.exit(true); else { FriendBattle.api.end(); if (typeof show === "function") show("battle"); } }
-    else { if (window.TeamGame && TeamGame.isOn()) TeamGame.exit(); TeamZone.api.finish(); }
+  const ICON = {
+    home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M5.5 9.8V19.5h13V9.8"/><path d="M10 19.5v-5h4v5"/></svg>',
+    shop: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 8.5h13.6l-1 11.2H6.2L5.2 8.5Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg>',
+    zone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.6c0 4.4 3.1 7.7 7.5 9.4 4.4-1.7 7.5-5 7.5-9.4V6L12 3Z"/><path d="M12.8 8.2 9.8 12.6h4.4l-3 4.2"/></svg>'
+  };
+  // ---------- rewards ----------
+  const fx = (n, ...a) => { try { if (typeof window[n] === "function") return window[n](...a); } catch {} };
+  const sum = (rows) => rows.reduce((t, x) => ({ coins: t.coins + (x.coins | 0), xp: t.xp + (x.xp | 0) }), { coins: 0, xp: 0 });
+  const myRows = (kind) => ((D.data && D.data.rewards) || []).filter((x) => x.kind === kind);
+  // the round-win reward shown inside the between-round popup (credited the moment the round ended)
+  function paintRw() {
+    const box = document.getElementById("sr-rw"), r = D.data; if (!box || !r || !r.last_round) return;
+    const row = myRows("round").find((x) => x.round_no === r.last_round.round_no);
+    if (!row) { box.innerHTML = ""; return; }
+    const key = r.series.id + ":" + row.round_no + ":" + row.coins; if (box.dataset.k === key) return; box.dataset.k = key;
+    box.innerHTML = `<span class="t">Round win reward</span><div class="sr-chips"><span class="sr-chip2"><b id="sr-rc">+${row.coins}</b><small>🪙 Coins</small></span><span class="sr-chip2 xp"><b>+${row.xp}</b><small>⚡ XP</small></span></div>`;
+    fx("countUp", document.getElementById("sr-rc"), row.coins, "+");
+  }
+  function rewardSummary(r) {
+    const rr = myRows("round"), ov = myRows("overall"); if (!rr.length && !ov.length) return "";
+    const a = sum(rr), b = sum(ov), t = sum([...rr, ...ov]);
+    return `<div class="sr-tot" role="group" aria-label="Your rewards"><p class="sr-sec" style="margin:0">Your rewards</p>
+      ${rr.length ? `<div class="r"><span>${rr.length} round ${rr.length === 1 ? "win" : "wins"}</span><b>+${a.coins} 🪙 · +${a.xp} XP</b></div>` : ""}
+      ${ov.length ? `<div class="r"><span>Overall winner reward</span><b>+${b.coins} 🪙 · +${b.xp} XP</b></div>` : ""}
+      <div class="r all"><span>Total</span><b>+${t.coins} 🪙 · +${t.xp} XP</b></div></div>`;
+  }
+  // collect what the server says is now due. The server hands each reward out once; Player.rewardSeries also refuses a repeated key.
+  async function claimNow(sid, animate) {
+    if (D.claiming) return; D.claiming = true;
+    try {
+      const r = await call("series_claim", sid ? { p_series: sid } : {});
+      if (!r || !r.ok || !(r.granted || []).length) return;
+      let coins = 0, xp = 0, overall = false, up = false;
+      for (const g of r.granted) {
+        const k = g.series_id + ":" + g.kind + ":" + g.round_no;
+        const res = typeof Player !== "undefined" && Player && typeof Player.rewardSeries === "function" ? Player.rewardSeries(k, g.coins, g.xp) : null;
+        if (res) { coins += res.coins; xp += res.xp; if (g.kind === "overall") overall = true; if (res.levelUp) up = true; }
+      }
+      if (!coins && !xp) return;
+      fx("refreshCoins");
+      if (animate) {
+        const src = document.getElementById("sr-rc") || document.querySelector("#sr-fin .sr-tot b");
+        if (src) fx("coinsToBalance", src, coins);
+        if (overall) fx("confetti");
+        try { if (typeof sfx !== "undefined" && sfx.coin) sfx.coin(); } catch {}
+      } else toast(`+${coins} 🪙  +${xp} XP from Series Mode${up ? " · Level up!" : ""}`);
+    } finally { D.claiming = false; }
+  }
+  function toast(t) {
+    const e = document.createElement("div"); e.className = "sr-ov"; e.style.cssText = "inset:auto 0 calc(20px + env(safe-area-inset-bottom,0px)) 0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:none;align-items:flex-end;overflow:visible;padding:0 14px";
+    e.innerHTML = `<div class="sr-card" style="padding:10px 16px;width:auto;max-width:92%;font-weight:800;font-size:.9rem">${esc(t)}</div>`; document.body.append(e); setTimeout(() => e.remove(), 3500);
+  }
+  // ---------- after a refresh: bring the final result screen back (and anything unpaid) ----------
+  const SEEN = "wb_series_seen";
+  const seenList = () => { try { return JSON.parse(localStorage.getItem(SEEN) || "[]"); } catch { return []; } };
+  function markSeen() {
+    const id = D.data && D.data.series && D.data.series.id; if (!id) return;
+    try { const a = seenList().filter((x) => x !== id); a.push(id); localStorage.setItem(SEEN, JSON.stringify(a.slice(-20))); } catch {}
+  }
+  async function refreshFinal() {
+    if (Date.now() - (D.lastFinal || 0) < 2000 || D.busy) return; D.lastFinal = Date.now(); D.busy = true;
+    const r = await call("series_sync", { p_series: D.data.series.id }); D.busy = false;
+    if (!r) return;
+    if (!r.ok) { if (r.reason === "forbidden") hidePop(); return; }
+    if (r.lobby || !r.overall || D.view !== "final") return;
+    D.data = r; drawFinal(D.ctx, r); if (r.pending_rewards > 0) claimNow(r.series.id, true);
+  }
+  setTimeout(async () => {
+    if (curCtx() || D.data) return;
+    const rc = await call("series_recent"); if (!rc || !rc.ok || !rc.series_id || seenList().includes(rc.series_id) || curCtx() || D.data) return;
+    const v = await call("series_sync", { p_series: rc.series_id }); if (!v || !v.ok || v.lobby || !v.overall || curCtx() || D.data) return;
+    D.ctx = rc.mode; D.data = v; D.view = "final"; drawFinal(rc.mode, v); if (v.pending_rewards > 0) claimNow(rc.series_id, true);
+  }, 3500);
+  setTimeout(() => claimNow(null, false), 6000);               // anything still unpaid from an earlier series (app closed before the final screen)
+
+  // ---------- Play Again and leaving ----------
+  function againBlock(r) {
+    const msg = D.againMsg ? `<p class="sr-err" role="alert">${esc(D.againMsg)}</p>` : "";
+    if (r.again) return `${msg}<button class="sr-btn" type="button" id="sr-again">${r.is_host ? "Open New Series Lobby" : "Join New Series"}</button>`;
+    if (r.is_host) return `${msg}<button class="sr-btn" type="button" id="sr-again">🔁 Play Again</button>`;
+    return `${msg}<button class="sr-btn" type="button" disabled>🔁 Play Again</button><p class="sr-wait">Waiting for the host to start a new series…</p>`;
+  }
+  function gotoLobby(ctx, state, sinfo) {
+    markSeen(); info.set(state.room.id, sinfo || null); hidePop(); D.data = null; popKey = ""; D.againMsg = "";
+    if (ctx === "friend") { if (window.BattleGame && BattleGame.isOn()) BattleGame.exit(false); FriendBattle.api.enter(state); if (typeof show === "function") show("battle"); }
+    else { if (window.TeamGame && TeamGame.isOn()) TeamGame.exit(); TeamZone.api.apply(state, true); if (typeof show === "function") show("team"); }
+  }
+  async function playAgain(ctx) {
+    const r = D.data, b = document.getElementById("sr-again"); if (!r || D.againBusy) return;
+    D.againBusy = true; if (b) { b.disabled = true; b.textContent = "Opening…"; }
+    let res;
+    if (r.again && !r.is_host) res = await call("series_join", { p_mode: ctx, p_code: r.again.code }, true);
+    else res = await call("series_again", { p_series: r.series.id }, true);
+    D.againBusy = false;
+    if (res && res.ok && !res.state && res.room_id) {                 // the host's new lobby already exists: step back into it
+      const q = await call(ctx === "friend" ? "bt_sync" : "tz_sync", { p_room: res.room_id }); if (q && q.ok && q.state) res = { ok: true, state: q.state, series: res.series };
+    }
+    if (res && res.ok && res.state) { gotoLobby(ctx, res.state, res.series); return; }
+    D.againMsg = res && res.reason === "not_host" ? "Only the host can start a new series." : errText(res || {});
+    D.view = "final"; const f = finEl(); if (f) f.remove(); drawFinal(ctx, D.data);
+  }
+  function exitTo(ctx, dest) {
+    markSeen(); hidePop(); D.data = null; popKey = ""; D.againMsg = "";
+    if (ctx === "friend") {
+      if (window.BattleGame && BattleGame.isOn()) BattleGame.exit(false);
+      try { FriendBattle.api.end(); } catch {}
+      if (typeof show === "function") show(dest === "zone" ? "battle" : dest);
+      if (dest === "zone") FriendBattle.api.setView("friend");
+    } else {
+      if (window.TeamGame && TeamGame.isOn()) TeamGame.exit();
+      try { TeamZone.api.finish(); } catch {}
+      if (dest !== "zone" && typeof show === "function") show(dest);
+    }
   }
 
   window.Series = { is: isSeries, page, button, chips, back, owns, info: (id) => info.get(id) || null };
