@@ -590,7 +590,7 @@ if (!document.getElementById("sr-css3")) { const st = document.createElement("st
     const card = (cls, ic, n, label) => `<div class="ss-stat ${cls}"><span class="ic">${ic}</span><b>${Number(n || 0).toLocaleString()}</b><small>${label}</small></div>`;
     const cards = SS.loading && !SS.stats ? "" : `<div class="ss-stats" role="group" aria-label="Overall statistics">
       ${card("", IC.chart, st.played, "Series played")}${card("won", IC.trophy, st.won, "Series won")}${card("lost", IC.x, st.lost, "Series lost")}${card("draw", IC.eq, st.drawn, "Series drawn")}
-      ${card("", IC.flag, st.rounds_won, "Rounds won")}${card("", IC.coin, st.coins, "Coins earned")}${card("", IC.bolt, st.xp, "XP earned")}</div>`;
+      ${card("", IC.flag, st.rounds_won, "Rounds won")}</div>`;
     const F = [["all", "All"], ["friend", "Friend Zone"], ["team", "Team Zone"], ["won", "Won"], ["lost", "Lost"], ["draw", "Draw"]];
     const chips = `<div class="ss-filters" role="group" aria-label="Filter history">${F.map(([k, l]) => `<button class="ss-chip${SS.filter === k ? " on" : ""}" type="button" data-sr="sfilter" data-f="${k}" aria-pressed="${SS.filter === k}">${l}</button>`).join("")}</div>`;
     let list;
