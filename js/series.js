@@ -201,7 +201,7 @@ html[data-motion=reduced] .sr-entry{transition:none!important}
 .sr-chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .sr-chip2{display:inline-flex;align-items:baseline;gap:6px;padding:7px 12px;border-radius:14px;background:var(--panel-2);border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line));font-weight:900}
 .sr-chip2 b{font-size:1.15rem;font-variant-numeric:tabular-nums}.sr-chip2 small{color:var(--muted);font-weight:800;font-size:.72rem}
-.sr-chip2.xp{border-color:color-mix(in srgb,#8B5CF6 55%,var(--line))}.sr-bal{font-size:.78rem;color:var(--muted);font-weight:700}
+.sr-chip2.sr-xp{border-color:color-mix(in srgb,#8B5CF6 55%,var(--line))}.sr-bal{font-size:.78rem;color:var(--muted);font-weight:700}
 .sr-tot{width:100%;display:grid;gap:8px;padding:12px;border-radius:18px;background:var(--panel-2);border:1px solid var(--line)}
 .sr-tot .r{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--muted);font-weight:700}.sr-tot .r b{color:var(--text)}
 .sr-tot .r.all{padding-top:8px;border-top:1px dashed var(--line);font-size:.95rem}.sr-tot .r.all b{color:var(--gold)}
@@ -373,15 +373,13 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     const row = myRows("round").find((x) => x.round_no === r.last_round.round_no);
     if (!row) { box.innerHTML = ""; return; }
     const key = r.series.id + ":" + row.round_no + ":" + row.coins; if (box.dataset.k === key) return; box.dataset.k = key;
-    box.innerHTML = `<span class="t">Round win reward</span><div class="sr-chips"><span class="sr-chip2"><b id="sr-rc">+${row.coins}</b><small>🪙 Coins</small></span><span class="sr-chip2 xp"><b>+${row.xp}</b><small>⚡ XP</small></span></div>`;
+    box.innerHTML = `<span class="t">Round win reward</span><div class="sr-chips"><span class="sr-chip2"><b id="sr-rc">+${row.coins}</b><small>🪙 Coins</small></span><span class="sr-chip2 sr-xp"><b>+${row.xp}</b><small>⚡ XP</small></span></div>`;
     fx("countUp", document.getElementById("sr-rc"), row.coins, "+");
   }
   function rewardSummary(r) {
-    const rr = myRows("round"), ov = myRows("overall"); if (!rr.length && !ov.length) return "";
-    const a = sum(rr), b = sum(ov), t = sum([...rr, ...ov]);
+    const rows = [...myRows("round"), ...myRows("overall")]; if (!rows.length) return "";
+    const t = sum(rows);
     return `<div class="sr-tot" role="group" aria-label="Your rewards"><p class="sr-sec" style="margin:0">Your rewards</p>
-      ${rr.length ? `<div class="r"><span>${rr.length} round ${rr.length === 1 ? "win" : "wins"}</span><b>+${a.coins} 🪙 · +${a.xp} XP</b></div>` : ""}
-      ${ov.length ? `<div class="r"><span>Overall winner reward</span><b>+${b.coins} 🪙 · +${b.xp} XP</b></div>` : ""}
       <div class="r all"><span>Total</span><b>+${t.coins} 🪙 · +${t.xp} XP</b></div></div>`;
   }
   // collect what the server says is now due. The server hands each reward out once; Player.rewardSeries also refuses a repeated key.
