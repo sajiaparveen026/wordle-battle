@@ -1,7 +1,7 @@
-// Series Mode (create / join, lobby, rounds, between-round popup, final results, rewards, Play Again, final screen after a refresh) for Friend Zone and Team Zone.
+// Series Mode (create / join, lobby, rounds, between-round popup, final results, rewards, Play Again, Series Stats & History) for Friend Zone and Team Zone.
 // This file only DRAWS screens and sends taps. Every decision (valid settings, room code, capacity, expiry, already started,
 // who may join, the round winner, the next word, the overall winner) is made by Supabase: supabase/migrations/014_series_mode.sql and
-// 015_series_rounds.sql, 016_series_rewards.sql and 017_series_hardening.sql (series_create / series_join / series_info / series_sync / series_claim / series_again).
+// 015_series_rounds.sql, 016_series_rewards.sql and 017_series_hardening.sql and 018_series_stats.sql (series_create / series_join / series_info / series_sync / series_claim / series_again).
 // The lobby itself is the existing Friend Zone / Team Zone waiting room; this file adds the Series label chips to it.
 (() => {
   "use strict";
@@ -55,11 +55,11 @@ html[data-motion=reduced] .sr-entry{transition:none!important}
   const zone = (ctx) => (ctx === "friend" ? window.FriendBattle && FriendBattle.api : window.TeamZone && TeamZone.api);
   const redraw = (ctx) => { const a = zone(ctx); if (!a) return; if (ctx === "friend") a.render && a.render(true); else a.repaint && a.repaint(); };
   const go = (ctx, v) => { const a = zone(ctx); if (a && a.setView) a.setView(v); };
-  const isSeries = (v) => v === "series" || v === "sercfg" || v === "serjoin";
+  const isSeries = (v) => v === "series" || v === "sercfg" || v === "serjoin" || v === "serstats";
 
   // ---------- pieces other files call ----------
   function button(ctx) {
-    return `<div class="sr-entry-wrap"><button class="sr-entry" type="button" data-sr="open" aria-label="Series Mode"><span class="ic" aria-hidden="true">🏆</span><span class="t"><b>Series Mode</b><small>Play 3, 5 or 10 rounds</small></span><span class="ch" aria-hidden="true">›</span></button></div>`;
+    return `<div class="sr-entry-wrap"><button class="sr-entry" type="button" data-sr="open" aria-label="Series Mode"><span class="ic" aria-hidden="true">🏆</span><span class="t"><b>Series Mode</b></span><span class="ch" aria-hidden="true">›</span></button></div>`;
   }
   function chips(ctx, room) {
     if (!room || !room.id) return "";
@@ -78,8 +78,9 @@ html[data-motion=reduced] .sr-entry{transition:none!important}
   }
   function page(ctx, v) {
     const z = Z[ctx], hero = ctx === "friend" ? "fb-hero" : "tz-hero";
+    if (v === "serstats") return statsPage(ctx);
     if (v === "series") {
-      return { title: "Series Mode", html: `<div class="sr-wrap"><div class="${hero}"><h2>Series Mode</h2><p>Several rounds, one winner. The player with the most round wins takes the series.</p></div>
+      return { title: "Friend Zone", html: `<div class="sr-wrap"><div class="ss-top">${statsButton()}</div><div class="${hero}"><h2>Series Mode</h2><p>Several rounds, one winner. The player with the most round wins takes the series.</p></div>
         <div class="fb-cards two">
           <button class="fb-card create" type="button" data-sr="create"><span class="fb-ico" aria-hidden="true">➕</span><h3>Create Series</h3><p>Pick the difficulty and rounds, then invite players.</p><span class="fb-go">Create →</span></button>
           <button class="fb-card join" type="button" data-sr="join"><span class="fb-ico" aria-hidden="true">🔑</span><h3>Join Series</h3><p>Have a series code? Enter it to join.</p><span class="fb-go">Join →</span></button>
@@ -90,7 +91,7 @@ html[data-motion=reduced] .sr-entry{transition:none!important}
       const diff = Object.entries(DIFF).map(([k, x]) => `<button class="tz-opt diff ${k}${z.cfg.diff === k ? " on" : ""}" type="button" role="radio" aria-checked="${z.cfg.diff === k}" data-sr="diff" data-k="${k}"><span class="di" aria-hidden="true">${x.icon}</span><b>${x.name}</b><small>${x.min} min / round</small></button>`).join("");
       const rounds = ROUNDS.map((n) => `<button class="tz-opt${z.cfg.rounds === n ? " on" : ""}" type="button" role="radio" aria-checked="${z.cfg.rounds === n}" data-sr="rounds" data-n="${n}"><b>${n}</b><small>rounds</small></button>`).join("");
       const size = ctx === "team" ? `<section class="tz-sec"><h3>Maximum players</h3><div class="tz-opts" role="radiogroup" aria-label="Maximum players">${[3, 4, 5].map((n) => `<button class="tz-opt${z.cfg.size === n ? " on" : ""}" type="button" role="radio" aria-checked="${z.cfg.size === n}" data-sr="size" data-n="${n}"><b>${n}</b><small>players</small></button>`).join("")}</div></section>` : "";
-      return { title: "Create Series", html: `<div class="sr-wrap"><div class="${hero}"><h2>Create Series</h2><p>${ctx === "friend" ? "You and one friend" : "You and your team"} play every round with the same difficulty.</p></div>
+      return { title: "Friend Zone", html: `<div class="sr-wrap"><div class="${hero}"><h2>Create Series</h2><p>${ctx === "friend" ? "You and one friend" : "You and your team"} play every round with the same difficulty.</p></div>
         <section class="tz-sec"><h3>Difficulty</h3><div class="tz-opts" role="radiogroup" aria-label="Difficulty">${diff}</div></section>
         <section class="tz-sec"><h3>Number of rounds</h3><div class="tz-opts" role="radiogroup" aria-label="Number of rounds">${rounds}</div></section>
         ${size}
@@ -99,7 +100,7 @@ html[data-motion=reduced] .sr-entry{transition:none!important}
         <div class="tz-row"><button class="tz-go alt" type="button" data-sr="back" data-v="${v}">Back</button><button class="tz-go" type="button" data-sr="create-go"${z.busy ? " disabled" : ""}>${z.busy ? "Creating…" : "Create Series"}</button></div></div>` };
     }
     // serjoin
-    return { title: "Join Series", html: `<div class="sr-wrap"><div class="${hero}"><h2>Join Series</h2><p>Type the 6-character code from the host.</p></div>
+    return { title: "Friend Zone", html: `<div class="sr-wrap"><div class="${hero}"><h2>Join Series</h2><p>Type the 6-character code from the host.</p></div>
       <section class="tz-sec"><input class="tz-input" id="sr-code" maxlength="8" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="ABC123" value="${esc(z.code)}" aria-label="Series room code"></section>
       ${z.err ? `<p class="tz-err" role="alert">${esc(z.err)}</p>` : ""}
       <div class="tz-row"><button class="tz-go alt" type="button" data-sr="back" data-v="${v}">Back</button><button class="tz-go" type="button" data-sr="join-go" id="sr-join-go"${z.busy || z.code.length !== 6 ? " disabled" : ""}>${z.busy ? "Joining…" : "Enter"}</button></div></div>` };
@@ -146,6 +147,10 @@ html[data-motion=reduced] .sr-entry{transition:none!important}
       else if (a === "diff") { z.cfg.diff = b.dataset.k; redraw(ctx); }
       else if (a === "rounds") { z.cfg.rounds = Number(b.dataset.n); redraw(ctx); }
       else if (a === "size") { z.cfg.size = Number(b.dataset.n); redraw(ctx); }
+      else if (a === "stats") { SS.filter = "all"; SS.loading = true; SS.err = ""; go(ctx, "serstats"); loadHistory(ctx); }
+      else if (a === "sfilter") { SS.filter = b.dataset.f; redraw(ctx); }
+      else if (a === "sretry") { SS.loading = true; SS.err = ""; redraw(ctx); loadHistory(ctx); }
+      else if (a === "scard") openDetail(ctx, b.dataset.id);
       else if (a === "create-go") create(ctx);
       else if (a === "join-go") join(ctx);
     });
@@ -469,6 +474,187 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
       try { TeamZone.api.finish(); } catch {}
       if (dest !== "zone" && typeof show === "function") show(dest);
     }
+  }
+
+
+  const CSS3 = `
+.ss-top{display:flex;justify-content:flex-end;margin-bottom:-6px}
+.ss-btn{display:inline-grid;grid-auto-flow:column;align-items:center;gap:8px;padding:5px 12px 5px 6px;border-radius:999px;cursor:pointer;font:inherit;color:var(--text);touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 18%,var(--panel)),var(--panel));border:1.5px solid color-mix(in srgb,var(--gold) 55%,var(--line));animation:ss-glow 3.2s ease-in-out infinite;transition:transform .15s,border-color .2s}
+.ss-btn:hover{border-color:var(--gold)}.ss-btn:active{transform:scale(.96)}.ss-btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.ss-btn .ic{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,var(--gold) 22%,var(--panel-2));border:1px solid color-mix(in srgb,var(--gold) 50%,var(--line));color:var(--gold)}
+.ss-btn svg{width:21px;height:21px;overflow:visible}.ss-btn small{font-size:.7rem;font-weight:900;letter-spacing:.9px;text-transform:uppercase;white-space:nowrap}
+.ss-bar{transform-box:fill-box;transform-origin:50% 100%;animation:ss-rise 2.4s ease-in-out infinite}.ss-bar:nth-child(2){animation-delay:.25s}.ss-bar:nth-child(3){animation-delay:.5s}
+.ss-star{transform-box:fill-box;transform-origin:center;animation:ss-twinkle 2.4s ease-in-out infinite}
+.ss{display:grid;gap:14px}
+.ss-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.ss-stat{display:grid;gap:2px;justify-items:start;padding:10px 12px;border-radius:16px;background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 9%,var(--panel)),var(--panel));border:1px solid var(--line);min-width:0}
+.ss-stat .ic{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;color:var(--gold);background:var(--panel-2);border:1px solid var(--line);margin-bottom:4px}
+.ss-stat svg{width:17px;height:17px}.ss-stat b{font-size:1.3rem;line-height:1.1;font-variant-numeric:tabular-nums}.ss-stat small{font-size:.66rem;font-weight:800;letter-spacing:.7px;color:var(--muted);text-transform:uppercase}
+.ss-stat.won .ic{color:#4ADE80}.ss-stat.lost .ic{color:#F87171}.ss-stat.draw .ic{color:#94A3B8}
+.ss-filters{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.ss-filters::-webkit-scrollbar{display:none}
+.ss-chip{flex:none;padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit;font-weight:800;font-size:.8rem;color:var(--muted);background:var(--panel);border:1.5px solid var(--line);touch-action:manipulation}
+.ss-chip.on{color:#0b1a05;background:linear-gradient(180deg,#9BF55C,#5ED823);border-color:transparent}.ss-chip:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.ss-list{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
+.ss-card{display:grid;gap:10px;text-align:left;width:100%;padding:14px;border-radius:20px;cursor:pointer;font:inherit;color:var(--text);position:relative;overflow:hidden;
+  background:linear-gradient(165deg,color-mix(in srgb,var(--gold) 8%,var(--panel)),var(--panel) 60%);border:1.5px solid var(--line);transition:transform .15s,border-color .2s,box-shadow .2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.ss-card::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--line)}
+.ss-card.won::before{background:#4ADE80}.ss-card.lost::before{background:#F87171}.ss-card.draw::before{background:#94A3B8}
+.ss-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--gold) 55%,var(--line));box-shadow:0 8px 24px rgba(0,0,0,.3)}.ss-card:active{transform:scale(.99)}.ss-card:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.ss-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ss-mode{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.ss-res{padding:4px 11px;border-radius:999px;font-size:.72rem;font-weight:900;letter-spacing:1.2px;text-transform:uppercase}
+.ss-res.won{color:#0b2a14;background:#4ADE80}.ss-res.lost{color:#3a0a0a;background:#F87171}.ss-res.draw{color:#0f172a;background:#94A3B8}
+.ss-ic{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:700;color:var(--muted)}.ss-ic svg{width:15px;height:15px;flex:none;color:var(--gold)}
+.ss-who{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ss-who .l{font-size:.7rem;font-weight:800;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-right:2px}
+.ss-pl{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 10px 3px 4px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);font-size:.8rem;font-weight:800}
+.ss-pl i{display:grid;place-items:center;flex:none;width:22px;height:22px;border-radius:50%;font-style:normal;font-size:.8rem;overflow:hidden;background:var(--panel);border:1px solid var(--line)}
+.ss-pl span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ss-meta{display:flex;flex-wrap:wrap;gap:6px}.ss-tag{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:.74rem;font-weight:800;background:var(--panel-2);border:1px solid var(--line)}
+.ss-win{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:14px;background:color-mix(in srgb,var(--gold) 10%,var(--panel-2));border:1px solid color-mix(in srgb,var(--gold) 40%,var(--line));font-size:.84rem;font-weight:800;min-width:0}
+.ss-win svg{width:18px;height:18px;flex:none;color:var(--gold)}.ss-win .ss-pl{background:transparent;border:0;padding:0}
+.ss-foot{display:flex;flex-wrap:wrap;gap:6px 14px;padding-top:8px;border-top:1px dashed var(--line);font-size:.82rem;font-weight:800}.ss-foot b{color:var(--gold)}
+.ss-empty{display:grid;gap:8px;justify-items:center;text-align:center;padding:34px 16px;color:var(--muted);border-radius:20px;border:1.5px dashed var(--line)}
+.ss-empty .big{font-size:2.4rem}.ss-empty b{color:var(--text);font-size:1.05rem}.ss-empty p{margin:0;font-size:.88rem}
+.ss-load{display:grid;gap:10px}.ss-sk{height:120px;border-radius:20px;background:linear-gradient(100deg,var(--panel) 30%,var(--panel-2) 50%,var(--panel) 70%);background-size:200% 100%;animation:ss-shim 1.3s linear infinite}
+.sr-det .sr-card{width:min(100%,560px);justify-items:stretch;text-align:left;gap:14px}
+.sr-det h3{margin:0;font-size:1.15rem}.sr-det .sec{margin:4px 0 -6px;font-size:.72rem;font-weight:900;letter-spacing:1.6px;color:var(--gold);text-transform:uppercase}
+.sr-det .kv{display:grid;gap:6px;margin:0;padding:0;list-style:none}.sr-det .kv li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:8px 12px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line);font-size:.86rem}
+.sr-det .kv li>span:first-child{color:var(--muted);font-weight:800;white-space:nowrap}.sr-det .kv li>b,.sr-det .kv li>span:last-child{text-align:right;min-width:0}
+.sr-det .rd{display:grid;gap:8px;padding:12px;border-radius:16px;background:var(--panel-2);border:1px solid var(--line)}
+.sr-det .rd .h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.78rem;font-weight:900;letter-spacing:1.3px;color:var(--muted);text-transform:uppercase}
+.sr-det .rd .w{display:flex;gap:4px}.sr-det .rd .w i{display:grid;place-items:center;width:30px;height:30px;border-radius:7px;font-style:normal;font-weight:900;font-size:.95rem;color:#0b1a05;background:linear-gradient(180deg,#9BF55C,#5ED823)}
+.sr-det .rd p{margin:0;font-size:.84rem;color:var(--muted);line-height:1.4}.sr-det .rd p b{color:var(--text)}
+.sr-det .pr{display:flex;flex-wrap:wrap;gap:6px}.sr-det .pr span{display:inline-flex;gap:6px;align-items:center;padding:3px 9px;border-radius:999px;font-size:.74rem;font-weight:800;background:var(--panel);border:1px solid var(--line)}
+.sr-det .pr span.ok{border-color:#4ADE80;color:#4ADE80}.sr-det .pr span.no{color:var(--muted)}
+.sr-det .fin{display:grid;gap:6px;justify-items:center;text-align:center;padding:14px;border-radius:18px;background:linear-gradient(165deg,color-mix(in srgb,var(--gold) 14%,var(--panel-2)),var(--panel-2));border:1.5px solid color-mix(in srgb,var(--gold) 50%,var(--line))}
+.sr-det .fin .cr{font-size:2rem;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--gold) 60%,transparent))}
+@keyframes ss-glow{50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 14%,transparent),0 4px 18px color-mix(in srgb,var(--gold) 28%,transparent)}}
+@keyframes ss-rise{50%{transform:scaleY(.72)}}@keyframes ss-twinkle{50%{transform:scale(1.25) rotate(12deg);opacity:.75}}@keyframes ss-shim{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.ss-btn,.ss-bar,.ss-star,.ss-sk{animation:none!important}.ss-card{transition:none!important}}
+html[data-motion=reduced] .ss-btn,html[data-motion=reduced] .ss-bar,html[data-motion=reduced] .ss-star,html[data-motion=reduced] .ss-sk{animation:none!important}
+`;
+if (!document.getElementById("sr-css3")) { const st = document.createElement("style"); st.id = "sr-css3"; st.textContent = CSS3; document.head.append(st); }
+
+  // ====================================================================== Series Stats & History
+  // Everything shown here comes from the server (018_series_stats.sql: series_history / series_detail), which reads the real completed series.
+  // Only completed series are listed, and a word is only returned for a finished series.
+  const SS = { filter: "all", loading: false, err: "", items: [], stats: null };
+  const SVG = (d) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const IC = {
+    cal:    SVG('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
+    users:  SVG('<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.400 1.700 6 5"/><path d="M16 5.700a3 3 0 0 1 0 5.600M18.500 14.800c1.500.700 2.300 2.200 2.500 4.200"/>'),
+    flag:   SVG('<path d="M5.500 21V4"/><path d="M5.500 5h11l-2 3.500 2 3.500h-11"/>'),
+    trophy: SVG('<path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 6H4.500v1.500A3.500 3.500 0 0 0 8 11M16 6h3.500v1.500A3.500 3.500 0 0 1 16 11"/><path d="M12 13v4M8.500 20.500h7M9.500 17h5"/>'),
+    coin:   SVG('<circle cx="12" cy="12" r="8.500"/><circle cx="12" cy="12" r="4.800"/>'),
+    bolt:   SVG('<path d="M13 3 5.500 13.500H11L10 21l7.500-10.500H12L13 3Z"/>'),
+    crown:  SVG('<path d="M4 18.500 3 8l5 4 4-7 4 7 5-4-1 10.500H4Z"/>'),
+    x:      SVG('<circle cx="12" cy="12" r="8.500"/><path d="M9 9l6 6M15 9l-6 6"/>'),
+    eq:     SVG('<circle cx="12" cy="12" r="8.500"/><path d="M8.500 10h7M8.500 14h7"/>'),
+    chart:  SVG('<path d="M4 20h16"/><rect x="5.500" y="12" width="3.200" height="8" rx="1"/><rect x="10.400" y="7.500" width="3.200" height="12.500" rx="1"/><rect x="15.300" y="10" width="3.200" height="10" rx="1"/>')
+  };
+  function statsButton() {
+    return `<button class="ss-btn" type="button" data-sr="stats" aria-label="Series Stats"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true">
+      <g fill="currentColor"><rect class="ss-bar" x="4" y="13" width="4" height="8" rx="1.300"/><rect class="ss-bar" x="10" y="8.500" width="4" height="12.500" rx="1.300"/><rect class="ss-bar" x="16" y="11" width="4" height="10" rx="1.300"/></g>
+      <path class="ss-star" d="M12 1.200l1.100 2.300 2.500.3-1.800 1.700.5 2.500L12 6.800 9.700 8l.5-2.500-1.800-1.700 2.500-.3L12 1.200Z" fill="currentColor"/></svg></span><small>Series Stats</small></button>`;
+  }
+  const fmtDate = (t) => { try { return new Date(t).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }); } catch { return ""; } };
+  const MODE = { friend: "Friend Zone", team: "Team Zone" };
+  const RES = { won: "Won", lost: "Lost", draw: "Draw" };
+  const pill = (p) => `<span class="ss-pl"><i aria-hidden="true">${av(p.avatar)}</i><span>${esc(p.username)}</span></span>`;
+
+  // a guest who made an account keeps their history: move their series seats over once (safe to repeat)
+  let adoptP = null;
+  function adoptSeriesGuest() {
+    if (adoptP) return adoptP;
+    adoptP = (async () => {
+      try {
+        if (!(window.Auth && Auth.isAccount && Auth.isAccount()) || !Auth.client || !Auth.client()) return;
+        const g = JSON.parse(localStorage.getItem("wbid_lb_guest") || "null");
+        if (!g || typeof g.pid !== "string" || typeof g.secret !== "string" || g.secret.length < 24) return;
+        await Auth.client().rpc("series_adopt_guest", { p_pid: g.pid, p_secret: g.secret });
+      } catch {}
+    })();
+    return adoptP;
+  }
+  async function loadHistory(ctx) {
+    await adoptSeriesGuest();
+    const r = await call("series_history", { p_limit: 200 });
+    SS.loading = false;
+    if (r && r.ok) { SS.items = r.items || []; SS.stats = r.stats || null; SS.err = ""; }
+    else SS.err = r && r.reason === "no_server" ? ERR.no_server : (r && r.reason === "bad_id" ? ERR.bad_id : "Couldn't load your series history. Check your connection and try again.");
+    redraw(ctx);
+  }
+  function statsPage(ctx) {
+    const hero = ctx === "friend" ? "fb-hero" : "tz-hero", st = SS.stats || {};
+    const card = (cls, ic, n, label) => `<div class="ss-stat ${cls}"><span class="ic">${ic}</span><b>${Number(n || 0).toLocaleString()}</b><small>${label}</small></div>`;
+    const cards = SS.loading && !SS.stats ? "" : `<div class="ss-stats" role="group" aria-label="Overall statistics">
+      ${card("", IC.chart, st.played, "Series played")}${card("won", IC.trophy, st.won, "Series won")}${card("lost", IC.x, st.lost, "Series lost")}${card("draw", IC.eq, st.drawn, "Series drawn")}
+      ${card("", IC.flag, st.rounds_won, "Rounds won")}${card("", IC.coin, st.coins, "Coins earned")}${card("", IC.bolt, st.xp, "XP earned")}</div>`;
+    const F = [["all", "All"], ["friend", "Friend Zone"], ["team", "Team Zone"], ["won", "Won"], ["lost", "Lost"], ["draw", "Draw"]];
+    const chips = `<div class="ss-filters" role="group" aria-label="Filter history">${F.map(([k, l]) => `<button class="ss-chip${SS.filter === k ? " on" : ""}" type="button" data-sr="sfilter" data-f="${k}" aria-pressed="${SS.filter === k}">${l}</button>`).join("")}</div>`;
+    let list;
+    if (SS.loading) list = `<div class="ss-load" aria-busy="true"><div class="ss-sk"></div><div class="ss-sk"></div></div>`;
+    else if (SS.err) list = `<div class="ss-empty"><span class="big">⚠️</span><b>${esc(SS.err)}</b><button class="tz-go" type="button" data-sr="sretry">Try again</button></div>`;
+    else {
+      const f = SS.filter, items = SS.items.filter((x) => f === "all" || x.mode === f || x.my_result === f);
+      if (!SS.items.length) list = `<div class="ss-empty"><span class="big">🏆</span><b>No series yet</b><p>Finish a Series Mode match and it will show up here.</p></div>`;
+      else if (!items.length) list = `<div class="ss-empty"><span class="big">🔎</span><b>Nothing here</b><p>No series match this filter.</p></div>`;
+      else list = `<div class="ss-list">${items.map(histCard).join("")}</div>${st.played > SS.items.length ? `<p class="sr-sm" style="text-align:center">Showing your latest ${SS.items.length} series.</p>` : ""}`;
+    }
+    return { title: "Friend Zone", html: `<div class="sr-wrap ss"><div class="${hero}"><h2>My Series History</h2><p>Every series you have finished, newest first.</p></div>${cards}${chips}${list}
+      <div class="tz-row"><button class="tz-go alt" type="button" data-sr="back" data-v="serstats">Back to Series Mode</button></div></div>` };
+  }
+  function histCard(x) {
+    const others = (x.players || []).filter((p) => p.seat !== x.my_seat), win = x.overall_result === "win" ? (x.players || []).find((p) => p.seat === x.winner_seat) : null;
+    const d = DIFF[x.difficulty] || DIFF.medium;
+    return `<button class="ss-card ${x.my_result}" type="button" data-sr="scard" data-id="${esc(x.series_id)}" aria-label="${esc(MODE[x.mode])} series, ${esc(RES[x.my_result])}, ${esc(fmtDate(x.completed_at))}">
+      <div class="ss-row"><span class="ss-mode">${x.mode === "friend" ? IC.users : IC.users} ${esc(MODE[x.mode] || "")}</span><span class="ss-res ${x.my_result}">${esc(RES[x.my_result])}</span></div>
+      <div class="ss-ic">${IC.cal}<span>${esc(fmtDate(x.completed_at))}</span></div>
+      <div class="ss-who"><span class="l">Played with</span>${others.length ? others.map(pill).join("") : '<span class="ss-ic">—</span>'}</div>
+      <div class="ss-meta"><span class="ss-tag">${d.icon} ${d.name}</span><span class="ss-tag">${IC.flag.replace("<svg", '<svg width="13" height="13"')} ${x.total_rounds} rounds</span></div>
+      <div class="ss-win">${IC.trophy}${win ? `<span>Overall winner</span>${pill(win)}` : `<span>Overall draw · no winner</span>`}</div>
+      <div class="ss-foot"><span class="ss-ic">${IC.flag}My round wins: <b>${x.my_wins}</b></span><span class="ss-ic">${IC.coin}<b>+${x.coins}</b></span><span class="ss-ic">${IC.bolt}<b>+${x.xp} XP</b></span></div></button>`;
+  }
+
+  // ---------- the detail popup ----------
+  function closeDetail() { const e = document.getElementById("sr-det"); if (e) e.remove(); lock(!!(popEl() || finEl())); }
+  async function openDetail(ctx, id) {
+    closeDetail();
+    const el = document.createElement("div"); el.id = "sr-det"; el.className = "sr-ov sr-det"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Series details");
+    el.innerHTML = `<div class="sr-card"><div class="ss-load" aria-busy="true"><div class="ss-sk"></div><div class="ss-sk"></div></div></div>`;
+    el.addEventListener("click", (e) => { if (e.target === el) closeDetail(); });
+    document.body.append(el); lock(true);
+    const r = await call("series_detail", { p_series: id });
+    if (!document.getElementById("sr-det")) return;
+    if (!r || !r.ok) { el.firstChild.innerHTML = `<div class="ss-empty"><span class="big">⚠️</span><b>Couldn't open this series.</b></div><button class="sr-btn alt" type="button" id="sd-close">Back</button>`; el.querySelector("#sd-close").addEventListener("click", closeDetail); return; }
+    el.firstChild.innerHTML = detailHtml(r);
+    el.querySelector("#sd-close").addEventListener("click", closeDetail); el.querySelector("#sd-close").focus({ preventScroll: true });
+  }
+  function detailHtml(r) {
+    const s = r.series, me = r.me, ps = r.players || [], byseat = {}; ps.forEach((p) => { byseat[p.seat] = p; });
+    const d = DIFF[s.difficulty] || DIFF.medium, win = s.overall_result === "win" ? byseat[s.winner_seat] : null, top = Math.max(0, ...ps.map((p) => p.wins));
+    const rounds = (r.rounds || []).map((x) => {
+      const det = (x.details || []).map((q) => { const p = byseat[q.seat]; if (!p) return "";
+        const ok = q.status === "solved", t = ok ? `✓ solved in ${q.attempts}` : q.status === "failed" ? `✗ out of attempts (${q.attempts})` : `✗ not solved (${q.attempts} ${q.attempts === 1 ? "attempt" : "attempts"})`;
+        return `<span class="${ok ? "ok" : "no"}">${esc(p.username)}${p.is_me ? " (you)" : ""}: ${t}</span>`; }).join("");
+      return `<div class="rd"><div class="h"><span>Round ${x.round_no}</span><span>${x.result === "win" ? "Won" : "Draw"}</span></div>
+        <div class="w" aria-label="${esc(x.word)}">${String(x.word || "").toUpperCase().split("").map((c) => `<i aria-hidden="true">${esc(c)}</i>`).join("")}</div>
+        ${x.meaning ? `<p><b>Meaning:</b> ${esc(x.meaning)}</p>` : ""}
+        <p><b>Round winner:</b> ${x.result === "win" ? esc(x.winner_name || "Player") : "Round draw · no winner"}</p>${det ? `<div class="pr">${det}</div>` : ""}</div>`;
+    }).join("");
+    const fin = win
+      ? `<span class="cr" aria-hidden="true">👑</span><p class="sr-hd" style="margin:0">OVERALL SERIES WINNER</p><div class="sr-big" aria-hidden="true">${av(win.avatar)}</div><p class="sr-nm">${esc(win.username)}${win.is_me ? " (you)" : ""}</p><p class="sr-sm">${win.wins} ${win.wins === 1 ? "round" : "rounds"} won</p>`
+      : `<span class="cr" aria-hidden="true">🤝</span><p class="sr-hd" style="margin:0">OVERALL DRAW</p><p class="sr-sm">${top > 0 ? "Level on " + top + (top === 1 ? " round" : " rounds") : "Every round was a draw"}</p>`;
+    return `<h3>Series Details</h3>
+      <ul class="kv"><li><span>Date &amp; time</span><b>${esc(fmtDate(s.completed_at))}</b></li><li><span>Game mode</span><b>${esc(MODE[s.mode] || "")}</b></li>
+        <li><span>Difficulty</span><b>${d.icon} ${d.name} · ${d.min} min</b></li><li><span>Total rounds</span><b>${s.total_rounds}</b></li>
+        <li><span>Participants</span><span class="pr" style="justify-content:flex-end">${ps.map(pill).join("")}</span></li></ul>
+      <p class="sec">Round by round</p>${rounds}
+      <p class="sec">Final results</p><div class="fin">${fin}</div>
+      <ul class="kv sr-pl">${ps.map((p) => `<li${p.wins === top && top > 0 ? ' style="border-color:var(--gold)"' : ""}><span style="display:flex;align-items:center;gap:8px;min-width:0;color:var(--text)">${pill(p)}${p.is_me ? " (you)" : ""}</span><b>${p.wins} ${p.wins === 1 ? "round" : "rounds"}</b></li>`).join("")}</ul>
+      <ul class="kv"><li><span>My result</span><span class="ss-res ${me.result}">${esc(RES[me.result])}</span></li><li><span>Coins earned</span><b>+${me.coins} 🪙</b></li><li><span>XP earned</span><b>+${me.xp} XP</b></li></ul>
+      <button class="sr-btn alt" type="button" id="sd-close">Back to history</button>`;
   }
 
   window.Series = { is: isSeries, page, button, chips, back, owns, info: (id) => info.get(id) || null };
