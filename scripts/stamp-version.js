@@ -21,6 +21,12 @@ if (url && key) {
   const m = fs.readFileSync(cfgPath, "utf8").match(/SUPABASE_ANON_KEY:\s*"([^"]+)"/);
   if (m) checkNotSecret(m[1]);
 }
+// ---- Link preview (WhatsApp, Telegram...): the invitation page needs an ABSOLUTE image URL, so it is filled in with the real production domain at build time.
+// Vercel provides the domain in VERCEL_PROJECT_PRODUCTION_URL. Without it (local run) join.html keeps its relative path. This can never fail the build.
+try {
+  const host = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL, jp = path.join(root, "join.html");
+  if (host && fs.existsSync(jp)) { const origin = /^https?:\/\//.test(host) ? host : "https://" + host; fs.writeFileSync(jp, fs.readFileSync(jp, "utf8").replace(/content="(?:https?:\/\/[^"\/]+)?\/icons\/icon-512\.png"/g, `content="${origin}/icons/icon-512.png"`)); console.log("join.html preview image:", origin); }
+} catch (e) { console.log("join.html preview image not updated:", e.message); }
 const files = ["index.html", "manifest.webmanifest", "sw.js"];
 const walk = (dir) => { for (const e of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) e.isDirectory() ? walk(`${dir}/${e.name}`) : files.push(`${dir}/${e.name}`); };
 for (const dir of ["css", "js", "icons"]) walk(dir);

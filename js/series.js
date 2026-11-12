@@ -671,5 +671,5 @@ if (!document.getElementById("sr-css3")) { const st = document.createElement("st
 
   // true when this room is a Series round (used by the game screens to ignore a late answer from an earlier round)
   const inSeries = (st) => !!(st && st.room && info.get(st.room.id));
-  window.Series = { inSeries, is: isSeries, page, button, chips, back, owns, info: (id) => info.get(id) || null };
+  window.Series = { remember: (id, s) => info.set(id, s || null), inSeries, is: isSeries, page, button, chips, back, owns, info: (id) => info.get(id) || null };
 })();

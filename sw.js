@@ -39,6 +39,8 @@ self.addEventListener("message", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request, url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== self.location.origin) return; // Supabase etc.: untouched
+  const jm = req.mode === "navigate" && url.pathname.match(/\/join-battle\/([A-Za-z0-9_-]+)/);
+  if (jm) { event.respondWith(Response.redirect(new URL("./?join=" + encodeURIComponent(jm[1]), self.registration.scope).href, 302)); return; } // a battle invitation link opens the app itself (works offline too)
   if (req.mode === "navigate") { // the app page keeps OAuth / password-reset redirect URLs (?code=, #access_token=) working
     const shell = url.pathname.endsWith("/") || url.pathname.endsWith("/index.html");
     event.respondWith(caches.open(CACHE).then((c) => c.match(shell ? "./index.html" : req)).then((r) => r || fetch(req)));

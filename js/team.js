@@ -270,6 +270,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
     else say("Code: " + code, "", 4000);
   }
   async function shareCode() {
+    if (window.InviteLink) return InviteLink.share("team");      // link invitation (WhatsApp / Copy Link / Share); the room code stays as the backup
     const code = S && S.room ? S.room.code : ""; if (!code) return;
     const text = `Join my Team Zone room in Wordle Battle with code ${code}`;
     if (navigator.share) { try { await navigator.share({ title: "Wordle Battle Team Zone", text }); return; } catch { return; } }

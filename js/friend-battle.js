@@ -364,6 +364,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
   async function copyCode() { if (!S) return; toast((await copyText(S.room.code)) ? "Room code copied" : "Couldn't copy. Select the code and copy it.", "success"); }
   async function share() {
     if (!S) return;
+    if (window.InviteLink) return InviteLink.share("friend");      // link invitation (WhatsApp / Copy Link / Share); the room code below stays as the backup
     const code = S.room.code, d = DIFF[S.room.difficulty] || DIFF.medium, url = location.origin + location.pathname;
     const text = `Join my Wordle Battle! Room code: ${code} (${d.name}, ${d.min} min). Open ${url} → Play → Friend Zone → Enter a Room.`;
     if (navigator.share) { try { await navigator.share({ title: "Wordle Battle invitation", text }); return; } catch (e) { if (e && e.name === "AbortError") return; } }

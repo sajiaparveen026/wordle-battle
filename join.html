@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>You're invited to a Wordle Battle!</title>
+<meta name="description" content="Tap the link to join the battle room and play together.">
+<meta name="theme-color" content="#1A1A1B">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Wordle Battle">
+<meta property="og:title" content="You're invited to a Wordle Battle!">
+<meta property="og:description" content="Tap the link to join the battle room and play together.">
+<meta property="og:image" content="/icons/icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<style>
+  *{box-sizing:border-box}html,body{height:100%;margin:0}
+  body{display:grid;place-items:center;padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));background:#1A1A1B;color:#FAFAF5;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  main{display:grid;gap:14px;justify-items:center;text-align:center;width:min(100%,380px);padding:26px 20px;border-radius:26px;background:linear-gradient(170deg,#3a3320,#29292B 45%);border:1.5px solid #6d5f2b;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  img{width:84px;height:84px;border-radius:20px}
+  h1{margin:0;font-size:1.3rem;line-height:1.25}p{margin:0;color:#b9b9b0;font-size:.95rem;line-height:1.45}
+  .sp{width:28px;height:28px;border-radius:50%;border:3px solid #3a3a3d;border-top-color:#FACC15;animation:r .8s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
+  a.btn{display:inline-block;padding:12px 22px;border-radius:15px;font-weight:800;text-decoration:none;color:#0b3a05;background:linear-gradient(180deg,#9BF55C,#5ED823);box-shadow:0 4px 0 #2B8512}
+  @media (prefers-reduced-motion:reduce){.sp{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <img src="/icons/icon-192.png" alt="" width="84" height="84">
+  <h1>You're invited to a Wordle Battle!</h1>
+  <div class="sp" id="sp" aria-hidden="true"></div>
+  <p id="msg">Opening your invitation…</p>
+  <a class="btn" id="go" href="/">Open Wordle Battle</a>
+  <noscript><p>Tap the button to open the game, then enter the room code your friend sent you.</p></noscript>
+</main>
+<script>
+// This page only hands the invitation to the app (the real checks happen in the app, against the server).
+(function () {
+  var m = location.pathname.match(/\/join-battle\/([A-Za-z0-9_-]{1,64})/), t = m ? m[1] : "";
+  var to = t ? "/?join=" + encodeURIComponent(t) : "/";
+  document.getElementById("go").href = to;
+  if (!t) { document.getElementById("sp").hidden = true; document.getElementById("msg").textContent = "This invitation link isn't valid. Open Wordle Battle and use the room code instead."; return; }
+  location.replace(to);
+})();
+</script>
+</body>
+</html>
