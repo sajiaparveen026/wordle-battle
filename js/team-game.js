@@ -253,8 +253,10 @@ html[data-motion=reduced] .tzg-rm,html[data-motion=reduced] .tzg-cd b,html[data-
   async function useHint(type) {
     if (hintBusy || !playing() || !started() || !myActive() || resultShown) return;
     hintBusy = true;
+    const rid = room().id, inSeries = !!(window.Series && Series.inSeries(S));
     const r = await api().call("tz_hint", { p_room: room().id, p_type: type });
     hintBusy = false;
+    if (inSeries && (!room() || room().id !== rid)) return;      // Series: the round moved on while this was in flight; don't apply an old round's answer
     if (r.state) api().apply(r.state);
     if (!r.ok) return submitMsg({ already_used: "Already used.", nothing_to_reveal: "Nothing left to reveal.", nothing_to_remove: "Nothing to remove.", no_clue: "No clue for this word.", not_playing: "Hints are closed now." }[r.reason] || "Couldn't use that hint.");
     snd("coin");

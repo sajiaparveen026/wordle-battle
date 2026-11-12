@@ -72,6 +72,22 @@ const Player = (() => {
   if (!Array.isArray(p.bhist)) p.bhist = [];
   p.ai = p.ai && typeof p.ai === "object" ? cleanB(p.ai) : { played: 0, won: 0, lost: 0, draw: 0, streak: 0, best: 0 };
   if (!Array.isArray(p.ahist)) p.ahist = [];
+  // Solo stats (Profile > Solo): regular Solo games ONLY. Daily Challenge games are never counted here (Daily keeps its own numbers, and its games stay
+  // under the Daily filter in Recent Plays). Older saves are worked out ONCE from real game-mode data: lifetime wins / losses, minus the battle results,
+  // minus the Daily Challenge totals kept in the daily stats; the streak comes from the Solo results in the game history (Daily games skipped).
+  const isDailyGame = (kind, id) => kind === "daily" || String(id || "").startsWith("daily-");
+  const cleanS = (s) => ({ won: cnt(s.won), lost: cnt(s.lost), streak: Math.min(cnt(s.streak), cnt(s.won)) });
+  const seedSolo = (ds) => {
+    if (!ds || typeof ds !== "object") { try { ds = JSON.parse(localStorage.getItem(wbKey("stats"))); } catch { ds = null; } }
+    const dp = cnt(ds && ds.played), dw = Math.min(cnt(ds && ds.wins), dp), dl = dp - dw;
+    const won = Math.max(0, p.wins - p.bstats.won - dw), lost = Math.max(0, p.losses - p.bstats.lost - dl);
+    let streak = 0;
+    for (let i = p.history.length - 1; i >= 0; i--) { const h = p.history[i]; if (!h || h.mode === "daily") continue; if (!h.won) break; streak++; }   // newest Solo games first; a Daily result never breaks or extends it
+    return { won, lost, streak: Math.min(streak, won) };
+  };
+  const hadSolo = !!(p.solo && typeof p.solo === "object");
+  p.solo = hadSolo ? cleanS(p.solo) : seedSolo();
+  if (!hadSolo) save(true);
   // Friend / Team battle counters. Older saves are seeded once from the battle history they still have (last 50): only entries that are clearly
   // a Friend battle (has an opponent) or a Team battle (typed "team") are counted, so nothing is ever over-counted.
   const cleanC = (o) => { const pl = cnt(o.played); return { played: pl, won: Math.min(cnt(o.won), pl) }; };
@@ -130,6 +146,7 @@ const Player = (() => {
       p.coins += r.coins; p.earned += r.coins; p.xp += r.xp; p.wins++; if (!hintsUsed) p.noHintWins++; countSession();
       if (tries >= 1 && tries <= 6) { p.dist[tries - 1]++; p.bestGuesses = p.bestGuesses ? Math.min(p.bestGuesses, tries) : tries; }
       p.streak++; p.bestStreak = Math.max(p.bestStreak, p.streak);
+      if (!isDailyGame(kind, gameId)) { p.solo.won++; p.solo.streak++; }      // Solo only: a Daily win never touches the Solo numbers
       if (extra && typeof extra === "object") { fastWin(extra.ms); if (extra.power === false) p.noPower++; }
       p.rewarded.push("W:" + gameId); p.recent = [...p.recent, "W"].slice(-5);
       p.rewarded = p.rewarded.slice(-300); save();
@@ -156,16 +173,6 @@ const Player = (() => {
       countSession(); p.rewarded.push(key); p.rewarded = p.rewarded.slice(-300); save();
       return { coins, xp, outcome, levelUp: this.levelInfo().level > before };
     },
-    // Series Mode reward (coins + XP only). Paid once per key ("<series>:round:<n>" / "<series>:overall:0"); it is NOT a battle result, so wins, losses, streaks and history are untouched.
-    rewardSeries(key, coins, xp) {
-      const k = "S:" + key;
-      if (!key || p.rewarded.includes(k)) return null;
-      coins = Math.min(1000, Math.max(0, Number(coins) | 0)); xp = Math.min(1000, Math.max(0, Number(xp) | 0));
-      const before = this.levelInfo().level;
-      p.coins += coins; p.earned += coins; p.xp += xp;
-      p.rewarded.push(k); p.rewarded = p.rewarded.slice(-300); save();
-      return { coins, xp, levelUp: this.levelInfo().level > before };
-    },
     // AI Zone reward + record. Paid and counted ONCE per match id (a refresh, a second tab or a retry can never pay twice). Only coins / XP / the AI counters change:
     // wins, losses and the battle counters are NOT touched, so Solo, Friend Battle, Team Battle and the leaderboard never see these matches. No word is stored.
     rewardAI(matchId, level, outcome, meta) {
@@ -181,14 +188,17 @@ const Player = (() => {
       return { coins, xp, outcome, levelUp: this.levelInfo().level > before };
     },
     // Solo numbers for the Profile: battle wins/losses are also added to wins/losses (achievements use those), so they are taken out here to keep Solo and Battle separate.
-    soloCounts() { const w = Math.max(0, p.wins - p.bstats.won), l = Math.max(0, p.losses - p.bstats.lost); return { won: w, played: w + l }; },
+    soloCounts() { const s = p.solo; return { won: s.won, played: s.won + s.lost, streak: s.streak }; },      // Solo games only (no Daily, no battles)
+    // Work the Solo numbers out again from the game-mode data (used when an older cloud save arrives without them). ds = the daily stats, if already known.
+    reseedSolo(ds) { p.solo = seedSolo(ds); save(true); },
     // Skip bookkeeping + friend count for the achievements. markSkip: the word that replaced a skipped one is not a "no power-up" win.
     markSkip(gameId) { p.skipGame = String(gameId || "").slice(0, 60); save(true); },
     noteFriends(n) { n = cnt(n); if (n > p.friendsMax) { p.friendsMax = n; save(); } return p.friendsMax; },
     recordBattle(won) { p.battles.played++; if (won) p.battles.won++; save(); },
-    recordLoss(gameId) {
+    recordLoss(gameId, kind) {
       if (p.rewarded.includes("W:" + gameId) || p.rewarded.includes("L:" + gameId)) return;
-      p.losses++; p.streak = 0; countSession(); p.rewarded.push("L:" + gameId); p.recent = [...p.recent, "L"].slice(-5); save();
+      p.losses++; p.streak = 0; if (!isDailyGame(kind, gameId)) { p.solo.lost++; p.solo.streak = 0; }      // Solo only: a Daily loss never touches the Solo numbers
+ countSession(); p.rewarded.push("L:" + gameId); p.recent = [...p.recent, "L"].slice(-5); save();
     }
   };
 })();

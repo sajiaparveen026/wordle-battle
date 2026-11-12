@@ -226,7 +226,7 @@ function renderProfileStats() {           // Solo, Battle and AI numbers come fr
   $("#pf-l-rate").textContent = "Win Rate";
   let played, won, streak;
   if (battle) { const b = p.bstats; played = b.played; won = b.won; streak = b.streak; }
-  else { const c = Player.soloCounts(); played = c.played; won = c.won; streak = p.streak; }   // Solo: battle results taken out (see Player.soloCounts)
+  else { const c = Player.soloCounts(); played = c.played; won = c.won; streak = c.streak; }   // Solo: regular Solo games only, no Daily and no battles (see Player.soloCounts)
   $("#pf-played").textContent = played; $("#pf-won").textContent = won;
   $("#pf-rate").textContent = played ? Math.round((won / played) * 100) + "%" : "—"; $("#pf-wstreak").textContent = streak;
   $("#pf-l-played").textContent = battle ? "Battles Played" : "Games Played"; $("#pf-l-won").textContent = battle ? "Battles Won" : "Games Won";
@@ -729,7 +729,7 @@ function finishGame() { // each game id can only pay out once (see Player.reward
   const usedHint = Object.keys(hintState.reveals).length > 0 || hintState.disabled.length > 0 || hintState.clues.length > 0;   // any Reveal / Remove / Word hint in this game (Skip is not a hint)
   const ms = playOn ? Math.round(playElapsed()) : null; pausePlay(true);
   if (status === "won") { lastReward = Player.reward(gameId, mode, guesses.length, usedHint, { ms, power: usedHint || Player.data.skipGame === gameId }); }
-  else Player.recordLoss(gameId);
+  else Player.recordLoss(gameId, mode);
   Player.logGame(gameId, mode, status === "won", guesses.length);   // shown under Recent Games on the Profile (once per game)
   if (mode === "daily") { const g = load("game_daily", null); if (g && g.date === today()) { g.reward = lastReward ? { coins: lastReward.coins, xp: lastReward.xp } : { coins: 0, xp: 0 }; save("game_daily", g); } } // remember what this game earned
   if (mode === "daily" && stats.lastDaily !== today()) {

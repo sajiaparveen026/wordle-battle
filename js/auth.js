@@ -238,7 +238,7 @@
   const metaKey = () => "wb_sync_" + user.id;
   const loadMeta = () => { try { return JSON.parse(localStorage.getItem("wb_sync_" + window.WB_NS)) || { rev: 0, dirty: false }; } catch { return { rev: 0, dirty: false }; } };
   const saveMeta = () => localStorage.setItem(metaKey(), JSON.stringify(meta));
-  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt", "earned", "noHintWins", "sessionsPlayed", "lastSession", "lastGameAt", "battles", "ach", "bstats", "bhist", "ai", "ahist", "fb", "tb", "fast", "noPower", "friendsMax"];
+  const KEYS = ["coins", "xp", "wins", "losses", "hints", "skips", "rewarded", "recent", "dist", "streak", "bestStreak", "bestGuesses", "history", "joinedAt", "earned", "noHintWins", "sessionsPlayed", "lastSession", "lastGameAt", "battles", "ach", "bstats", "bhist", "ai", "ahist", "solo", "fb", "tb", "fast", "noPower", "friendsMax"];
   const snapshot = () => { const P = Player.data, player = {}; KEYS.forEach((k) => (player[k] = P[k])); return { v: 1, player, stats: window.WBApp.getStats() }; };
   function applySnapshot(s) { // sanitise before trusting remote/guest data in the local store
     if (!s || typeof s.player !== "object") return;
@@ -277,6 +277,8 @@
     if (r.fast && typeof r.fast === "object") P.fast = { s120: hi(r.fast.s120, P.fast.s120), s60: hi(r.fast.s60, P.fast.s60), s45: hi(r.fast.s45, P.fast.s45) };
     P.noPower = hi(r.noPower, P.noPower); P.friendsMax = hi(r.friendsMax, P.friendsMax);
     if (r.ach && typeof r.ach === "object" && !Array.isArray(r.ach)) Object.keys(r.ach).forEach((id) => { const d = r.ach[id]; if (/^[a-z0-9-]{1,40}$/.test(id) && typeof d === "string" && !isNaN(Date.parse(d)) && (!P.ach[id] || Date.parse(d) < Date.parse(P.ach[id]))) P.ach[id] = d; });
+    if (r.solo && typeof r.solo === "object") { const so = r.solo, w = n(so.won, 0); P.solo = { won: w, lost: n(so.lost, 0), streak: Math.min(n(so.streak, 0), w) }; }
+    else if (Player.reseedSolo) Player.reseedSolo(s.stats);                  // an older cloud save has no Solo numbers: work them out from its game-mode data
     Player.save(true);
     if (s.stats && typeof s.stats === "object") window.WBApp.applyStats(s.stats);
   }

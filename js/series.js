@@ -249,6 +249,14 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     });
   }
 
+  // Round-specific popups (the Clue window, and a Leave / confirm dialog) must never outlive their round. Only the HIDING happens here:
+  // purchased clues, their counts and their history are untouched, and the clue stays in the game's own clue line.
+  function closeRoundPopups() {
+    const c = document.getElementById("clue"); if (c && !c.classList.contains("hidden")) c.classList.add("hidden");
+    const d = document.getElementById("dialog");
+    if (d && !d.classList.contains("hidden")) { const b = d.querySelector("#dlg-actions button"); if (b) b.click(); else d.classList.add("hidden"); }   // the first button is Cancel: the waiting code is released, nothing stays stuck
+    lock(!!document.querySelector(".sr-ov"));              // only the Series popups may keep the page locked
+  }
   function paintHeader(ctx, r) {
     const h = document.querySelector(ctx === "friend" ? "#bt-top .bt-h" : "#tzg-top .tzg-h"); if (!h) return;
     const s = r.series, d = DIFF[s.difficulty] || DIFF.medium, key = s.current_round + ":" + s.total_rounds + ":" + s.difficulty;
@@ -259,11 +267,13 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
   async function switchRoom(ctx, id, sinfo) {
     if (D.switching) return; D.switching = true;
     try {
+      closeRoundPopups();                                           // nothing from this round goes into the next one
       info.set(id, sinfo);
       const r = await call(ctx === "friend" ? "bt_sync" : "tz_sync", { p_room: id });
       if (!r || !r.ok || !r.state) return;
       if (ctx === "friend") { if (window.BattleGame && BattleGame.isOn()) BattleGame.exit(false); FriendBattle.api.enter(r.state); }
       else TeamZone.api.apply(r.state, true);
+      closeRoundPopups();                                           // and nothing opened while the new round was loading
     } finally { D.switching = false; }
   }
 
@@ -279,6 +289,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     if (!["playing", "finished"].includes(room.status)) return;       // still in the lobby: nothing to run yet
     if (!info.has(room.id)) { ensureInfo(ctx, room); return; }
     const si = info.get(room.id); if (!si) return;                    // a normal battle
+    if (room.status === "finished" && D.closedFor !== room.id) { D.closedFor = room.id; closeRoundPopups(); }      // the round just ended (solved, time up, or everyone failed)
     D.busy = true;
     const t0 = Date.now(), r = await call("series_sync", { p_series: si.id });
     D.busy = false;
@@ -313,6 +324,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     let el = popEl();
     if (!el || popKey !== key) {
       if (el) el.remove(); popKey = key;
+      closeRoundPopups();
       el = document.createElement("div"); el.id = "sr-pop"; el.className = "sr-ov"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", `Round ${lr.round_no} completed`);
       const win = lr.result === "win"
         ? `<div class="sr-win"><span class="a" aria-hidden="true">${av(lr.winner_avatar)}</span><span class="n"><small>Round Winner</small><b>${esc(lr.winner_name || "Player")}</b></span></div>`
@@ -330,7 +342,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
   function tickPop() {
     const n = document.getElementById("sr-n"), r = D.data; if (!n || !r || !r.last_round || !r.last_round.next_at_ms) return;
     const left = r.last_round.next_at_ms - srvNow(); n.textContent = String(Math.max(0, Math.ceil(left / 1000)));
-    if (left <= 0) { const e = popEl(); if (e) { e.remove(); lock(false); popKey = ""; } }
+    if (left <= 0) { const e = popEl(); if (e) { e.remove(); lock(false); popKey = ""; closeRoundPopups(); } }
   }
   setInterval(tickPop, 200);
 
@@ -657,5 +669,7 @@ if (!document.getElementById("sr-css3")) { const st = document.createElement("st
       <button class="sr-btn alt" type="button" id="sd-close">Back to history</button>`;
   }
 
-  window.Series = { is: isSeries, page, button, chips, back, owns, info: (id) => info.get(id) || null };
+  // true when this room is a Series round (used by the game screens to ignore a late answer from an earlier round)
+  const inSeries = (st) => !!(st && st.room && info.get(st.room.id));
+  window.Series = { inSeries, is: isSeries, page, button, chips, back, owns, info: (id) => info.get(id) || null };
 })();

@@ -224,14 +224,16 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     if (!playing() || !started() || !myActive() || hintBusy || busy || resultShown) return;
     if ((S.me.hints_used || []).includes(type)) return;
     hintBusy = true; $$(".hint").forEach((b) => (b.disabled = true));
+    const rid = room().id, inSeries = !!(window.Series && Series.inSeries(S));
     const r = await fb().call("bt_hint", { p_room: room().id, p_type: type });
     hintBusy = false;
+    if (inSeries && (!S || room().id !== rid)) return;      // Series: this round is over and the next one has begun, so an old answer must not touch the new screen
     if (r.state) fb().apply(r.state);
     if (r.ok) {
       snd("coin");
       if (type === "reveal") toast(`Letter ${r.data.pos + 1} is ${r.data.letter.toUpperCase()}`, "success");
       else if (type === "remove") toast(`${r.data.letters.length} wrong letters removed`, "success");
-      else showClue(r.data);
+      else if (!inSeries || playing()) showClue(r.data);      // Series: never open the Clue popup after its round has ended (the clue itself is kept)
     } else if (r.reason === "nothing_to_reveal") toast("You already know every letter's place!", "");
     else if (r.reason === "nothing_to_remove") toast("There are no more letters to remove.", "");
     else if (r.reason === "already_used") toast("You already used that clue.", "");
