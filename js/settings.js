@@ -13,6 +13,21 @@
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
     {
+  v: "1.24.0",
+  date: "2026-11-13",
+  title: "Series Mode, invite links and Share App",
+  items: [
+    "New Series Mode in Friend Zone and Team Zone: play 3, 5 or 10 rounds at the same difficulty and see who wins the whole series.",
+    "Every round ends with a popup showing the correct word and its meaning, then the next round starts for everyone together.",
+    "Win a round to earn 10 coins and 20 XP, and win the series for an extra 50 coins and 50 XP.",
+    "Series Stats shows your full series history, your results and every round's word and winner.",
+    "Invite friends with a link: share your room on WhatsApp or copy the link, and they join with one tap.",
+    "New Share App option in Settings to invite friends to Wordle Battle.",
+    "Solo stats now count only Solo games. Daily Challenge results no longer change your Solo played, won, win rate or streak.",
+    "Fixed the Clue popup staying open after a Series round ends."
+  ]
+},
+    {
   v: "1.23.1",
   date: "2026-11-04",
   title: "Tap an AI card to play",
@@ -333,6 +348,22 @@
     $("#bug-msg").className = "authmsg " + (ok ? "ok" : "error"); $("#bug-msg").textContent = ok ? "Report copied. Paste it into an email to " + SUPPORT_EMAIL + "." : "Couldn\u2019t copy. Please select the text and copy it yourself.";
   });
 
+  // ---------- Share App ----------
+  // Native share menu (WhatsApp, Messenger, Telegram, SMS, ...) where the browser has one; otherwise the link is copied. No sign-in needed.
+  // The link is the address the app is running on (your real production domain), never a placeholder or the current deep link / query.
+  const siteLink = () => (window.CONFIG && typeof CONFIG.SITE_URL === "string" && /^https:\/\/[^\s/]+$/i.test(CONFIG.SITE_URL.replace(/\/+$/, "")) ? CONFIG.SITE_URL.replace(/\/+$/, "") : location.origin) + "/";
+  async function copyLink(t) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(t); return true; } } catch {}
+    try { const a = document.createElement("textarea"); a.value = t; a.setAttribute("readonly", ""); a.style.cssText = "position:fixed;opacity:0;top:0;left:0"; document.body.append(a); a.select(); a.setSelectionRange(0, t.length); const ok = document.execCommand("copy"); a.remove(); return ok; } catch { return false; }
+  }
+  async function shareApp() {
+    const link = siteLink(), text = `Hey! I'm playing Wordle Battle. Join me and challenge your friends in this fun word-guessing game!\nPlay here: ${link}`;
+    if (typeof navigator.share === "function" && !(navigator.canShare && !navigator.canShare({ text }))) {
+      try { await navigator.share({ title: "Wordle Battle", text }); return; } catch (e) { if (e && e.name === "AbortError") return; }   // closed the menu: nothing more to do
+    }
+    const ok = await copyLink(link);
+    toast(ok ? "Link copied!" : "Couldn't copy the link. Please copy it from the address bar: " + link, ok ? "success" : "error", ok ? 2200 : 4200);
+  }
   // ---------- one click handler for every row ----------
   root.addEventListener("click", (e) => {
     if (e.target.closest("[data-sp-close]") || e.target.closest("#sp-close")) return close();
@@ -344,6 +375,7 @@
       case "password": openPassword(); break;
       case "delete": openDelete(); break;
       case "howto": close(false); if (window.Tutorial) Tutorial.open(); break;
+      case "share": shareApp(); break;
       case "signup": case "login": close(false); WBApp.show(act.dataset.spAct); break;
     }
   });
