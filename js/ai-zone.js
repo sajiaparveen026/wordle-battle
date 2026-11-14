@@ -189,7 +189,7 @@
       const l = planRemove(); if (!l) return toast("There are no more letters to remove.", "");
       M.pu.remove = { letters: l }; toast(`${l.length} wrong letters removed`, "success");
     } else M.pu.word = { i: Math.floor(Math.random() * clueDeckOf(M.secret).length) };
-    snd("coin"); try { flash($(`[data-hint=${type}]`)); } catch {}
+    snd("power"); try { flash($(`[data-hint=${type}]`)); } catch {}
     paintHintTiles(); drawKeys(); drawHints(); persist();
     if (type === "word") showClue();
   }
@@ -202,7 +202,7 @@
   const drawGuess = (i, g) => [...rowEl(i).children].forEach((t, c) => drawTile(t, g.word[c], K[g.pattern[c]]));
   function flipRow(i, g, done) {
     if (quick()) { drawGuess(i, g); return done(); }
-    [...rowEl(i).children].forEach((t, c) => later(() => { t.classList.add("flip"); snd("flip", c); later(() => { drawTile(t, g.word[c], K[g.pattern[c]]); t.classList.add("flip"); }, 275); }, c * 280));
+    [...rowEl(i).children].forEach((t, c) => later(() => { t.classList.add("flip"); snd("flip", c, K[g.pattern[c]]); later(() => { drawTile(t, g.word[c], K[g.pattern[c]]); t.classList.add("flip"); }, 275); }, c * 280));
     later(done, COLS * 280 + 300);
   }
   function paintTyping() {
@@ -222,7 +222,7 @@
   function press(k) {
     if (!canType()) return;
     if (k === "enter") return submit();
-    if (k === "back") { cur = cur.slice(0, -1); notice(""); snd("key"); }
+    if (k === "back") { cur = cur.slice(0, -1); notice(""); snd("del"); }
     else if (/^[a-z]$/.test(k) && cur.length < COLS && !goneKeys().includes(k)) { cur += k; notice(""); snd("key"); }
     paintTyping();
   }
@@ -267,7 +267,7 @@
   }
   function aiMove() {
     if (aiBusy || !M || M.phase !== "play" || M.aStatus !== "active" || M.aGuesses.length >= ROWS) return;    // one guess per countdown, never two
-    aiBusy = true; const turn = ++aiTurn;
+    aiBusy = true; const turn = ++aiTurn; snd("aiMove");
     let word = ai.next(M.aGuesses.map((h) => ({ word: h.word, code: h.code })));                   // the engine sees its own guesses and their feedback only
     if (typeof VALID !== "undefined" && (!VALID.has(word) || M.aGuesses.some((h) => h.word === word))) word = [...ANSWERS].find((w) => !M.aGuesses.some((h) => h.word === w)) || ANSWERS[0];
     const code = toCode(evaluate(word, M.secret));
@@ -276,7 +276,7 @@
     if (solved) M.aStatus = "solved"; else if (out) M.aStatus = "failed";
     drawAtt(); drawStatus();
     const delay = quick() ? 0 : COLS * 220 + 300;
-    if (solved) finish("loss", delay + 200);                                                  // the AI got it first: match over now, no more guesses from either side
+    if (solved) { later(() => snd("aiSolved"), quick() ? 0 : COLS * 220); finish("loss", delay + 200); }                                                  // the AI got it first: match over now, no more guesses from either side
     else if (out && M.pStatus === "failed") finish("draw", delay + 200);
     else persist();
     revealAi(row, () => {
@@ -311,8 +311,8 @@
     if (fresh) {
       M.phase = "ready"; drawStatus(); paintTyping();
       const wrap = $(".board-wrap"), cd = document.createElement("div"); cd.id = "az-cd"; cd.className = "bt-cd"; cd.setAttribute("role", "status"); wrap.append(cd);
-      const step = (n) => { if (!M || M.id !== m.id) return; if (n === 0) { cd.remove(); M.phase = "play"; M.startedAt = new Date().toISOString(); M.thinkLeft = lv().think * 1000; persist(); startTick(); paintTyping(); drawStatus(); return; } cd.innerHTML = `<b>${n}</b><span>GET READY</span>`; snd("key"); later(() => step(n - 1), quick() ? 400 : 900); };
-      step(3);
+      const step = (n) => { if (!M || M.id !== m.id) return; if (n === 0) { cd.remove(); M.phase = "play"; M.startedAt = new Date().toISOString(); M.thinkLeft = lv().think * 1000; persist(); startTick(); paintTyping(); drawStatus(); return; } cd.innerHTML = `<b>${n}</b><span>GET READY</span>`; later(() => step(n - 1), quick() ? 400 : 900); };
+      snd("aiStart"); step(3);
     } else { M.phase = "play"; persist(); startTick(); paintTyping(); }
   }
   function startMatch(level) {
@@ -372,7 +372,7 @@
       <div class="bt-rw" id="az-rw"></div>
       <div class="r-actions"><button class="again-link" type="button" data-az="again" id="az-again">Play again</button><div class="r-icons"><button class="r-icon" type="button" data-az="home" aria-label="Home" title="Home"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-home"/></svg><small>Home</small></button><button class="r-icon" type="button" data-az="profile" aria-label="Profile" title="Profile"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-profile"/></svg><small>Profile</small></button><button class="r-icon ai" type="button" data-az="zone" aria-label="AI Zone" title="AI Zone"><svg class="ri" aria-hidden="true" focusable="false"><use href="#r-robot"/></svg><small>AI Zone</small></button></div></div></div>`;
     document.body.append(el); lockModal(true); $("#az-again").focus();
-    if (res === "win") { snd("win"); gfx("confetti"); } else if (res === "loss") snd("lose");
+    if (res === "win") { snd("victory"); gfx("confetti"); } else if (res === "loss") snd("defeat"); else snd("draw");
     drawReward(reward, res, m.id);
   }
   let fxFor = "";   // the match whose reward coins already flew (one animation per paid win)
@@ -391,7 +391,7 @@
     } else gfx("refreshCoins");
     if (rw.coins) gfx("countUp", $("#az-rc"), rw.coins, "+"); if (rw.xp) gfx("countUp", $("#az-rx"), rw.xp, "+");
     gfx("animateXp", "#az-xp", Math.round(lvl.xp / lvl.need * 100));
-    if (rw.coins) snd("coin");
+    if (rw.coins) snd("reward");
   }
 
   // ---------- AI Battle Stats ----------

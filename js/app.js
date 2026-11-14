@@ -15,6 +15,9 @@ let settings = load("settings", { theme: "dark", mute: false });
 if (!settings.motionUser) settings.reduceMotion = false;
 if (settings.theme !== "light") settings.theme = "dark";   // only two themes exist
 if (typeof settings.vibrate !== "boolean") settings.vibrate = true;   // Settings > Game Preferences
+if (typeof settings.music !== "boolean") settings.music = true;      // Settings > Game Preferences > Background Music (settings.mute = Sound Effects OFF)
+if (typeof settings.musicVol !== "number" || settings.musicVol < 0 || settings.musicVol > 1) settings.musicVol = 0.5;
+if (typeof settings.sfxVol !== "number" || settings.sfxVol < 0 || settings.sfxVol > 1) settings.sfxVol = 0.8;
 const reduced = () => !!settings.reduceMotion;
 let stats = load("stats", { played: 0, wins: 0, streak: 0, best: 0, dist: [0, 0, 0, 0, 0, 0], lastDaily: "" });
 
@@ -55,29 +58,35 @@ function evaluate(guess, secret) {
 }
 
 // ---------- Sound ----------
-let audio;
-function beep(freq, dur = 0.08, type = "sine") {
-  if (settings.mute) return;
-  try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    const o = audio.createOscillator(), g = audio.createGain();
-    o.type = type; o.frequency.value = freq; g.gain.value = 0.06;
-    o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + dur);
-  } catch {}
-}
+// Every sound comes from js/audio.js (music, effects, volumes, mute). This file only names the moments.
+const A = (name, o) => { if (window.WBAudio) WBAudio.play(name, o); };
+function beep() { A("tap"); }   // kept for older callers
 // ---------- Vibration (Settings > Game Preferences). Not every device supports it (e.g. iPhone), so it is always optional. ----------
 const canVibrate = () => typeof navigator.vibrate === "function";
 function vibe(pattern) { if (!settings.vibrate || !canVibrate()) return; try { navigator.vibrate(pattern); } catch {} }
+const later = (fn, ms) => setTimeout(fn, ms);
 const sfx = {
-  key: () => beep(520, 0.04), bad: () => { beep(150, 0.18, "square"); vibe(60); }, coin: () => { beep(880, 0.07); setTimeout(() => beep(1320, 0.1), 70); vibe(25); },
-  flip: (i) => beep(400 + i * 60, 0.07),
-  win: () => { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, 0.15), i * 110)); vibe([70, 50, 70, 50, 150]); },
-  lose: () => { [300, 240, 180].forEach((f, i) => setTimeout(() => beep(f, 0.2, "triangle"), i * 150)); vibe(220); }
+  key: () => A("key"), del: () => A("key_del"), submit: () => A("submit"), bad: () => { A("invalid"); vibe(60); }, err: () => A("error"),
+  // a tile turns over, then shows its colour (st = correct / present / absent, or g / y / anything else in the battle screens)
+  flip: (i, st) => { A("flip", { rate: 0.92 + (i || 0) * 0.045 }); const nm = !st ? "" : (st === "correct" || st === "g") ? "correct" : (st === "present" || st === "y") ? "present" : "absent"; if (nm) later(() => A(nm, { rate: nm === "absent" ? 1 : 0.96 + (i || 0) * 0.03 }), 200); },
+  win: () => { A(mode === "daily" ? "daily_win" : "win"); vibe([70, 50, 70, 50, 150]); },
+  lose: () => { A("lose"); vibe(220); },
+  coin: () => { A("coin"); vibe(25); }, claim: () => { A("claim"); vibe(25); }, buy: () => { A("buy"); vibe(25); }, reward: () => A("reward"),
+  fly: () => A("reward_fly"), collect: () => A("coin_collect"),
+  clueBuy: () => { A("clue_buy"); vibe(25); }, reveal: () => later(() => A("clue_reveal"), 120), power: () => { A("clue_buy"); vibe(25); },
+  achievement: (g) => A("achievement", { gain: g || 1 }),
+  toast: (k) => A(k === "success" ? "confirm" : k === "error" ? "error" : "notify"), toggle: (on) => A(on ? "toggle_on" : "toggle_off"), preview: () => A("confirm"),
+  menuOpen: () => A("menu_open"), menuClose: () => A("menu_close"), tick: () => A("tick"), timeUp: () => A("time_up"),
+  // battles
+  aiStart: () => A("ai_start"), aiMove: () => A("ai_move"), aiSolved: () => A("ai_solved"),
+  victory: () => { A("victory"); vibe([70, 50, 70, 50, 150]); }, defeat: () => { A("defeat"); vibe(220); }, draw: () => A("draw"), results: () => A("results"), solved: () => A("correct"),
+  // spin wheel
+  wheelTick: () => A("wheel_tick"), wheelSpin: () => A("wheel_spin"), wheelSlow: () => A("wheel_slow"), wheelStop: () => A("wheel_stop"), wheelWin: () => { A("wheel_win"); vibe([60, 40, 60, 40, 140]); }
 };
 
 // ---------- Small UI helpers ----------
 function toast(text, kind = "", ms = 2200) {
-  const el = document.createElement("div"); el.className = "msg " + kind; el.textContent = text;
+  const el = document.createElement("div"); el.className = "msg " + kind; el.textContent = text; sfx.toast(kind);
   $("#toast").prepend(el); setTimeout(() => el.remove(), ms);
 }
 function noticeToast(title, text, ms = 3800) {   // a two-line notice (bold title + message), same toast stack as toast()
@@ -142,7 +151,7 @@ function show(name, fromHistory) {
   if (name !== "game" && playOn) { pausePlay(true); if (status === "playing") saveProgress(); }   // leaving the Solo / Daily game stops its clock
   if (!fromHistory) syncHistory(name);
   if (name !== screen) prevScreen = screen;
-  screen = name;
+  screen = name; if (window.WBAudio) WBAudio.screen(name);
   $$(".screen").forEach((s) => s.classList.toggle("hidden", s.id !== name));
   const el = $("#" + name); el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
   $("#bottomnav").classList.toggle("hidden", name === "game" || AUTH_SCREENS.includes(name));
@@ -286,7 +295,7 @@ const THEME_COLOR = { dark: "#1A1A1B", light: "#F5F4EE" };   // browser / phone 
 function applySettings() {
   document.documentElement.dataset.theme = settings.theme; document.documentElement.dataset.motion = reduced() ? "reduced" : "full";
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = THEME_COLOR[settings.theme] || THEME_COLOR.dark;
-  save("settings", settings);
+  save("settings", settings); if (window.WBAudio) WBAudio.refresh();   // music / effects volume and on-off apply at once
 }
 // "Reset all progress" (guest devices only). Settings > Privacy & Security > Delete Account uses it for guests, after its own confirmation.
 async function resetAllProgress(alreadyConfirmed) {
@@ -339,15 +348,15 @@ function shopFx(card, label, dir, amount) {
 function visibleCoins() { return $$(".coins").find((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.closest(".hidden"); }) || null; }
 function coinsToBalance(src, amount, opts = {}) {
   const to = visibleCoins(), vals = $$(".coin-val"), real = () => Player.data.coins, before = Math.max(0, real() - amount);
-  const finish = () => { refreshCoins(); if (opts.onTick) opts.onTick(real()); if (to) { to.classList.remove("bump"); void to.offsetWidth; to.classList.add("bump"); setTimeout(() => to.classList.remove("bump"), 650); } };
+  const finish = () => { sfx.collect(); refreshCoins(); if (opts.onTick) opts.onTick(real()); if (to) { to.classList.remove("bump"); void to.offsetWidth; to.classList.add("bump"); setTimeout(() => to.classList.remove("bump"), 650); } };
   if (!src || !to || reduced() || !src.getBoundingClientRect) return finish();
   const a = src.getBoundingClientRect(), t = to.getBoundingClientRect();
   if (!a.width || !t.width) return finish();
   const from = { x: a.left + a.width / 2, y: a.top + a.height / 2 }, dest = { x: t.left + t.width / 2, y: t.top + t.height / 2 };
   vals.forEach((v) => (v.textContent = before)); if (opts.onTick) opts.onTick(before);       // the balance shows the old number until the coins land
-  const n = 8; let landed = 0, done = false;
+  const n = 8; let landed = 0, done = false; sfx.fly();
   const land = () => {
-    if (done) return; done = true; const to2 = real(), t0 = performance.now();
+    if (done) return; done = true; sfx.collect(); const to2 = real(), t0 = performance.now();
     const step = (now) => { const k = Math.min(1, (now - t0) / 450), v = Math.round(before + (to2 - before) * (1 - Math.pow(1 - k, 3))); vals.forEach((e) => (e.textContent = v)); if (opts.onTick) opts.onTick(v); if (k < 1) requestAnimationFrame(step); else finish(); };
     requestAnimationFrame(step);
   };
@@ -368,7 +377,7 @@ async function buyItem(id) {                              // one purchase at a t
     if (!(await confirmSpend("Buy", `Buy 1 "${it.name}" for ${it.price} coins?`, it.price, it.icon))) return;
     if (!Player.spend(it.price)) return toast("Not enough coins", "error");
     if (it.kind === "hint") Player.addHintCredit(it.type); else if (it.kind === "skip") Player.addSkipCredit();
-    sfx.coin(); toast(`Bought: ${it.name}`, "success"); updateHintButtons();   // updateHintButtons also refreshes every coin counter
+    sfx.buy(); toast(`Bought: ${it.name}`, "success"); updateHintButtons();   // updateHintButtons also refreshes every coin counter
     cool = reduced() ? 400 : 1000;                         // keep the buttons locked while the success effect plays
     if (btn) { btn.textContent = "✓ Bought"; btn.classList.add("ok"); setTimeout(() => { btn.textContent = "Buy"; btn.classList.remove("ok"); }, cool); }
     shopFx(btn && btn.closest(".gcard"), `-${it.price} 🪙`, "spend");
@@ -426,7 +435,7 @@ function reveal(i, word, animate, done) {
   [...rowEl(i).children].forEach((t, c) => {
     const apply = () => { t.classList.add(res[c]); t.setAttribute("aria-label", `${word[c]}, ${{ correct: "correct position", present: "in the word, wrong position", absent: "not in the word" }[res[c]]}`); };
     if (!animate) { t.textContent = word[c]; apply(); return; }
-    setTimeout(() => { t.classList.add("flip"); sfx.flip(c); setTimeout(apply, 275); }, c * 280);
+    setTimeout(() => { t.classList.add("flip"); sfx.flip(c, res[c]); setTimeout(apply, 275); }, c * 280);
   });
   if (animate) setTimeout(done, COLS * 280 + 300); else done && done();
 }
@@ -523,7 +532,7 @@ async function useHint(type) {
   if (type === "word") return openClues();   // the lightbulb never pays by itself: it opens the popup (buying happens inside it)
   if (spendLock) return;
   if (hintState.used[type] >= HINT_LIMITS[type]) {   // the limit lives in the saved game state, so it holds after a refresh and can't be skipped by tapping fast
-    sfx.bad(); return noticeToast("Usage Limit Reached!", `You've already used ${type === "reveal" ? "Reveal a Letter" : "Remove Wrong Letters"} the maximum number of times in this game.`);
+    sfx.err(); return noticeToast("Usage Limit Reached!", `You've already used ${type === "reveal" ? "Reveal a Letter" : "Remove Wrong Letters"} the maximum number of times in this game.`);
   }
   spendLock = true;
   try {
@@ -539,7 +548,7 @@ async function useHint(type) {
     hintState.used[type]++;   // counted only here: the use succeeded and any payment is already taken
     if (type === "reveal") { hintState.reveals[plan.pos] = plan.letter; toast(`Letter ${plan.pos + 1} is ${plan.letter.toUpperCase()}`, "success"); }
     else { hintState.disabled.push(...plan); toast(`${plan.length} wrong letters removed`, "success"); }
-    sfx.coin(); flash($(`[data-hint=${type}]`)); renderHintTiles(); colorKeys(); updateHintButtons(); saveProgress();
+    sfx.power(); flash($(`[data-hint=${type}]`)); renderHintTiles(); colorKeys(); updateHintButtons(); saveProgress();
   } finally { spendLock = false; }
 }
 
@@ -592,7 +601,7 @@ function openClues() {
   if (status !== "playing") return;
   const auto = ownedClues().length === 0 && cluesLeft() > 0 && clueIsFree();   // free uses left and no clue yet: reveal the first clue straight away, no buy screen
   if (auto) buyClue();                                                           // the free path has no dialog, so this finishes at once
-  drawClue(auto);
+  drawClue(auto); if (ownedClues().length) sfx.reveal();
   $("#clue").classList.remove("hidden"); lockModal(true); $("#clue-x").focus();
 }
 const clueBusy = (on) => { $("#clue-first").disabled = on; $("#clue-buy").disabled = on; };
@@ -610,7 +619,7 @@ async function buyClue() { // the ONLY place a clue is paid for: Buy Clue (none 
     const idx = planClue(); if (idx === null) return drawClue(false);   // re-picked after the dialog; nothing left means nothing charged
     if (clueIsFree()) Player.consumeHint("word"); else if (!Player.spend(cost)) return toast("Not enough coins", "error");   // coins leave only now, once the clue is certain
     hintState.clues.push(idx); saveProgress();               // the clue is saved together with the payment
-    sfx.coin(); flash($("[data-hint=word]")); updateHintButtons(); drawClue(true);   // updateHintButtons also refreshes every coin counter
+    sfx.clueBuy(); sfx.reveal(); flash($("[data-hint=word]")); updateHintButtons(); drawClue(true);   // updateHintButtons also refreshes every coin counter
   } finally { spendLock = false; clueBusy(false); }
 }
 $("#clue-first").onclick = buyClue; $("#clue-buy").onclick = buyClue;
@@ -701,7 +710,7 @@ function startGame(newPractice = false) {
 function press(k) {
   if (screen !== "game" || status !== "playing" || busy) return;
   if (k === "enter") return submit();
-  if (k === "back") { current = current.slice(0, -1); sfx.key(); submitMsg(""); }
+  if (k === "back") { current = current.slice(0, -1); sfx.del(); submitMsg(""); }
   else if (/^[a-z]$/.test(k) && current.length < COLS && !hintState.disabled.includes(k)) { current += k; sfx.key(); submitMsg(""); }
   paintRow(guesses.length, current);
 }
@@ -713,7 +722,7 @@ function submit() {
   if (!VALID.has(current)) return bad("Not a word!");
   if (guesses.includes(current)) return bad("Already guessed");
   submitMsg("");
-  const word = current; current = ""; busy = true; guesses.push(word); markActive();
+  sfx.submit(); const word = current; current = ""; busy = true; guesses.push(word); markActive();
   reveal(row, word, true, () => {
     busy = false;
     if (word === answer) { status = "won"; rowEl(row).classList.add("win"); sfx.win(); }
@@ -783,7 +792,7 @@ function showResult() {
       $("#r-balance").textContent = `Balance: ${old} 🪙`; $$(".coin-val").forEach((v) => (v.textContent = old));
     }
     $("#r-level").textContent = `Level ${lv.level} · ${lv.xp}/${lv.need} XP`; animateXp("#r-xp", (lv.xp / lv.need) * 100);
-    confetti(); setTimeout(sfx.coin, 400);
+    confetti(); setTimeout(sfx.reward, 400);
   }
   renderStats(won ? n : 0);
   $("#r-daily").textContent = "";   // the "Daily challenges completed / Daily streak" line was removed from the result card

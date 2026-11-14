@@ -288,7 +288,7 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
       else if (!netBad) { netBad = true; if (window.BattleGame && BattleGame.isOn()) netBanner(true); else render(); }
     } finally { syncing = false; if (again) { again = false; sync(); } }
   }
-  function setState(st) {
+  function setState(st) { if (window.WBAudio) WBAudio.roomState("friend", st);
     const prev = S; S = st;
     const was = prev && prev.players ? prev.players.length : 0;
     if (prev && prev.room.id === st.room.id && was === 1 && st.players.length === 2) { const o = oppPlayer(); if (o) toast(`${o.username} joined the room`, "success"); }

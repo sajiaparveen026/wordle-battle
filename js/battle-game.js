@@ -104,7 +104,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
   function flipRow(i, g, done) {
     const tiles = [...rowEl(i).children], quick = typeof reduced === "function" && reduced();
     if (quick) { drawGuess(i, g); return done(); }
-    tiles.forEach((t, c) => setTimeout(() => { t.classList.add("flip"); snd("flip", c); setTimeout(() => { drawTile(t, g.word[c], KIND[g.pattern[c]]); t.classList.add("flip"); }, 275); }, c * 280));
+    tiles.forEach((t, c) => setTimeout(() => { t.classList.add("flip"); snd("flip", c, KIND[g.pattern[c]]); setTimeout(() => { drawTile(t, g.word[c], KIND[g.pattern[c]]); t.classList.add("flip"); }, 275); }, c * 280));
     setTimeout(done, COLS * 280 + 300);
   }
   function paintTyping() {
@@ -188,7 +188,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     if (!canType()) return;
     const gone = ((S.me.hint_data.remove || {}).letters) || [];
     if (k === "enter") return submit();
-    if (k === "back") { cur = cur.slice(0, -1); submitMsg(""); snd("key"); }
+    if (k === "back") { cur = cur.slice(0, -1); submitMsg(""); snd("del"); }
     else if (/^[a-z]$/.test(k) && cur.length < COLS && !gone.includes(k)) { cur += k; submitMsg(""); snd("key"); }
     paintTyping();
   }
@@ -206,7 +206,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
       fb().apply(r.state);
       flipRow(row, g, () => {
         busy = false;
-        if (r.pattern === "ggggg") { rowEl(row).classList.add("win"); snd("win"); }
+        if (r.pattern === "ggggg") { rowEl(row).classList.add("win"); snd("solved"); }
         update(S); 
       });
       return;
@@ -230,7 +230,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     if (inSeries && (!S || room().id !== rid)) return;      // Series: this round is over and the next one has begun, so an old answer must not touch the new screen
     if (r.state) fb().apply(r.state);
     if (r.ok) {
-      snd("coin");
+      snd("power");
       if (type === "reveal") toast(`Letter ${r.data.pos + 1} is ${r.data.letter.toUpperCase()}`, "success");
       else if (type === "remove") toast(`${r.data.letters.length} wrong letters removed`, "success");
       else if (!inSeries || playing()) showClue(r.data);      // Series: never open the Clue popup after its round has ended (the clue itself is kept)
@@ -266,7 +266,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     document.body.append(el); lockModal(true); $("#bt-back").focus();
     if (window.Friends) Friends.decorateResult(el, r.id);   // "+ Add Friend" beside the opponent (js/friends.js)
     $("#bt-back").onclick = () => exit(true);
-    if (res === "win") snd("win"); else if (res === "loss") snd("lose");
+    if (res === "win") snd("victory"); else if (res === "loss") snd("defeat"); else snd("draw");
     drawBar(); drawHints(); paintTyping();
     rwState = "idle"; rwInfo = null; rmSig = ""; rmBusy = false;
     drawReward(); watchRematch(); rwWait = claimReward();            // collect the reward automatically, then offer a rematch
@@ -333,7 +333,7 @@ html[data-motion=reduced] .bt-h,html[data-motion=reduced] .bt-tm b,html[data-mot
     }, quick() ? 0 : 900);
     gfx("animateXp", "#bt-xp", Math.round(lv.xp / lv.need * 100));
     if (m.outcome === "win") gfx("confetti");
-    snd("coin");
+    snd("reward");
   }
 
   // ---------- rematch: the server keeps the request (30 seconds) and creates the new battle when both agree ----------

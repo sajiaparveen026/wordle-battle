@@ -47,7 +47,7 @@
       }
       writeDay(place, day);                                           // save the claim first, then pay: a crash in between can only lose the claim, never double it
       if (!Player.addCoins(AMOUNT)) return { status: "error", note: UNAVAILABLE };
-      refreshCoins(); if (typeof sfx !== "undefined" && sfx.coin) sfx.coin();
+      refreshCoins(); if (typeof sfx !== "undefined") { if (sfx.claim) sfx.claim(); else if (sfx.coin) sfx.coin(); }
       return { status: "claimed" };
     } finally { busy[place] = false; refreshDot(); syncShopButton(); }
   }

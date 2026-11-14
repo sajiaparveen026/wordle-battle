@@ -242,9 +242,10 @@ html[data-motion=reduced] .whcard,html[data-motion=reduced] .whcard::after,html[
   function tickFx() {
     const p = $("#wh-pointer"); if (!p) return;
     p.classList.remove("tick"); void p.offsetWidth; p.classList.add("tick");
-    const now = performance.now(); if (now - lastTickSfx > 70 && typeof sfx !== "undefined" && sfx.key) { lastTickSfx = now; sfx.key(); }
+    const now = performance.now(); if (now - lastTickSfx > 70 && typeof sfx !== "undefined" && sfx.key) { lastTickSfx = now; (sfx.wheelTick || sfx.key)(); }
   }
   function animateTo(target, dur) {
+    if (typeof sfx !== "undefined" && sfx.wheelSlow) setTimeout(sfx.wheelSlow, Math.round(dur * 0.45));   // the wheel starts to slow down
     return new Promise((res) => {
       const from = rot, t0 = performance.now(); let seg = segAt(from);
       const step = (now) => {
@@ -294,7 +295,7 @@ html[data-motion=reduced] .whcard,html[data-motion=reduced] .whcard::after,html[
     }
     let idx = prizes.findIndex((p) => p.id === prize.id);
     if (idx < 0 && isAcct()) { cfgDone = false; await loadStatus(true); idx = prizes.findIndex((p) => p.id === prize.id); }
-    if (idx >= 0) { if (!built) build(); await animateTo(targetFor(idx), quick() ? 700 : WHEEL.spinMs); }
+    if (idx >= 0) { if (!built) build(); if (typeof sfx !== "undefined" && sfx.wheelSpin) sfx.wheelSpin(); await animateTo(targetFor(idx), quick() ? 700 : WHEEL.spinMs); if (typeof sfx !== "undefined" && sfx.wheelStop) sfx.wheelStop(); }
     finish(req, prize, isFree, cost, useDay, false);
   }
 
@@ -320,7 +321,7 @@ html[data-motion=reduced] .whcard,html[data-motion=reduced] .whcard::after,html[
     const sub = prize.kind === "coins" ? (cost ? `Spin cost ${cost} coins · net ${net >= 0 ? "+" : ""}${net}` : "Free spin · added to your balance") : `Added to your items. Use it in a game.`;
     el.innerHTML = `<div class="wh-win-card" style="--c:${c}"><div class="wh-rays"></div><div class="wh-win-ic" id="wh-win-ic" aria-hidden="true">${iconOf(prize)}</div><h2 id="wh-win-t">${jackpot ? "JACKPOT!" : "You won"}</h2><p class="wh-win-p">${esc(prize.kind === "coins" ? "+" + prize.amount + " coins" : nameOf(prize))}</p><small>${esc(sub)}</small><button class="wh-collect" id="wh-collect" type="button">Collect</button></div>`;
     document.body.append(el); if (typeof lockModal === "function") lockModal(true);
-    if (typeof sfx !== "undefined") { if (jackpot && sfx.win) sfx.win(); else if (sfx.coin) sfx.coin(); }
+    if (typeof sfx !== "undefined") { if (jackpot && sfx.wheelWin) sfx.wheelWin(); else if (sfx.claim) setTimeout(sfx.claim, 350); else if (sfx.coin) sfx.coin(); }
     if (typeof confetti === "function") { confetti(); if (jackpot) setTimeout(confetti, 500); }
     let closed = false;
     const close = () => {

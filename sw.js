@@ -39,6 +39,10 @@ self.addEventListener("message", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request, url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== self.location.origin) return; // Supabase etc.: untouched
+  if (url.pathname.includes("/audio/")) {   // music and sound effects: downloaded once, then kept on the device (separate cache, so app updates do not delete it)
+    event.respondWith(caches.open("wbsound-v1").then((c) => c.match(req).then((hit) => hit || fetch(req).then((r) => { if (r.ok) c.put(req, r.clone()); return r; }))));
+    return;
+  }
   const jm = req.mode === "navigate" && url.pathname.match(/\/join-battle\/([A-Za-z0-9_-]+)/);
   if (jm) { event.respondWith(Response.redirect(new URL("./?join=" + encodeURIComponent(jm[1]), self.registration.scope).href, 302)); return; } // a battle invitation link opens the app itself (works offline too)
   if (req.mode === "navigate") { // the app page keeps OAuth / password-reset redirect URLs (?code=, #access_token=) working

@@ -443,7 +443,8 @@ html[data-motion=reduced] .ach-sp,html[data-motion=reduced] .ach-ring,html[data-
   function chime(tier) {   // uses the game's own sound (respects Mute) and vibration (respects the Vibration setting)
     if (typeof beep !== "function") return;
     const notes = { bronze: [660, 880], silver: [660, 880, 1175], gold: [523, 659, 784, 1046, 1318] }[tier];
-    notes.forEach((f, i) => setTimeout(() => beep(f, tier === "gold" && i === notes.length - 1 ? 0.28 : 0.12), 250 + i * 110));
+    if (typeof sfx !== "undefined" && sfx.achievement) setTimeout(() => sfx.achievement(tier === "bronze" ? 0.75 : 1), 250);
+    else notes.forEach((f, i) => setTimeout(() => beep(f, tier === "gold" && i === notes.length - 1 ? 0.28 : 0.12), 250 + i * 110));
     if (typeof vibe === "function") vibe(tier === "gold" ? [40, 40, 40, 40, 110] : 30);
   }
 

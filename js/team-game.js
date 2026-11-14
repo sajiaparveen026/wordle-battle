@@ -141,7 +141,7 @@ html[data-motion=reduced] .tzg-rm,html[data-motion=reduced] .tzg-cd b,html[data-
     const tiles = [...rowEl(i).children];
     if (quick()) { drawGuess(i, g); return done(); }
     flipping = true;
-    tiles.forEach((t, c) => setTimeout(() => { t.classList.add("flip"); snd("flip", c); setTimeout(() => { drawTile(t, g.word[c], KIND[g.pattern[c]]); t.classList.add("flip"); }, 275); }, c * 280));
+    tiles.forEach((t, c) => setTimeout(() => { t.classList.add("flip"); snd("flip", c, KIND[g.pattern[c]]); setTimeout(() => { drawTile(t, g.word[c], KIND[g.pattern[c]]); t.classList.add("flip"); }, 275); }, c * 280));
     setTimeout(() => { flipping = false; done(); }, COLS * 280 + 300);
   }
   function paintTyping() {
@@ -227,7 +227,7 @@ html[data-motion=reduced] .tzg-rm,html[data-motion=reduced] .tzg-cd b,html[data-
     if (!canType()) return;
     const gone = (S.me.hint_data && S.me.hint_data.remove && S.me.hint_data.remove.letters) || [];
     if (k === "enter") return submit();
-    if (k === "back") { cur = cur.slice(0, -1); submitMsg(""); snd("key"); }
+    if (k === "back") { cur = cur.slice(0, -1); submitMsg(""); snd("del"); }
     else if (/^[a-z]$/.test(k) && cur.length < COLS && !gone.includes(k)) { cur += k; submitMsg(""); snd("key"); }
     paintTyping();
   }
@@ -259,7 +259,7 @@ html[data-motion=reduced] .tzg-rm,html[data-motion=reduced] .tzg-cd b,html[data-
     if (inSeries && (!room() || room().id !== rid)) return;      // Series: the round moved on while this was in flight; don't apply an old round's answer
     if (r.state) api().apply(r.state);
     if (!r.ok) return submitMsg({ already_used: "Already used.", nothing_to_reveal: "Nothing left to reveal.", nothing_to_remove: "Nothing to remove.", no_clue: "No clue for this word.", not_playing: "Hints are closed now." }[r.reason] || "Couldn't use that hint.");
-    snd("coin");
+    snd("power");
     submitMsg("");
     update(S);
   }
@@ -389,6 +389,7 @@ html[data-motion=reduced] .tzg-rm,html[data-motion=reduced] .tzg-cd b,html[data-
     const placed = S.players.slice().sort((a, b) => (a.finish_place || 99) - (b.finish_place || 99) || a.seat - b.seat);
     const me = placed.find((p) => p.is_me);
     const won = me && me.finish_place === 1;
+    if (el.dataset.snd !== rid) { el.dataset.snd = rid; snd(won ? "victory" : (me && me.finish_place) ? "results" : placed.some((p) => p.finish_place === 1) ? "defeat" : "draw"); }   // once per result screen
     const title = won ? "You solved it!" : me && me.finish_place ? `You finished ${ordinal(me.finish_place)}` : "Battle over";
     const solver = placed.find((p) => p.finish_place === 1);
     const reason = room().end_reason === "solved" ? (solver && solver.is_me ? "You got it first, so the battle ended." : `${solver ? esc(solver.username) : "A player"} solved it first, so the battle ended.`)

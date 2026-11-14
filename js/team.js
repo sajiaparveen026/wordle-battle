@@ -199,7 +199,7 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
 
   // ---------- server state ----------
   const dropped = new Set();                       // rooms I have left: a late reply for them must not bring me back
-  function apply(state, fresh) {
+  function apply(state, fresh) { if (window.WBAudio) WBAudio.roomState("team", state);
     if (!state || !state.room) return;
     if (fresh) dropped.delete(state.room.id); else if (dropped.has(state.room.id)) return;   // a deliberate create / join clears the mark
     S = state; gotAt = Date.now(); netBad = false; err = ""; view = "room";

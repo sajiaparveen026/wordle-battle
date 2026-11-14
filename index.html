@@ -95,6 +95,7 @@
     <symbol id="s-logout" viewBox="0 0 24 24"><path d="M9 4.5H6.5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2H9"/><path d="M15 8l4 4-4 4M19 12H9.5"/></symbol>
     <symbol id="s-moon" viewBox="0 0 24 24"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2z"/></symbol>
     <symbol id="s-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.8"/><path d="M12 3v2.2M12 18.8V21M3 12h2.2M18.8 12H21M5.6 5.6l1.6 1.6M16.8 16.8l1.6 1.6M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6"/></symbol>
+    <symbol id="s-music" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.500" cy="18" r="2.500"/><circle cx="16.500" cy="16" r="2.500"/></symbol>
     <symbol id="s-volume" viewBox="0 0 24 24"><path d="M4.5 9.8v4.4h3.2l4.3 3.6V6.2L7.7 9.8z"/><path d="M15.4 9a4 4 0 0 1 0 6M17.8 6.6a7.4 7.4 0 0 1 0 10.8"/></symbol>
     <symbol id="s-vibrate" viewBox="0 0 24 24"><rect x="8" y="3.5" width="8" height="17" rx="2"/><path d="M4.5 8.5v7M19.5 8.5v7M2 10.5v3M22 10.5v3"/></symbol>
     <symbol id="s-motion" viewBox="0 0 24 24"><path d="M3.5 9c2.2-2.4 4.4-2.4 6.6 0s4.4 2.4 6.6 0M3.5 15c2.2-2.4 4.4-2.4 6.6 0s4.4 2.4 6.6 0"/></symbol>
@@ -506,10 +507,13 @@
       <section class="sp-view hidden" data-view="game" aria-labelledby="sp-t-game">
         <div class="sp-sub"><button class="sp-back" type="button" data-sp-back aria-label="Back to Settings"><svg class="pf-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#p-chev"/></svg></button><h3 id="sp-t-game" tabindex="-1">Game Preferences</h3></div>
         <div class="sp-list">
-          <div class="sp-card sp-row" data-sw-row="sw-sound"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-volume"/></svg></span><span class="sp-txt"><b id="sw-sound-l">Sound Effects</b><small id="sw-sound-d">Key taps, clues, coins and win jingles.</small></span><button class="sw " id="sw-sound" type="button" role="switch" aria-checked="false" aria-labelledby="sw-sound-l sw-sound-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
+          <div class="sp-card sp-row" data-sw-row="sw-music"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-music"/></svg></span><span class="sp-txt"><b id="sw-music-l">Background Music</b><small id="sw-music-d">Relaxing music while you play.</small></span><button class="sw" id="sw-music" type="button" role="switch" aria-checked="true" aria-labelledby="sw-music-l sw-music-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
+          <div class="sp-card sp-vol"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-volume"/></svg></span><span class="sp-txt"><b id="vol-music-l">Music volume</b></span><output class="sp-pct" id="vol-music-o" for="vol-music">50%</output><input class="sp-range" id="vol-music" type="range" min="0" max="100" step="1" value="50" aria-labelledby="vol-music-l"></div>
+          <div class="sp-card sp-row" data-sw-row="sw-sound"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-volume"/></svg></span><span class="sp-txt"><b id="sw-sound-l">Sound Effects</b><small id="sw-sound-d">Taps, typing, tile flips, wins, coins and rewards.</small></span><button class="sw " id="sw-sound" type="button" role="switch" aria-checked="false" aria-labelledby="sw-sound-l sw-sound-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
+          <div class="sp-card sp-vol"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-volume"/></svg></span><span class="sp-txt"><b id="vol-sfx-l">Sound effects volume</b></span><output class="sp-pct" id="vol-sfx-o" for="vol-sfx">50%</output><input class="sp-range" id="vol-sfx" type="range" min="0" max="100" step="1" value="50" aria-labelledby="vol-sfx-l"></div>
           <div class="sp-card sp-row" data-sw-row="sw-vibe"><span class="sp-ico" aria-hidden="true"><svg class="pf-ico" viewBox="0 0 24 24" focusable="false"><use href="#s-vibrate"/></svg></span><span class="sp-txt"><b id="sw-vibe-l">Vibration</b><small id="sw-vibe-d">A short buzz for wrong words, wins and clues.</small></span><button class="sw " id="sw-vibe" type="button" role="switch" aria-checked="false" aria-labelledby="sw-vibe-l sw-vibe-d"><span class="sw-knob" aria-hidden="true"></span></button></div>
         </div>
-        <p class="sp-fine">Both apply straight away, in every game mode.</p>
+        <p class="sp-fine">Music, sound and vibration apply straight away, in every game mode.</p>
       </section>
 
       <!-- Privacy & Security -->
@@ -855,6 +859,7 @@
 <script src="js/vendor/supabase.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/avatars.js"></script>
+<script src="js/audio.js"></script>
 <script src="js/app.js"></script>
 <script src="js/tutorial.js"></script>
 <script src="js/achievements.js"></script>

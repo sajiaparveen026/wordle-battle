@@ -13,6 +13,18 @@
   // ---------- What's New: newest first. Add an entry here (and bump js/version.js) each time you ship. ----------
   const CHANGELOG = [
     {
+  v: "1.25.0",
+  date: "2026-11-13",
+  title: "Music and sound effects",
+  items: [
+    "New background music: a relaxed track for the menus, a focused one for Solo and Daily, and an energetic one for battles.",
+    "New sound effects across the whole game: taps, typing, tile flips, wins and defeats, countdowns, coins, rewards, achievements, level-ups and the Spin Wheel.",
+    "Friend Zone, Team Zone and Series Mode now sound like a real match, from joining a room to the winner celebration.",
+    "Settings > Game Preferences: turn Background Music and Sound Effects on or off and set each volume on its own. Changes apply instantly and are remembered.",
+    "Sound pauses when you leave the app and comes back when you return."
+  ]
+},
+    {
   v: "1.24.0",
   date: "2026-11-13",
   title: "Series Mode, invite links and Share App",
@@ -179,24 +191,40 @@
   function setSwitch(id, on, disabled) { const b = sw(id); b.setAttribute("aria-checked", String(!!on)); b.classList.toggle("on", !!on); b.disabled = !!disabled; b.closest(".sp-row").classList.toggle("off", !!disabled); }
   function sync() { // every label and switch always reflects the saved preferences
     const dark = settings.theme === "dark", sound = !settings.mute, vib = !!settings.vibrate && canVibrate();
-    setSwitch("sw-dark", dark); setSwitch("sw-motion", !!settings.reduceMotion); setSwitch("sw-sound", sound); setSwitch("sw-vibe", vib, !canVibrate());
+    setSwitch("sw-dark", dark); setSwitch("sw-motion", !!settings.reduceMotion); setSwitch("sw-sound", sound); setSwitch("sw-music", settings.music !== false); setSwitch("sw-vibe", vib, !canVibrate());
     $("#sw-dark-d").textContent = dark ? "On: easy on the eyes. Turn off for the light theme." : "Off: light theme. Turn on for the dark theme.";
     $("#sw-vibe-d").textContent = canVibrate() ? "A short buzz for wrong words, wins and clues." : "Your device or browser doesn\u2019t support vibration.";
     $("#sp-d-appearance").textContent = dark ? "Dark mode \u00b7 On" : "Dark mode \u00b7 Off";
-    $("#sp-d-game").textContent = `Sound ${sound ? "on" : "off"} \u00b7 Vibration ${vib ? "on" : "off"}`;
+    $("#sp-d-game").textContent = `Music ${settings.music !== false ? "on" : "off"} \u00b7 Sound ${sound ? "on" : "off"} \u00b7 Vibration ${vib ? "on" : "off"}`; syncVol();
     if (window.PWA) PWA.renderAbout();   // shows / hides the red update cards
     $("#sp-d-about").textContent = window.PWA && PWA.isUpdateReady() ? `Update available \u00b7 v${self.APP_VERSION}` : `Version ${self.APP_VERSION} \u00b7 Credits`;
     $("#sp-d-new").textContent = `Latest updates \u00b7 v${CHANGELOG[0].v}`;
     $("#sp-d-account").textContent = isAcct() ? "Profile, avatar & sign-in" : "Profile & create account";
     $("#sp-d-delete").textContent = isAcct() ? "Permanently remove your account" : "Clear all progress on this device";
   }
+  // Background Music and Sound Effects volume sliders (0-100 %). They apply while you drag; the value is kept in settings.musicVol / settings.sfxVol.
+  const VOLS = [["vol-music", "musicVol", 0.5, () => settings.music === false], ["vol-sfx", "sfxVol", 0.8, () => !!settings.mute]];
+  function syncVol() {
+    VOLS.forEach(([id, key, def, off]) => {
+      const el = $("#" + id); if (!el) return; const v = Math.round((typeof settings[key] === "number" ? settings[key] : def) * 100), o = $("#" + id + "-o");
+      el.value = v; el.style.setProperty("--p", v + "%"); el.setAttribute("aria-valuetext", v + " percent"); if (o) o.textContent = v + "%";
+      el.disabled = off(); const row = el.closest(".sp-vol"); if (row) row.classList.toggle("off", off());
+    });
+  }
+  VOLS.forEach(([id, key]) => {
+    const el = $("#" + id); if (!el) return;
+    el.addEventListener("input", () => { settings[key] = Math.min(1, Math.max(0, Number(el.value) / 100)); syncVol(); applySettings(); });
+    el.addEventListener("change", () => { if (key === "sfxVol") sfx.preview(); });             // let you hear the new effects level
+  });
   function toggle(id) {
     if (id === "sw-dark") { settings.theme = settings.theme === "dark" ? "light" : "dark"; fadeTheme(); }
     else if (id === "sw-motion") { settings.reduceMotion = !settings.reduceMotion; settings.motionUser = true; }   // motionUser: this is the player's own choice
     else if (id === "sw-sound") settings.mute = !settings.mute;
+    else if (id === "sw-music") settings.music = settings.music === false;
     else if (id === "sw-vibe") { if (!canVibrate()) return; settings.vibrate = !settings.vibrate; }
     applySettings(); sync();
-    if (id === "sw-sound" && !settings.mute) beep(880, 0.07);   // a short preview so you can hear it is on
+    if (id === "sw-sound" && !settings.mute) sfx.preview();   // a short preview so you can hear it is on
+    if (id === "sw-music") sfx.toggle(settings.music !== false);
     if (id === "sw-vibe" && settings.vibrate) vibe(40);          // ...and feel it
   }
   function fadeTheme() { // a soft cross-fade while the colours change (skipped for reduced motion)
@@ -235,13 +263,13 @@
     a.onfinish = () => { if (my !== token) return; if (opening) anims.forEach((x) => x.cancel()); else { root.classList.remove("open"); anims.forEach((x) => x.cancel()); } anims = []; };
   }
   function open(name) {
-    if (isOpen) return; isOpen = true; opener = document.activeElement;
+    if (isOpen) return; isOpen = true; opener = document.activeElement; sfx.menuOpen();
     root.removeAttribute("inert"); root.setAttribute("aria-hidden", "false");
     view(name || "main", false); root.classList.add("open"); document.body.classList.add("sp-lock"); play(true);
     setTimeout(() => { const t = root.querySelector('[data-view="main"]:not(.hidden) .sp-card') || $("#sp-close"); if (t && isOpen) t.focus({ preventScroll: true }); }, 60);
   }
   function close(restoreFocus = true) {
-    if (!isOpen) return; isOpen = false;
+    if (!isOpen) return; isOpen = false; sfx.menuClose();
     root.setAttribute("aria-hidden", "true"); root.setAttribute("inert", ""); document.body.classList.remove("sp-lock"); play(false);   // .open is removed when the slide-out ends
     if (restoreFocus && opener && opener.isConnected && opener.focus) opener.focus({ preventScroll: true });
   }

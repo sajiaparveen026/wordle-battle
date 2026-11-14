@@ -296,6 +296,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     if (!r || !r.ok) { if (r && r.reason === "forbidden") { D.data = null; hidePop(); } return; }
     if (r.lobby) return;
     D.off = r.server_now_ms - (t0 + Date.now()) / 2; D.data = r;
+    if (r.series.current_round === 1 && !r.last_round && D.sSnd !== r.series.id) { D.sSnd = r.series.id; A("series_start"); }
     if (r.room_id && r.room_id !== room.id) switchRoom(ctx, r.room_id, r.series);
     else info.set(room.id, r.series);
     paintHeader(ctx, r);
@@ -325,6 +326,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     if (!el || popKey !== key) {
       if (el) el.remove(); popKey = key;
       closeRoundPopups();
+      { const me = (r.players || []).find((p) => p.is_me); A(lr.result === "draw" ? "round_draw" : me && lr.winner_seat === me.seat ? "round_win" : "round_end"); }   // the round winner announcement
       el = document.createElement("div"); el.id = "sr-pop"; el.className = "sr-ov"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", `Round ${lr.round_no} completed`);
       const win = lr.result === "win"
         ? `<div class="sr-win"><span class="a" aria-hidden="true">${av(lr.winner_avatar)}</span><span class="n"><small>Round Winner</small><b>${esc(lr.winner_name || "Player")}</b></span></div>`
@@ -342,7 +344,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
   function tickPop() {
     const n = document.getElementById("sr-n"), r = D.data; if (!n || !r || !r.last_round || !r.last_round.next_at_ms) return;
     const left = r.last_round.next_at_ms - srvNow(); n.textContent = String(Math.max(0, Math.ceil(left / 1000)));
-    if (left <= 0) { const e = popEl(); if (e) { e.remove(); lock(false); popKey = ""; closeRoundPopups(); } }
+    if (left <= 0) { const e = popEl(); if (e) { e.remove(); lock(false); popKey = ""; closeRoundPopups(); A("round_start"); } }
   }
   setInterval(tickPop, 200);
 
@@ -371,6 +373,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
         <button class="sr-ni" type="button" data-nav="zone" aria-label="${ctx === "friend" ? "Friend Zone" : "Team Zone"}"><span class="ic">${ICON.zone}</span><small>${ctx === "friend" ? "Friend Zone" : "Team Zone"}</small></button>
       </div></div>`;
     document.body.append(el); lock(true); D.view = "final";
+    if (D.finSnd !== r.series.id) { D.finSnd = r.series.id; A(winner && winner.is_me ? "series_win" : winner ? "results" : "draw"); }   // the overall winner celebration
     el.querySelectorAll("[data-nav]").forEach((b) => b.addEventListener("click", () => exitTo(ctx, b.dataset.nav)));
     const pa = el.querySelector("#sr-again"); if (pa) pa.addEventListener("click", () => playAgain(ctx));
     if (!D.confettiFor || D.confettiFor !== r.series.id) { D.confettiFor = r.series.id; if (winner && winner.is_me) fx("confetti"); }
@@ -381,6 +384,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
     zone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.6c0 4.4 3.1 7.7 7.5 9.4 4.4-1.7 7.5-5 7.5-9.4V6L12 3Z"/><path d="M12.8 8.2 9.8 12.6h4.4l-3 4.2"/></svg>'
   };
   // ---------- rewards ----------
+  const A = (n, o) => { if (window.WBAudio) WBAudio.play(n, o); };
   const fx = (n, ...a) => { try { if (typeof window[n] === "function") return window[n](...a); } catch {} };
   const sum = (rows) => rows.reduce((t, x) => ({ coins: t.coins + (x.coins | 0), xp: t.xp + (x.xp | 0) }), { coins: 0, xp: 0 });
   const myRows = (kind) => ((D.data && D.data.rewards) || []).filter((x) => x.kind === kind);
@@ -412,7 +416,7 @@ html[data-motion=reduced] .sr-ov,html[data-motion=reduced] .sr-ov *{animation:no
         if (res) { coins += res.coins; xp += res.xp; if (g.kind === "overall") overall = true; if (res.levelUp) up = true; }
       }
       if (!coins && !xp) return;
-      fx("refreshCoins");
+      fx("refreshCoins"); if (animate) A(overall ? "series_reward" : "reward");
       if (animate) {
         const src = document.getElementById("sr-rc") || document.querySelector("#sr-fin .sr-tot b");
         if (src) fx("coinsToBalance", src, coins);
