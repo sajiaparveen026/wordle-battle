@@ -95,6 +95,18 @@ html[data-motion=reduced] .iv-ov,html[data-motion=reduced] .iv-card,html[data-mo
   const SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.600 13.500 6.800 4M15.400 6.500l-6.800 4"/></svg>';
   const COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.500"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
 
+  // ---------- WhatsApp: opens WhatsApp itself and NEVER navigates away from this page ----------
+  // (an earlier version used window.open(..., "noopener"), which always returns null; that was mistaken for "popup blocked" and replaced the whole game page with WhatsApp)
+  const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || "") || (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.platform || ""));
+  function openWhatsApp(text) {
+    const q = encodeURIComponent(text), web = "https://wa.me/?text=" + q;
+    const go = (href, blank) => { const a = document.createElement("a"); a.href = href; if (blank) { a.target = "_blank"; a.rel = "noopener noreferrer"; } a.style.display = "none"; document.body.append(a); a.click(); a.remove(); };
+    if (!isMobile()) { go(web, true); return; }                       // computer: WhatsApp (app or web) in a new tab; the game tab stays
+    let left = false; const mark = () => { if (document.hidden) left = true; }; document.addEventListener("visibilitychange", mark);
+    go("whatsapp://send?text=" + q, false);                          // phone: straight into the WhatsApp app; the game page stays exactly where it is
+    setTimeout(() => { document.removeEventListener("visibilitychange", mark); if (!left && !document.hidden) go(web, true); }, 1700);   // WhatsApp isn't installed: its web page opens in a NEW tab
+  }
+
   // ---------- SHARE (host) ----------
   async function share(ctx) {
     const st = ctx === "friend" ? window.FriendBattle && FriendBattle.state && FriendBattle.state() : window.TeamZone && TeamZone.state && TeamZone.state();
@@ -128,7 +140,7 @@ html[data-motion=reduced] .iv-ov,html[data-motion=reduced] .iv-card,html[data-mo
       const b = e.target.closest("[data-iv]"); if (!b || !el.isConnected) return; const a = b.dataset.iv;
       if (a === "x") close();
       else if (a === "sel") b.select();
-      else if (a === "wa") { const w = window.open("https://wa.me/?text=" + encodeURIComponent(el.dataset.text || ""), "_blank", "noopener"); if (!w) location.href = "https://wa.me/?text=" + encodeURIComponent(el.dataset.text || ""); }
+      else if (a === "wa") openWhatsApp(el.dataset.text || "");
       else if (a === "copy") toast((await copyText(el.dataset.link || "")) ? "Link copied" : "Couldn't copy. Select the link and copy it.");
       else if (a === "copycode") toast((await copyText(el.dataset.code || "")) ? "Room code copied" : "Couldn't copy the code.");
       else if (a === "native") { try { await navigator.share({ title: "Wordle Battle invitation", text: el.dataset.text || "" }); } catch (err) { if (!err || err.name !== "AbortError") toast("Couldn't open the share menu. Use Copy Link."); } }

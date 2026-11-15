@@ -347,6 +347,10 @@ html[data-motion=reduced] .tz *,html[data-motion=reduced] .tz{animation:none!imp
   function boot() { if (root()) { wire(); paint(true); } }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 
+  // Back from another app (WhatsApp, a browser tab...) or the connection returned: catch up with the room straight away. Nothing here ever leaves or cancels a room.
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S && roomId) sync(); });
+  addEventListener("online", () => { if (S && roomId) sync(); });
+
   // Used by the battle screen (js/team-game.js)
   const api = {
     call: (fn, args) => call(fn, args, false),

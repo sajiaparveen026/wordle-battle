@@ -409,7 +409,8 @@ html[data-motion=reduced] .fb *{animation:none!important;transition:none!importa
   }
   addEventListener("online", () => { if (active && S) sync(); });
   document.addEventListener("visibilitychange", () => { if (active && S && document.visibilityState === "visible") sync(); });
-  addEventListener("pagehide", () => { if (S && (status() === "waiting" || status() === "lobby")) { try { call("bt_leave", { p_room: S.room.id }); } catch {} } });
+  // (no automatic leave here any more) A room is only ever left or cancelled by the player choosing Leave / Cancel Room. Opening another app, switching tabs, closing the
+  // page or losing the connection must NOT end the lobby: the host can come back to the same room, and the room ends only at its own expiry time.
 
   // ---------- called by app.js when the Battle screen opens / closes ----------
   async function open() {
