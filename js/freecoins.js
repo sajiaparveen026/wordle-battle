@@ -18,8 +18,7 @@
   const isAcct = () => !!(window.Auth && Auth.isAccount && Auth.isAccount());
   const nextMidnight = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1); };
   const clock = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${pad(Math.floor(s / 3600))}:${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`; };
-  const whenText = () => `Tomorrow at ${nextMidnight().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
-  const ALREADY = "You’ve already claimed your free coins today! Come back tomorrow.";
+    const ALREADY = "You’ve already claimed your free coins today! Come back tomorrow.";
   const OFFLINE = "You need to be online to claim your free coins. Please try again when you’re connected.";
   const UNAVAILABLE = "Free coins aren’t available right now. Please try again later.";
   const BADDATE = "Your device’s date looks wrong. Please correct it and try again.";
@@ -54,10 +53,10 @@
 
   // ---------- game screen: the "+" opens a popup ----------
   let tick = null, opener = null, state = "";
-  const el = { m: $("#free"), t: $("#free-title"), msg: $("#free-msg"), amt: $("#free-amount"), ico: $("#free-ico"), next: $("#free-next"), when: $("#free-when"), count: $("#free-count"), btn: $("#free-btn") };
+  const el = { m: $("#free"), t: $("#free-title"), msg: $("#free-msg"), amt: $("#free-amount"), ico: $("#free-ico"), next: $("#free-next"), x: $("#free-x"), count: $("#free-count"), btn: $("#free-btn") };
   function setNext(on) {
     el.next.classList.toggle("hidden", !on); clearInterval(tick); if (!on) return;
-    const target = nextMidnight(); el.when.textContent = whenText();
+    const target = nextMidnight();
     const upd = () => {
       const left = target - Date.now();
       if (left <= 0) { clearInterval(tick); refreshDot(); if (!el.m.classList.contains("hidden") && !busy.game) render(claimedToday("game") ? "already" : "available"); return; }
@@ -70,6 +69,7 @@
     el.ico.textContent = s === "success" ? "🎉" : s === "already" ? "⏳" : s === "error" ? "⚠️" : "🎁";
     el.amt.textContent = `+${AMOUNT} 🪙`; el.amt.classList.toggle("hidden", !(ok || s === "success"));
     el.btn.disabled = false; el.btn.classList.remove("hidden");
+    el.x.classList.toggle("hidden", s === "success" || s === "already" || s === "error");   // the ✕ is only shown while there is no OK / Awesome / Close button of its own
     if (s === "loading") { el.t.textContent = "Free Coins"; el.msg.textContent = "Checking your daily reward..."; el.btn.classList.add("hidden"); setNext(false); }
     else if (ok) { el.t.textContent = "Free Coins"; el.msg.textContent = `Claim ${AMOUNT} free coins. You can do this once every day.`; el.btn.textContent = `Claim ${AMOUNT} coins`; setNext(false); }
     else if (s === "success") { el.t.textContent = "Coins claimed!"; el.msg.textContent = `Success! ${AMOUNT} coins were added to your balance. You now have ${Player.data.coins} 🪙.`; el.btn.textContent = "Awesome"; setNext(true); }
